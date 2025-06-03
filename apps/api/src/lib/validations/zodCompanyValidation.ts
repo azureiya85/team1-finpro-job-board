@@ -49,7 +49,7 @@ export const jobSearchParamsSchema = z.object({
     (val) => (typeof val === 'string' ? val.split(',') : val),
     z.array(z.nativeEnum(CompanySize)).optional()
   ),
-  isRemote: z.preprocess(val => {
+   includePagination: z.preprocess(val => { 
     if (val === 'true') return true;
     if (val === 'false') return false;
     return undefined; 

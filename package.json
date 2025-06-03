@@ -37,6 +37,7 @@
   "dependencies": {
     "@prisma/client": "^6.8.2",
     "@types/axios": "^0.14.0",
-    "axios": "^1.7.2"
+    "axios": "^1.7.2",
+    "tsx": "^4.19.4"
   }
 }
