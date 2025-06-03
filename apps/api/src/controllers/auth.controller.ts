@@ -2,4 +2,3 @@ export const authUser = () => {
     
 }
 
-//test
