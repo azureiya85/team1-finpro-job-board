@@ -6,13 +6,15 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "baseUrl": ".",
+    "outDir": "./dist",    
+    "baseUrl": ".",         
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"]    
     }
   },
-  // "include": ["src/**/*"],
-  "include": ["**/*.ts"],
+  "include": [
+    "src/**/*.ts",         
+    "src/**/*.d.ts"        
+  ],
   "exclude": ["node_modules"]
 }
