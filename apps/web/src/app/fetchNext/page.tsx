@@ -36,6 +36,7 @@ export default function FetchNextJobsPage() {
           setJobs([]);
         }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.error("Failed to fetch jobs:", e);
         setError(e.message || "Failed to load jobs. Please try again later.");

@@ -47,6 +47,7 @@ export default function FetchExpressJobsPage() {
           setJobs([]);
         }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.error("Failed to fetch jobs from Express API:", e);
         setError(e.message || "Failed to load jobs from Express. Please try again later.");

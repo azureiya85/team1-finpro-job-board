@@ -33,6 +33,7 @@ export default function FetchNextJobDetailPage() {
         }
         const data: JobPostingFeatured = await response.json(); // Expecting a single job object
         setJob(data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.error(`Failed to fetch job ${jobId}:`, e);
         setError(e.message || "Failed to load job details. Please try again later.");

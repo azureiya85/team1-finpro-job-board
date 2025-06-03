@@ -44,6 +44,7 @@ export default function FetchExpressJobDetailPage() {
 
         const data: JobPostingFeatured = await response.json();
         setJob(data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.error(`Failed to fetch job ${jobId} from Express API:`, e);
         setError(e.message || "Failed to load job details from Express. Please try again later.");
