@@ -158,3 +158,14 @@ export interface JobUpdateData {
 }
 
 export type ProcessedJobUpdateData = JobUpdateData;
+
+export interface GetJobsResult {
+  jobs: JobPostingFeatured[];
+  pagination?: {
+    total: number;
+    page: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}

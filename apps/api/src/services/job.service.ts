@@ -92,32 +92,44 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
   return where;
 };
 
-
 export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingFeatured[] | GetJobsResult> {
-  const {
-    take = 3000, 
-    skip = 0,
-    orderBy,
-    includePagination = false, 
-  } = params;
+  const takeParam = params.take !== undefined ? parseInt(String(params.take), 10) : 3000;
+  const skipParam = params.skip !== undefined ? parseInt(String(params.skip), 10) : 0;
 
-  const effectiveOrderBy = orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
-  const where = buildWhereClause(params);
+  let includePaginationParam: boolean;
+
+  if (typeof params.includePagination === 'string') {
+    includePaginationParam = params.includePagination.toLowerCase() === 'true';
+  } else if (typeof params.includePagination === 'boolean') {
+    includePaginationParam = params.includePagination;
+  } else {
+    includePaginationParam = true;
+  }
+
+  if (isNaN(takeParam) || takeParam < 0) {
+    throw new Error("Invalid 'take' parameter: must be a non-negative number.");
+  }
+  if (isNaN(skipParam) || skipParam < 0) {
+    throw new Error("Invalid 'skip' parameter: must be a non-negative number.");
+  }
+
+  const effectiveOrderBy = params.orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
+  const where = buildWhereClause(params); // Pass original params for filtering logic
 
   try {
-    if (includePagination) {
+    if (includePaginationParam) {
       const [jobs, totalCount] = await prisma.$transaction([
         prisma.jobPosting.findMany({
           where,
           orderBy: effectiveOrderBy,
-          take,
-          skip,
-          select: {
+          take: takeParam, 
+          skip: skipParam, 
+          select: { 
             id: true, title: true, description: true, employmentType: true,
             experienceLevel: true, category: true, isRemote: true, createdAt: true,
             publishedAt: true, salaryMin: true, salaryMax: true, salaryCurrency: true,
             isPriority: true, tags: true, requirements: true, benefits: true,
-            applicationDeadline: true, // Added from single job fetch
+            applicationDeadline: true,
             company: {
               select: { id: true, name: true, logo: true, size: true, industry: true },
             },
@@ -130,22 +142,22 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
       ]);
 
       return {
-        jobs: jobs as JobPostingFeatured[], 
+        jobs: jobs as JobPostingFeatured[],
         pagination: {
           total: totalCount,
-          page: Math.floor(skip / take) + 1,
-          totalPages: Math.ceil(totalCount / take),
-          hasNext: skip + take < totalCount,
-          hasPrev: skip > 0,
+          page: takeParam > 0 ? Math.floor(skipParam / takeParam) + 1 : 1,
+          totalPages: takeParam > 0 ? Math.ceil(totalCount / takeParam) : (totalCount > 0 ? 1: 0) ,
+          hasNext: skipParam + takeParam < totalCount,
+          hasPrev: skipParam > 0,
         },
       };
     } else {
       const jobs = await prisma.jobPosting.findMany({
         where,
         orderBy: effectiveOrderBy,
-        take,
-        skip,
-        select: { 
+        take: takeParam, 
+        skip: skipParam,
+        select: {
             id: true, title: true, description: true, employmentType: true,
             experienceLevel: true, category: true, isRemote: true, createdAt: true,
             publishedAt: true, salaryMin: true, salaryMax: true, salaryCurrency: true,
@@ -156,20 +168,24 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
             },
             city: { select: { id: true, name: true } },
             province: { select: { id: true, name: true } },
+            // _count : Maybe?
         },
       });
       return jobs as JobPostingFeatured[];
     }
   } catch (error) {
     console.error("Service: Failed to fetch jobs with filters:", error);
-    throw new Error("Failed to fetch jobs from database.");
+    if (error instanceof Error) {
+        throw new Error(`Database error while fetching jobs: ${error.message}`);
+    }
+    throw new Error("Failed to fetch jobs from database due to an unknown error.");
   }
 }
 
 export async function fetchJobById(id: string): Promise<JobPostingFeatured | null> {
   try {
     const job = await prisma.jobPosting.findUnique({
-      where: { id, isActive: true },
+      where: { id, isActive: true }, // ID is already string,
       select: {
         id: true, title: true, description: true, employmentType: true,
         experienceLevel: true, category: true, isRemote: true, createdAt: true,
@@ -177,16 +193,20 @@ export async function fetchJobById(id: string): Promise<JobPostingFeatured | nul
         isPriority: true, tags: true, requirements: true, benefits: true,
         applicationDeadline: true,
         company: {
-          select: { id: true, name: true, logo: true, size: true, description: true }, 
+          select: { id: true, name: true, logo: true, size: true, description: true, industry: true }, 
         },
         city: { select: { id: true, name: true } },
         province: { select: { id: true, name: true } },
+        _count: { select: { applications: true } }, 
       },
     });
-    return job as JobPostingFeatured | null; 
+    return job as JobPostingFeatured | null;
   } catch (error) {
     console.error(`Service: Failed to fetch job with ID ${id}:`, error);
-    throw new Error("Failed to fetch job from database.");
+    if (error instanceof Error) {
+        throw new Error(`Database error while fetching job ${id}: ${error.message}`);
+    }
+    throw new Error(`Failed to fetch job ${id} from database.`);
   }
 }
 
