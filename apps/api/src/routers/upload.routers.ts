@@ -1,16 +1,16 @@
 import { Router } from 'express';
 import { UploadController } from '@/controllers/upload.controller';
 import { uploadSingle, handleUploadError } from '@/middleware/upload.middleware';
-// import { authMiddleware } from '@/middleware/auth.middleware'; 
+import { authMiddleware } from '@/middleware/auth.middleware'; // Now we can enable it
 
 const router = Router();
 
 router.post(
   '/',
-//   authMiddleware, 
+  authMiddleware, // Enable authentication
   uploadSingle,   
-  handleUploadError, 
-  UploadController.uploadFile
+  UploadController.uploadFile,
+  handleUploadError 
 );
 
 export default router;

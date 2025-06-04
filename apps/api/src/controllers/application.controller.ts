@@ -4,12 +4,14 @@ import { ApplicationService } from '@/services/application.service';
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
-    name: string;
+    name?: string;
+    email?: string;
+    role?: string;
   };
 }
 
 export class ApplicationController {
-   static async submitApplication(req: AuthenticatedRequest, res: Response): Promise<void> {
+  static async submitApplication(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
       const userName = req.user?.name;
@@ -21,6 +23,8 @@ export class ApplicationController {
         return;
       }
 
+      console.log('Application submission from user:', req.user);
+
       const { 
         jobPostingId, 
         cvUrl, 
@@ -28,7 +32,10 @@ export class ApplicationController {
         coverLetter, 
         fullName,
         phoneNumber,
-        currentLocation 
+        currentLocation,
+        availableStartDate,
+        portfolioUrl,
+        linkedinUrl
       } = req.body;
 
       // Check job posting validity

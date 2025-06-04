@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ApplicationController } from '@/controllers/application.controller';
 import { validate } from '@/middleware/validation.middleware';
-// import { authMiddleware } from '@/middleware/auth.middleware';
+import { authMiddleware } from '@/middleware/auth.middleware'; // Enable authentication
 import { cvSubmissionSchema } from '@/lib/validations/zodApplicationValidation';
 import { z } from 'zod';
 
@@ -20,14 +20,14 @@ const applicationStatusSchema = z.object({
 
 router.post(
   '/submit-cv',
-//   authMiddleware,
+  authMiddleware, // Enable authentication
   validate(submitCVSchema, 'body'),
   ApplicationController.submitApplication
 );
 
 router.get(
   '/status',
-//   authMiddleware,
+  authMiddleware, // Enable authentication
   validate(applicationStatusSchema, 'query'),
   ApplicationController.getApplicationStatus
 );

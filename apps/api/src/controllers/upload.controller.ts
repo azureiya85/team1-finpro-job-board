@@ -4,14 +4,24 @@ import { UploadService } from '@/services/upload.service';
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
+    name?: string;
+    email?: string;
+    role?: string;
   };
 }
 
 export class UploadController {
-   static async uploadFile(req: AuthenticatedRequest, res: Response): Promise<void> {
+  static async uploadFile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      // Check if user is authenticated (assuming you have auth middleware)
+      console.log('Upload request received:', {
+        file: req.file ? `${req.file.originalname} (${req.file.size} bytes)` : 'No file',
+        user: req.user,
+        body: req.body
+      });
+
+      // Now we have the real user ID from auth middleware
       const userId = req.user?.id;
+      
       if (!userId) {
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -19,9 +29,16 @@ export class UploadController {
 
       // Check if file exists
       if (!req.file) {
+        console.log('No file provided in request');
         res.status(400).json({ error: 'No file provided' });
         return;
       }
+
+      console.log('File details:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      });
 
       const folder = req.body.folder || 'uploads';
 
@@ -31,6 +48,8 @@ export class UploadController {
         file: req.file
       });
 
+      console.log('Upload successful:', result);
+
       res.json({
         success: true,
         ...result
@@ -38,7 +57,7 @@ export class UploadController {
     } catch (error) {
       console.error('Upload controller error:', error);
       res.status(500).json({
-        error: 'Failed to upload file'
+        error: error instanceof Error ? error.message : 'Failed to upload file'
       });
     }
   }
