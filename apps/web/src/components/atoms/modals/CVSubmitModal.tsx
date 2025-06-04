@@ -25,6 +25,18 @@ interface Job {
   requiresCoverLetter?: boolean;
 }
 
+// Define error response type 
+interface ValidationError {
+  path?: (string | number)[];
+  message: string;
+}
+
+interface ErrorResponse {
+  message?: string;
+  error?: string;
+  details?: ValidationError[];
+}
+
 export default function CVSubmitModal() {
   const { isOpen, selectedJob, closeModal, isSubmitting, setSubmitting } = useCVModalStore();
   const { user } = useAuthStore();
@@ -47,7 +59,7 @@ export default function CVSubmitModal() {
       email: user?.email || '',
       phoneNumber: user?.phoneNumber || '',
       currentLocation: user?.currentAddress || '',
-      expectedSalary: 0,
+      expectedSalary: 1000000, 
       coverLetter: '',
       availableStartDate: '',
       portfolioUrl: '',
@@ -92,11 +104,15 @@ export default function CVSubmitModal() {
   };
 
   const onSubmit = async (data: CVSubmissionForm) => {
-    if (!cvFile && (selectedJob as Job)?.requiresCoverLetter !== false) {
-        setUploadError('Please upload your CV');
-        return;
+    if (!cvFile) {
+      setUploadError('Please upload your CV');
+      return;
     }
-    if (!selectedJob) return;
+    
+    if (!selectedJob) {
+      setUploadError('No job selected');
+      return;
+    }
 
     setSubmitting(true);
     setUploadError('');
@@ -113,26 +129,31 @@ export default function CVSubmitModal() {
           body: formData,
         });
 
-        if (!uploadResponse.ok) throw new Error('Failed to upload CV');
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(`Failed to upload CV: ${errorText}`);
+        }
+        
         const uploadJson = await uploadResponse.json();
         cvUrl = uploadJson.url;
       }
 
+      // Prepare application data to match backend schema exactly
       const applicationData = {
         jobPostingId: selectedJob.id,
-        cvUrl: cvUrl || null,
-        expectedSalary: data.expectedSalary,
-        coverLetter: data.coverLetter,
-        applicantInfo: {
-          fullName: data.fullName,
-          email: data.email,
-          phoneNumber: data.phoneNumber,
-          currentLocation: data.currentLocation,
-          availableStartDate: data.availableStartDate,
-          portfolioUrl: data.portfolioUrl || null,
-          linkedinUrl: data.linkedinUrl || null,
-        },
+        cvUrl: cvUrl,
+        expectedSalary: Number(data.expectedSalary), 
+        coverLetter: data.coverLetter || '', 
+        fullName: data.fullName,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        currentLocation: data.currentLocation,
+        availableStartDate: data.availableStartDate,
+        portfolioUrl: data.portfolioUrl || null, 
+        linkedinUrl: data.linkedinUrl || null, 
       };
+
+      console.log('Application data being sent:', applicationData);
 
       const submitResponse = await fetch('/api/submit-cv', {
         method: 'POST',
@@ -141,9 +162,30 @@ export default function CVSubmitModal() {
       });
 
       if (!submitResponse.ok) {
-        const errorData = await submitResponse.json();
-        throw new Error(errorData.message || 'Failed to submit application');
+        const errorText = await submitResponse.text();
+        console.error('Submit error response:', errorText);
+        
+        let errorData: ErrorResponse;
+        try {
+          errorData = JSON.parse(errorText) as ErrorResponse;
+        } catch {
+          errorData = { message: errorText };
+        }
+        
+        // Show detailed validation errors 
+        if (errorData.details && Array.isArray(errorData.details)) {
+          const validationErrors = errorData.details.map((detail: ValidationError) => 
+            `${detail.path?.join('.')}: ${detail.message}`
+          ).join(', ');
+          throw new Error(`Validation errors: ${validationErrors}`);
+        }
+        
+        throw new Error(errorData.message || errorData.error || 'Failed to submit application');
       }
+      
+      const responseData = await submitResponse.json();
+      console.log('Success response:', responseData);
+      
       setSubmitSuccess(true);
       setTimeout(() => {
         handleClose();

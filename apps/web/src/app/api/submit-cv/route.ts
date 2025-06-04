@@ -3,13 +3,16 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { ApplicationStatus } from '@prisma/client';
-import { cvSubmissionSchema } from '@/lib/validations/zodApplicationValidation'; 
+import { submitCVSchema } from '@/lib/validations/zodApplicationValidation';
 
-// Extended schema 
-const submitCVSchema = cvSubmissionSchema.extend({
-  jobPostingId: z.string().cuid(),
-  cvUrl: z.string().url(),
-});
+// Define the user update type
+interface UserUpdateData {
+  phoneNumber?: string;
+  currentAddress?: string;
+  name?: string;
+  currentLocation?: string;
+  fullName?: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    // Validate request data
+    // Validate request data using the shared schema
     const validationResult = submitCVSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
@@ -43,7 +46,8 @@ export async function POST(request: NextRequest) {
       coverLetter, 
       fullName,
       phoneNumber,
-      currentLocation    } = validationResult.data;
+      currentLocation,
+    } = validationResult.data;
 
     // Check if job posting exists and is active
     const jobPosting = await prisma.jobPosting.findUnique({
@@ -99,18 +103,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user profile with application info (if provided)
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        phoneNumber: phoneNumber,
-        currentAddress: currentLocation,
-        // Update name if not set
-        ...((!session.user.name || session.user.name.trim() === '') && {
-          name: fullName
-        }),
-      }
-    });
+    // Update user profile with application info (if provided) - FIXED TYPE
+    const userUpdateData: UserUpdateData = {};
+    
+    if (phoneNumber) {
+      userUpdateData.phoneNumber = phoneNumber;
+    }
+    
+    if (currentLocation) {
+      userUpdateData.currentLocation = currentLocation;
+    }
+    
+    // Update name if not set
+    if ((!session.user.name || session.user.name.trim() === '') && fullName) {
+      userUpdateData.name = fullName;
+    }
+
+    // Only update if there's data to update
+    if (Object.keys(userUpdateData).length > 0) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: userUpdateData
+      });
+    }
 
     // Create job application
     const jobApplication = await prisma.jobApplication.create({
@@ -209,7 +224,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method to check application status
+// GET method remains the same...
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();

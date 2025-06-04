@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { Education, ApplicationStatus } from '@prisma/client';
 
-// CV Submission Schema
+// CV Submission Form Schema 
 export const cvSubmissionSchema = z.object({
   expectedSalary: z.number().min(1000000, 'Minimum salary should be at least Rp 1,000,000').max(1000000000, 'Maximum salary should not exceed Rp 1,000,000,000'),
   coverLetter: z.string().min(50, 'Cover letter should be at least 50 characters').max(2000, 'Cover letter should not exceed 2000 characters'),
@@ -14,6 +14,38 @@ export const cvSubmissionSchema = z.object({
   linkedinUrl: z.string().url('Please enter a valid LinkedIn URL').optional().or(z.literal('')),
 });
 export type CVSubmissionForm = z.infer<typeof cvSubmissionSchema>;
+
+// CV Submission API Schema 
+export const submitCVSchema = z.object({
+  jobPostingId: z.string().cuid('Invalid job posting ID'),
+  cvUrl: z.string().url('Invalid CV URL'),
+  expectedSalary: z.number().min(1000000, 'Minimum salary should be at least Rp 1,000,000').max(1000000000, 'Maximum salary should not exceed Rp 1,000,000,000'),
+  coverLetter: z.string().min(50, 'Cover letter should be at least 50 characters').max(2000, 'Cover letter should not exceed 2000 characters'),
+  fullName: z.string().min(2, 'Full name is required'),
+  email: z.string().email('Please enter a valid email address'),
+  phoneNumber: z.string().min(10, 'Phone number should be at least 10 digits').max(15, 'Phone number should not exceed 15 digits'),
+  currentLocation: z.string().min(2, 'Current location is required'),
+  availableStartDate: z.string().min(1, 'Available start date is required'),
+  portfolioUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')).or(z.null()),
+  linkedinUrl: z.string().url('Please enter a valid LinkedIn URL').optional().or(z.literal('')).or(z.null()),
+});
+export type SubmitCVData = z.infer<typeof submitCVSchema>;
+
+// Alternative: Make cvUrl optional for cases where CV upload is not required
+export const submitCVSchemaOptional = z.object({
+  jobPostingId: z.string().cuid('Invalid job posting ID'),
+  cvUrl: z.string().url('Invalid CV URL').optional().or(z.literal('')).or(z.null()),
+  expectedSalary: z.number().min(1000000, 'Minimum salary should be at least Rp 1,000,000').max(1000000000, 'Maximum salary should not exceed Rp 1,000,000,000'),
+  coverLetter: z.string().min(50, 'Cover letter should be at least 50 characters').max(2000, 'Cover letter should not exceed 2000 characters'),
+  fullName: z.string().min(2, 'Full name is required'),
+  email: z.string().email('Please enter a valid email address'),
+  phoneNumber: z.string().min(10, 'Phone number should be at least 10 digits').max(15, 'Phone number should not exceed 15 digits'),
+  currentLocation: z.string().min(2, 'Current location is required'),
+  availableStartDate: z.string().min(1, 'Available start date is required'),
+  portfolioUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')).or(z.null()),
+  linkedinUrl: z.string().url('Please enter a valid LinkedIn URL').optional().or(z.literal('')).or(z.null()),
+});
+export type SubmitCVDataOptional = z.infer<typeof submitCVSchemaOptional>;
 
 // Application Filters Schema
 export const applicationFiltersSchema = z.object({
@@ -70,4 +102,3 @@ export const applicationFiltersSchema = z.object({
   message: "Start date cannot be after end date",
   path: ["dateTo"],
 });
-export type ApplicationFiltersData = z.infer<typeof applicationFiltersSchema>;
