@@ -1,7 +1,7 @@
 'use server';
 
 import { signIn as nextAuthServerSignIn, auth as getNextAuthServerSession } from '@/auth'; 
-import { LoginFormData, RegisterFormData } from '@/lib/validations/zodAuthValidation';
+import { LoginFormData, RegisterFormData, CompanyRegisterFormData } from '@/lib/validations/zodAuthValidation';
 import { AuthError } from 'next-auth';
 import { UserRole } from '@prisma/client'; 
 import { authHelpers, RegisterResult } from '@/lib/authHelpers'; 
@@ -110,4 +110,17 @@ export async function resetPasswordAction(token: string, newPassword: string):Pr
 
 export async function resendVerificationEmailAction(email: string): Promise<{ success: boolean; message: string }> {
     return authHelpers.resendVerificationEmail(email);
+}
+
+export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
+  try {
+    const result = await authHelpers.registerCompanyAdmin(data);
+    return result;
+  } catch (error) {
+    console.error('Unexpected error in registerCompanyAdminAction:', error);
+    return {
+      success: false,
+      message: 'An unexpected server error occurred during company registration. Please try again.',
+    };
+  }
 }

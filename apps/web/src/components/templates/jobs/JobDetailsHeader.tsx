@@ -50,8 +50,6 @@ export function JobDetailsHeader({ job }: JobDetailsHeaderProps) {
         
 const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : null;
 
-    
-
   return (
     <Card className={cn(
       "mb-8 overflow-hidden border-2 transition-all duration-300",

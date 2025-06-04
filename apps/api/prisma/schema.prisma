@@ -24,7 +24,7 @@ model User {
   name              String?   
   image             String?   
   
-  // Your existing fields
+  // Basic Info
   password          String?
   firstName         String?
   lastName          String?
@@ -739,6 +739,21 @@ enum JobCategory {
   MEDIA
   NON_PROFIT
   GOVERNMENT
+  ENGINEERING 
+  SCIENCE_RESEARCH 
+  ARTS_ENTERTAINMENT 
+  WRITING_EDITING 
+  AGRICULTURE 
+  REAL_ESTATE 
+  AUTOMOTIVE 
+  AEROSPACE_DEFENSE 
+  ENERGY_UTILITIES 
+  TELECOMMUNICATIONS 
+  LOGISTICS_SUPPLY_CHAIN 
+  ARCHITECTURE_PLANNING 
+  SPORTS_FITNESS 
+  ENVIRONMENTAL_SERVICES 
+  SECURITY_PROTECTIVE_SERVICES 
   OTHER
 }
 
@@ -816,13 +831,12 @@ enum EmploymentStatus {
    INTERVIEW_REMINDER        // For User & Company Admin
    SUBSCRIPTION_EXPIRING
    SUBSCRIPTION_ENDED
-   NEW_JOB_MATCHING_PROFILE  // For User (if recommendations implemented)
+   NEW_JOB_MATCHING_PROFILE  
    ASSESSMENT_COMPLETED
    CERTIFICATE_ISSUED
-   // ... other types
  }
 
 enum CityType {
-  CITY      // Kota
-  REGENCY   // Kabupaten
+  CITY     
+  REGENCY   
 }
