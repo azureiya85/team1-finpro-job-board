@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-// Assuming JobPostingFeatured is accessible from apps/web
-import { JobPostingFeatured } from '@/types'; // Or your shared types path
+import { JobPostingFeatured } from '@/types'; 
 
-// **IMPORTANT: Replace with your actual Express API URL**
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
 

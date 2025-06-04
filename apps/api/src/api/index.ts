@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import jobRoutes from '@/routers/job.routers';
-// Import other resource routers here
-// import userRoutes from './users/user.routes';
+import uploadRoutes from '@/routers/upload.routers';
+import applicationRoutes from '@/routers/application.routers';
 
 const router = Router();
 
 router.use('/jobs', jobRoutes);
-// router.use('/users', userRoutes);
+router.use('/upload', uploadRoutes);
+router.use('/applications', applicationRoutes);
 
 export default router;

@@ -43,7 +43,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.511.0",
     "midtrans-client": "^1.4.2",
-    "multer": "^2.0.0",
+    "multer": "^2.0.1",
     "next": "15.3.2",
     "next-auth": "^5.0.0-beta.28",
     "next-seo": "^6.8.0",

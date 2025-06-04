@@ -1,4 +1,4 @@
-import { JobPostingFeatured } from '@/types';
+import { JobPostingFeatured, GetJobsResult } from '@/types';
 
 export interface FilterParams {
   category?: string;
@@ -17,6 +17,7 @@ export function buildRelatedJobsQuery(
   const params = new URLSearchParams();
   params.append('take', '12');
   params.append('skip', '0');
+  params.append('includePagination', 'false'); // We want just the array, not pagination wrapper
 
   const filterParams: FilterParams = {
     category: currentJob.category,
@@ -90,13 +91,23 @@ export function parseJobsResponse(responseData: unknown): JobPostingFeatured[] {
   let fetchedJobsArray: JobPostingFeatured[] = [];
 
   if (Array.isArray(responseData)) {
+    // Direct array response (when includePagination=false)
     fetchedJobsArray = responseData as JobPostingFeatured[];
+  } else if (
+    responseData &&
+    typeof responseData === 'object' &&
+    'jobs' in responseData &&
+    Array.isArray((responseData as { jobs: unknown }).jobs)
+  ) {
+    // Express format with pagination: { jobs: JobPostingFeatured[], pagination: {...} }
+    fetchedJobsArray = (responseData as GetJobsResult).jobs;
   } else if (
     responseData &&
     typeof responseData === 'object' &&
     'data' in responseData &&
     Array.isArray((responseData as { data: unknown }).data)
   ) {
+    // Next.js format: { data: JobPostingFeatured[] }
     fetchedJobsArray = (responseData as { data: JobPostingFeatured[] }).data;
   } else {
     console.warn('API response for jobs not in expected format:', responseData);

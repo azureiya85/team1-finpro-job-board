@@ -4,22 +4,42 @@ import { GetJobsParams } from 'src/types';
 
 export async function getAllJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const queryParams = req.query as any; 
+    const queryParams = req.query as any;
+        console.log('Raw query params:', queryParams);
 
-    const includePagination = req.query.includePagination === 'true' || true; 
+    // Handle includePagination parameter
+    let includePagination = true; // default
+    if (queryParams.includePagination !== undefined) {
+      includePagination = queryParams.includePagination === 'true';
+    }
+
+    // Convert string boolean parameters
+    const isRemote = queryParams.isRemote === 'true' ? true : 
+                    queryParams.isRemote === 'false' ? false : 
+                    undefined;
 
     const paramsForService: GetJobsParams = {
-      ...queryParams,
-      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }], 
+      jobTitle: queryParams.jobTitle,
+      locationQuery: queryParams.locationQuery,
+      categories: queryParams.categories, 
+      employmentTypes: queryParams.employmentTypes,
+      experienceLevels: queryParams.experienceLevels,
+      companySizes: queryParams.companySizes,
+      isRemote,
+      take: queryParams.take ? parseInt(queryParams.take as string, 10) : undefined,
+      skip: queryParams.skip ? parseInt(queryParams.skip as string, 10) : undefined,
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
       includePagination,
     };
+
+    console.log('Params for service:', paramsForService);
 
     const jobsResult = await jobService.fetchJobs(paramsForService);
     res.json(jobsResult);
 
   } catch (error) {
     console.error('[CONTROLLER_JOBS_GET_ALL] Error fetching jobs:', error);
-    next(error); // Let global error handler deal with it
+    next(error);
   }
 }
 
@@ -69,10 +89,26 @@ export async function getJobsByCompany(req: Request, res: Response, next: NextFu
       return;
     }
 
-    // Validation already done by middleware
     const queryParams = req.query as any;
+    
+    // Convert string boolean parameters
+    const isRemote = queryParams.isRemote === 'true' ? true : 
+                    queryParams.isRemote === 'false' ? false : 
+                    undefined;
 
-    const jobsResult = await jobService.fetchCompanyJobs(companyId, queryParams);
+    const cleanParams = {
+      jobTitle: queryParams.jobTitle,
+      locationQuery: queryParams.locationQuery,
+      categories: queryParams.categories,
+      employmentTypes: queryParams.employmentTypes,
+      experienceLevels: queryParams.experienceLevels,
+      companySizes: queryParams.companySizes,
+      isRemote,
+      take: queryParams.take ? parseInt(queryParams.take as string, 10) : undefined,
+      skip: queryParams.skip ? parseInt(queryParams.skip as string, 10) : undefined,
+    };
+
+    const jobsResult = await jobService.fetchCompanyJobs(companyId, cleanParams);
     res.json(jobsResult);
     
   } catch (error) {

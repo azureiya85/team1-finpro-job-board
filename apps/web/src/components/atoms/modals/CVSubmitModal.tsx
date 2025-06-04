@@ -12,6 +12,7 @@ import { CVSubmissionHeader, CVSubmissionFooter } from './CVSubmissionHeaderFoot
 import CVSubmissionContent from './CVSubmissionContent'; 
 
 const FORM_ID = 'cv-submission-form';
+const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
 interface Job {
   id: string;
@@ -55,7 +56,7 @@ export default function CVSubmitModal() {
     },
   });
 
-   const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
       const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
@@ -91,10 +92,62 @@ export default function CVSubmitModal() {
     }).format(value);
   };
 
+  const uploadFileToExpress = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', 'cvs');
+
+    const uploadResponse = await fetch(`${EXPRESS_API_BASE_URL}/upload`, {
+      method: 'POST',
+      credentials: 'include', 
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      const errorData = await uploadResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to upload CV');
+    }
+
+    const uploadResult = await uploadResponse.json();
+    return uploadResult.url;
+  };
+
+  interface ApplicationData {
+    jobPostingId: string;
+    cvUrl: string;
+    expectedSalary: number;
+    coverLetter: string;
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    currentLocation: string;
+    availableStartDate: string;
+    portfolioUrl: string;
+    linkedinUrl: string;
+  }
+
+  const submitApplicationToExpress = async (applicationData: ApplicationData) => {
+    const submitResponse = await fetch(`${EXPRESS_API_BASE_URL}/applications/submit-cv`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Ensure cookies are sent for authentication
+      body: JSON.stringify(applicationData),
+    });
+
+    if (!submitResponse.ok) {
+      const errorData = await submitResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to submit application');
+    }
+
+    return await submitResponse.json();
+  };
+
   const onSubmit = async (data: CVSubmissionForm) => {
     if (!cvFile && (selectedJob as Job)?.requiresCoverLetter !== false) {
-        setUploadError('Please upload your CV');
-        return;
+      setUploadError('Please upload your CV');
+      return;
     }
     if (!selectedJob) return;
 
@@ -103,47 +156,30 @@ export default function CVSubmitModal() {
 
     try {
       let cvUrl = '';
+      
+      // Upload CV file if provided
       if (cvFile) {
-        const formData = new FormData();
-        formData.append('file', cvFile);
-        formData.append('folder', 'cvs');
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!uploadResponse.ok) throw new Error('Failed to upload CV');
-        const uploadJson = await uploadResponse.json();
-        cvUrl = uploadJson.url;
+        cvUrl = await uploadFileToExpress(cvFile);
       }
 
+      // Prepare application data 
       const applicationData = {
         jobPostingId: selectedJob.id,
-        cvUrl: cvUrl || null,
+        cvUrl: cvUrl || '',
         expectedSalary: data.expectedSalary,
         coverLetter: data.coverLetter,
-        applicantInfo: {
-          fullName: data.fullName,
-          email: data.email,
-          phoneNumber: data.phoneNumber,
-          currentLocation: data.currentLocation,
-          availableStartDate: data.availableStartDate,
-          portfolioUrl: data.portfolioUrl || null,
-          linkedinUrl: data.linkedinUrl || null,
-        },
+        fullName: data.fullName,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        currentLocation: data.currentLocation,
+        availableStartDate: data.availableStartDate,
+        portfolioUrl: data.portfolioUrl || '',
+        linkedinUrl: data.linkedinUrl || '',
       };
 
-      const submitResponse = await fetch('/api/submit-cv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(applicationData),
-      });
+      // Submit application to Express API
+      await submitApplicationToExpress(applicationData);
 
-      if (!submitResponse.ok) {
-        const errorData = await submitResponse.json();
-        throw new Error(errorData.message || 'Failed to submit application');
-      }
       setSubmitSuccess(true);
       setTimeout(() => {
         handleClose();

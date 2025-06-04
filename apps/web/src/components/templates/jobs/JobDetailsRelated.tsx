@@ -10,6 +10,8 @@ import { AnimatePresence } from 'framer-motion';
 import { buildRelatedJobsQuery, filterRelatedJobs, parseJobsResponse } from '@/lib/attemptFilterHelper';
 import { useHorizontalScroll, createScrollIndicators } from '@/lib/scrollHelper';
 
+const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
+
 interface JobDetailsRelatedProps {
   currentJob: JobPostingFeatured;
 }
@@ -40,8 +42,7 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         console.warn("Query string seems empty, might not fetch anything useful.", queryString);
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const response = await fetch(`${baseUrl}/api/jobs?${queryString}`, {
+      const response = await fetch(`${EXPRESS_API_BASE_URL}/jobs?${queryString}`, {
         cache: 'no-store',
       });
 

@@ -73,7 +73,6 @@ const initialState: JobSearchState = {
 // --- API Fetching Logic ---
 async function fetchJobsFromApi(params: GetJobsParams): Promise<{jobs: JobPostingFeatured[], totalCount: number}> {
   const query = new URLSearchParams();
-  // Map from GetJobsParams to query params
   if (params.jobTitle) query.set('jobTitle', params.jobTitle); 
   if (params.locationQuery) query.set('locationQuery', params.locationQuery); 
   if (params.categories && params.categories.length > 0) params.categories.forEach(cat => query.append('categories', cat));
@@ -137,7 +136,6 @@ export const useJobSearchStore = create<JobSearchState & JobSearchActions>()(
 
   set({ isLoading: true, error: null });
   try {
-    // Map store state to API params - WITHOUT take/skip limits
     const apiParams: GetJobsParams = {
       jobTitle: searchTermInput || undefined, 
       locationQuery: locationSearchInput || undefined, 

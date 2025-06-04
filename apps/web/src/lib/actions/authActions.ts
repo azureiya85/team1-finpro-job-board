@@ -6,7 +6,6 @@ import { AuthError } from 'next-auth';
 import { UserRole } from '@prisma/client'; 
 import { authHelpers, RegisterResult } from '@/lib/authHelpers'; 
 
-// This interface is for the data structure expected by the client after login
 export interface LoggedInUser {
   id: string;
   email: string;
@@ -25,7 +24,6 @@ interface LoginActionResult {
 
 export async function loginWithCredentialsAction(data: LoginFormData): Promise<LoginActionResult> {
   try {
-    // nextAuthServerSignIn will use the 'authorize' function from auth.ts,
     await nextAuthServerSignIn('credentials', {
       email: data.email,
       password: data.password,
@@ -43,7 +41,7 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
       };
     }
 
-    // Map the session user (which is based on your NextAuth User type) to LoggedInUser
+    // Map the session user 
     const loggedInUser: LoggedInUser = {
       id: session.user.id,
       email: session.user.email!,
@@ -52,7 +50,7 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
       avatar: session.user.image || undefined,
       isVerified: session.user.isEmailVerified,
     };
-    // Update last login time here (as it's a server action)
+    // Update last login time 
     await authHelpers.updateLastLogin(loggedInUser.id);
 
 

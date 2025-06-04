@@ -4,7 +4,15 @@ import {
   GetJobsParams,
   GetJobsResult,
 } from 'src/types';
-import { Prisma,  } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+
+// Helper function to ensure array format for enum fields
+const ensureArray = (value: string | string[] | undefined): string[] | undefined => {
+  if (!value) return undefined;
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.filter(v => v.trim().length > 0);
+  return undefined;
+};
 
 // Helper function to build the where clause 
 const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput => {
@@ -60,27 +68,31 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
     }
   }
 
-  // --- Filter Logic ---
-  if (categories && categories.length > 0) {
-    where.category = { in: categories };
+  // --- Filter Logic with proper array handling ---
+  const categoriesArray = ensureArray(categories);
+  if (categoriesArray && categoriesArray.length > 0) {
+    where.category = { in: categoriesArray as any }; // Cast to satisfy Prisma types
   }
 
-  if (employmentTypes && employmentTypes.length > 0) {
-    where.employmentType = { in: employmentTypes };
+  const employmentTypesArray = ensureArray(employmentTypes);
+  if (employmentTypesArray && employmentTypesArray.length > 0) {
+    where.employmentType = { in: employmentTypesArray as any };
   }
 
-  if (experienceLevels && experienceLevels.length > 0) {
-    where.experienceLevel = { in: experienceLevels };
+  const experienceLevelsArray = ensureArray(experienceLevels);
+  if (experienceLevelsArray && experienceLevelsArray.length > 0) {
+    where.experienceLevel = { in: experienceLevelsArray as any };
   }
 
   if (typeof isRemote === 'boolean') {
     where.isRemote = isRemote;
   }
 
-  if (companySizes && companySizes.length > 0) {
+  const companySizesArray = ensureArray(companySizes);
+  if (companySizesArray && companySizesArray.length > 0) {
     where.company = {
       is: {
-        size: { in: companySizes },
+        size: { in: companySizesArray as any },
       },
     };
   }
@@ -88,6 +100,9 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
   if (companyId) {
     where.companyId = companyId;
   }
+
+  // Debug log the where clause
+  console.log('Built where clause:', JSON.stringify(where, null, 2));
 
   return where;
 };
@@ -114,7 +129,7 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
   }
 
   const effectiveOrderBy = params.orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
-  const where = buildWhereClause(params); // Pass original params for filtering logic
+  const where = buildWhereClause(params);
 
   try {
     if (includePaginationParam) {
@@ -185,7 +200,7 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
 export async function fetchJobById(id: string): Promise<JobPostingFeatured | null> {
   try {
     const job = await prisma.jobPosting.findUnique({
-      where: { id, isActive: true }, // ID is already string,
+      where: { id, isActive: true },
       select: {
         id: true, title: true, description: true, employmentType: true,
         experienceLevel: true, category: true, isRemote: true, createdAt: true,
@@ -209,7 +224,6 @@ export async function fetchJobById(id: string): Promise<JobPostingFeatured | nul
     throw new Error(`Failed to fetch job ${id} from database.`);
   }
 }
-
 
 // Specific function for latest featured jobs
 export async function fetchLatestFeaturedJobs(count: number = 5): Promise<JobPostingFeatured[]> {

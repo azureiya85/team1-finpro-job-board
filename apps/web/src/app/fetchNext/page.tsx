@@ -1,11 +1,9 @@
-"use client"; // Client component for fetching data
+"use client";
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { JobPostingFeatured } from '@/types'; // Assuming JobPostingFeatured is in @/types
-                                           // Or if it's part of jobUtils.ts exports:
-                                           // import { JobPostingFeatured } from '@/lib/jobsUtils';
-
+import { JobPostingFeatured } from '@/types'; 
+                                           
 export default function FetchNextJobsPage() {
   const [jobs, setJobs] = useState<JobPostingFeatured[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -16,8 +14,6 @@ export default function FetchNextJobsPage() {
       try {
         setLoading(true);
         setError(null);
-        // Your API route for listing jobs (uses getJobs from jobUtils)
-        // Let's fetch a small number for testing, e.g., 5 jobs
         const response = await fetch('/api/jobs?take=5');
         if (!response.ok) {
           const errorData = await response.json();
@@ -25,11 +21,9 @@ export default function FetchNextJobsPage() {
         }
         const data = await response.json();
 
-        // Your getJobs can return JobPostingFeatured[] or GetJobsResult (with pagination)
-        // This simple page will assume it gets an array directly or extracts it.
         if (Array.isArray(data)) {
           setJobs(data as JobPostingFeatured[]);
-        } else if (data && Array.isArray(data.jobs)) { // Handling GetJobsResult
+        } else if (data && Array.isArray(data.jobs)) { 
           setJobs(data.jobs as JobPostingFeatured[]);
         } else {
           console.warn("Received data is not in expected format (array or {jobs: array}):", data);
@@ -71,7 +65,6 @@ export default function FetchNextJobsPage() {
             </h2>
             <p><strong>Category:</strong> {job.category}</p>
             <p><strong>Company:</strong> {job.company?.name || 'N/A'}</p>
-            {/* Display application count if available from JobPostingFeatured */}
           </li>
         ))}
       </ul>

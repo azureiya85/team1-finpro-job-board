@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-// Assuming JobPostingFeatured and GetJobsResult are accessible from apps/web
-// You might need to adjust the import path if types are in apps/api or a shared package
-import { JobPostingFeatured, GetJobsResult } from '@/types'; // Or your shared types path
+import { JobPostingFeatured, GetJobsResult } from '@/types'; 
 
-// **IMPORTANT: Replace with your actual Express API URL**
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
 export default function FetchExpressJobsPage() {
@@ -19,8 +16,6 @@ export default function FetchExpressJobsPage() {
       try {
         setLoading(true);
         setError(null);
-        // Fetch a small number of jobs for testing, e.g., 5
-        // Your Express controller defaults includePagination=true
         const response = await fetch(`${EXPRESS_API_BASE_URL}/jobs?take=5`);
 
         if (!response.ok) {
@@ -36,8 +31,6 @@ export default function FetchExpressJobsPage() {
 
         const data: GetJobsResult | JobPostingFeatured[] = await response.json();
 
-        // Your job.controller.getAllJobs uses jobService.fetchJobs
-        // which returns GetJobsResult when includePagination is true (default for controller)
         if ('jobs' in data && Array.isArray(data.jobs)) {
           setJobs(data.jobs);
         } else if (Array.isArray(data)) { // Fallback if it somehow returns just the array
@@ -82,7 +75,6 @@ export default function FetchExpressJobsPage() {
             </h2>
             <p><strong>Category:</strong> {job.category}</p>
             <p><strong>Company:</strong> {job.company?.name || 'N/A'}</p>
-            {/* Display application count if available from JobPostingFeatured */}
           </li>
         ))}
       </ul>

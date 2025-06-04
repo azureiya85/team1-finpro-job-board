@@ -2,8 +2,8 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import  config  from './config';
-import mainApiRouter from './api'; // Your main API router
-import { errorHandler } from './middleware/errorHandler'; // Your global error handler
+import mainApiRouter from './api'; 
+import { errorHandler } from './middleware/errorHandler'; 
 
 async function startServer() {
   const app: Express = express();
@@ -46,7 +46,7 @@ async function startServer() {
     console.log(`Environment: ${config.nodeEnv}`);
   });
 
-  // Graceful Shutdown 
+  //  Shutdown 
   const signals = ['SIGINT', 'SIGTERM'];
   signals.forEach((signal) => {
     process.on(signal, () => {

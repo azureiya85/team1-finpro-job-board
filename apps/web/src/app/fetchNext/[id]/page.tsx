@@ -1,11 +1,10 @@
-"use client"; // Client component for fetching data
+"use client"; 
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation'; // For accessing route parameters
+import { useParams } from 'next/navigation'; 
 import Link from 'next/link';
-import { JobPostingFeatured } from '@/types'; // Assuming JobPostingFeatured is in @/types
-                                           // Or a similar type that matches the API response for a single job
-
+import { JobPostingFeatured } from '@/types'; 
+                                          
 export default function FetchNextJobDetailPage() {
   const params = useParams();
   const jobId = params.id as string; // Get the 'id' from the URL
@@ -16,7 +15,6 @@ export default function FetchNextJobDetailPage() {
 
   useEffect(() => {
     if (!jobId) {
-      // This case should ideally not happen if routing is set up correctly
       setError("Job ID is missing from URL.");
       setLoading(false);
       return;
@@ -26,7 +24,7 @@ export default function FetchNextJobDetailPage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/api/jobs/${jobId}`); // Your API route for a single job
+        const response = await fetch(`/api/jobs/${jobId}`); //  API route for a single job
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
