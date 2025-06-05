@@ -1,8 +1,9 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { emailService } from '@/services/email.service'; 
-import { RegisterFormData } from '@/lib/validations/zodAuthValidation';
+import { RegisterFormData, CompanyRegisterFormData } from '@/lib/validations/zodAuthValidation';
 import { universalCrypto } from '@/lib/crypto';
+import { UserRole } from '@prisma/client';
 
 export interface AuthUser {
   id: string;
@@ -70,6 +71,110 @@ export const authHelpers = {
     }
   },
 
+  // Register company adminAdd commentMore actions
+  registerCompanyAdmin: async (data: CompanyRegisterFormData): Promise<RegisterResult> => {
+    try {
+      // Check if user email already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { email: data.email },
+      });
+
+      if (existingUser) {
+        return {
+          success: false,
+          message: 'A user with this email already exists.',
+        };
+      }
+
+      // Check if company email already exists
+      const existingCompany = await prisma.company.findFirst({
+        where: { email: data.companyEmail },
+      });
+
+      if (existingCompany) {
+        return {
+          success: false,
+          message: 'A company with this company email already exists.',
+        };
+      }
+
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(data.password, 12);
+
+      // Generate email verification token
+      const emailVerificationToken = generateSecureToken();
+      const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      // Create user and company in a transaction
+      const result = await prisma.$transaction(async (tx) => {
+        // Create the user first with company name as the display name
+        const user = await tx.user.create({
+          data: {
+            email: data.email,
+            password: hashedPassword,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            name: data.companyName, 
+            role: UserRole.COMPANY_ADMIN,
+            provider: 'EMAIL',
+            isEmailVerified: false,
+            emailVerificationToken,
+            emailVerificationExpires,
+          },
+        });
+
+        // Create the company with the user as admin
+        const company = await tx.company.create({
+          data: {
+            name: data.companyName,
+            email: data.companyEmail,
+            industry: data.industry,
+            website: data.website || null,
+            phone: data.phone || null,
+            adminId: user.id,
+          },
+        });
+
+        return { user, company };
+      });
+
+      // Send verification email
+      try {
+        await emailService.sendVerificationEmail(
+          data.email, 
+          data.companyName, // Use company name instead of first name
+          emailVerificationToken
+        );
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+      }
+
+      const userWithoutSensitive = {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name || undefined,
+        firstName: result.user.firstName || undefined,
+        lastName: result.user.lastName || undefined,
+        role: result.user.role,
+        avatar: result.user.image || undefined,
+        isVerified: result.user.isEmailVerified,
+      };
+
+      return {
+        success: true,
+        message: 'Company registration successful! Please check your email to verify your account.',
+        user: userWithoutSensitive,
+      };
+
+    } catch (error) {
+      console.error('Error in registerCompanyAdmin:', error);
+      return {
+        success: false,
+        message: 'An error occurred during company registration. Please try again.',
+      };
+    }
+  },
+
   // Verify credentials for login 
   verifyCredentials: async (email: string, password: string): Promise<AuthUser | null> => {
     try {
@@ -133,7 +238,7 @@ export const authHelpers = {
       console.log("AUTH_HELPER: User email verification status updated successfully.");
 
       try {
-        await emailService.sendWelcomeEmail(userByTokenOnly.email, userByTokenOnly.firstName || 'User');
+        await emailService.sendWelcomeEmail(userByTokenOnly.email, userByTokenOnly.firstName || userByTokenOnly.name || 'User');
         console.log("AUTH_HELPER: Welcome email queued/sent.");
       } catch (emailError) {
         console.error('AUTH_HELPER: Failed to send welcome email:', emailError);
@@ -164,7 +269,7 @@ export const authHelpers = {
       });
       
       try {
-        await emailService.sendPasswordResetEmail(user.email, user.firstName || 'User', resetToken);
+        await emailService.sendPasswordResetEmail(user.email, user.firstName || user.name || 'User', resetToken);
       } catch (emailError) {
         console.error('Failed to send password reset email:', emailError);
         return { success: false, message: 'Failed to send password reset email. Please try again.' };
@@ -220,7 +325,7 @@ export const authHelpers = {
         },
       });
       
-      await emailService.sendVerificationEmail(user.email, user.firstName || 'User', emailVerificationToken);
+      await emailService.sendVerificationEmail(user.email, user.firstName || user.name || 'User', emailVerificationToken);
       return { success: true, message: 'Verification email has been resent' };
     } catch (error) {
       console.error('Resend verification email error:', error);

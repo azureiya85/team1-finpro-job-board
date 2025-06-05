@@ -253,6 +253,20 @@ export function CredentialsRegister() {
             Sign In <ChevronsRight className="inline h-4 w-4 -mt-0.5" />
           </Link>
         </motion.div>
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          transition={{ delay: 0.55 }} 
+          className="text-center text-sm text-muted-foreground"
+        >
+          Company Owner?{' '}
+          <Link 
+            href="/auth/register-company" 
+            className="font-medium text-primary-600 hover:underline" 
+          >
+            Register Your Company Here
+          </Link>
+        </motion.div>
       </CardContent>
     </Card>
   );

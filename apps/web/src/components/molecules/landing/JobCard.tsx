@@ -6,6 +6,7 @@ import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Info, Users, Tren
 import { JobPostingFeatured } from '@/types'; 
 import { formatRelativeDate, formatSalary, cn } from '@/lib/utils';
 import { EmploymentType, ExperienceLevel, JobCategory } from '@prisma/client';
+import { employmentTypeLabels, experienceLevelLabels, companySizeLabels, categoryLabels } from '@/lib/jobConstants';
 
 interface JobCardProps {
   job: JobPostingFeatured & { 
@@ -13,48 +14,6 @@ interface JobCardProps {
     category?: JobCategory;
   };
 }
-
-const employmentTypeLabels: Record<string, string> = { 
-  FULL_TIME: 'Full-time',
-  PART_TIME: 'Part-time',
-  CONTRACT: 'Contract',
-  INTERNSHIP: 'Internship',
-  FREELANCE: 'Freelance',
-  REMOTE: 'Remote Work',
-};
-
-const experienceLevelLabels: Record<string, string> = {
-  ENTRY_LEVEL: 'Entry Level',
-  MID_LEVEL: 'Mid Level',
-  SENIOR_LEVEL: 'Senior Level',
-  EXECUTIVE: 'Executive',
-};
-
-const companySizeLabels: Record<string, string> = {
-    STARTUP: 'Startup (1-10)',
-    SMALL: 'Small (11-50)',
-    MEDIUM: 'Medium (51-200)',
-    LARGE: 'Large (201-1000)',
-    ENTERPRISE: 'Enterprise (1000+)',
-};
-
-const categoryLabels: Record<string, string> = {
-  TECHNOLOGY: 'Technology',
-  MARKETING: 'Marketing',
-  SALES: 'Sales',
-  FINANCE: 'Finance',
-  HUMAN_RESOURCES: 'Human Resources',
-  OPERATIONS: 'Operations',
-  DESIGN: 'Design',
-  CUSTOMER_SERVICE: 'Customer Service',
-  HEALTHCARE: 'Healthcare',
-  EDUCATION: 'Education',
-  LEGAL: 'Legal',
-  CONSULTING: 'Consulting',
-  MANUFACTURING: 'Manufacturing',
-  RETAIL: 'Retail',
-  OTHER: 'Other',
-};
 
 export function JobCard({ job }: JobCardProps) {
   const location = job.isRemote

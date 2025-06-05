@@ -94,6 +94,12 @@ export const companyRegisterSchema = z.object({
     .string({ required_error: "Company email is required" })
     .min(1, "Company email is required")
     .email("Invalid email address"),
+  phone: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be less than 15 digits")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number")
+    .or(z.literal('')),
   industry: z
     .string({ required_error: "Industry is required" })
     .min(1, "Industry is required")

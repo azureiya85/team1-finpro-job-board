@@ -103,6 +103,13 @@ export const companyRegisterSchema = z.object({
     .url("Please enter a valid website URL")
     .optional()
     .or(z.literal('')),
+  phone: z 
+    .string()
+    .min(7, "Phone number seems too short") 
+    .max(20, "Phone number can be at most 20 characters") 
+    .regex(/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/, "Invalid phone number format") 
+    .optional()
+    .or(z.literal('')), 
   firstName: z
     .string({ required_error: "First name is required" })
     .min(1, "First name is required")
@@ -111,10 +118,10 @@ export const companyRegisterSchema = z.object({
     .string({ required_error: "Last name is required" })
     .min(1, "Last name is required")
     .max(50, "Last name must be less than 50 characters"),
-  email: z
-    .string({ required_error: "Email is required" })
-    .min(1, "Email is required")
-    .email("Invalid email address"),
+    email: z
+    .string({ required_error: "Your email is required" })
+    .min(1, "Your email is required")
+    .email("Invalid email address for admin user"),
   password: z
     .string({ required_error: "Password is required" })
     .min(8, "Password must be at least 8 characters")
