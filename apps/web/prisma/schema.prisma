@@ -219,6 +219,7 @@ model JobPosting {
   applicationDeadline DateTime?
   isActive          Boolean   @default(true)
   isPriority        Boolean   @default(false)
+  requiresCoverLetter Boolean  @default(true)
 
   // Requirements & Benefits
   requirements      String[]

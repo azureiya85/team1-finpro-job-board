@@ -31,6 +31,7 @@ import {
 } from '@/lib/jobConstants';
 import { EmploymentType } from '@prisma/client';
 import { useAuthStore } from '@/stores/authStores';
+import { useCVModalStore } from '@/stores/CVModalStores';
 
 interface JobDetailsHeaderProps {
   job: JobPostingFeatured;
@@ -38,6 +39,7 @@ interface JobDetailsHeaderProps {
 
 export function JobDetailsHeader({ job }: JobDetailsHeaderProps) {
   const { isAuthenticated } = useAuthStore();
+  const { openModal } = useCVModalStore();
   
   const location = job.isRemote
     ? 'Remote'
@@ -49,6 +51,10 @@ export function JobDetailsHeader({ job }: JobDetailsHeaderProps) {
   const salaryDisplay = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency);
         
 const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : null;
+
+  const handleApplyClick = () => {
+    openModal(job);
+  };
 
   return (
     <Card className={cn(
@@ -168,6 +174,7 @@ const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : nul
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <Button
+              onClick={handleApplyClick}
               size="lg"
               className="bg-gradient-to-r from-primary to-primary/90 hover:from-accent hover:to-accent/95 text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group"
             >

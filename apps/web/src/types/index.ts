@@ -18,7 +18,8 @@ export type JobPostingFeatured = Pick<
   | 'tags'  
   | 'benefits' 
   | 'requirements' 
-  | 'applicationDeadline'           
+  | 'applicationDeadline'
+    | 'requiresCoverLetter'              
 > & {
   company: Pick<Company, 'id' | 'name' | 'logo' | 'size'> | null;
   city: Pick<City, 'name'> | null;

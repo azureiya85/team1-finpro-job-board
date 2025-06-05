@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-// TODO: Define a proper type for selectedJob
+// Define a proper type for selectedJob
 interface Job {
   id: string;
   title: string;
@@ -21,9 +21,9 @@ interface Job {
   location?: string;
   type?: string;
   company?: {
-    logo?: string; 
+    logo?: string | null; 
   };
-  // Add other relevant job properties
+  requiresCoverLetter?: boolean;
 }
 
 interface CVSubmissionHeaderProps {

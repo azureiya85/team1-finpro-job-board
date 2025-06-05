@@ -349,12 +349,28 @@ export const authHelpers = {
     }
   },
 
-  // Update last login time
+// Update last login time
   updateLastLogin: async (userId: string): Promise<void> => {
     try {
-      await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } });
+      const existingUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true } // Only select id to minimize data transfer
+      });
+
+      if (!existingUser) {
+        console.warn(`UpdateLastLogin: User with ID ${userId} not found in database`);
+        return; // Exit gracefully instead of throwing an error
+      }
+
+      // Update the last login time
+      await prisma.user.update({ 
+        where: { id: userId }, 
+        data: { lastLoginAt: new Date() } 
+      });
+      
+      console.log(`UpdateLastLogin: Successfully updated for user ${userId}`);
     } catch (error) { 
-      console.error('Update last login error:', error); 
+      console.error('Update last login error:', error);
     }
   },
 };

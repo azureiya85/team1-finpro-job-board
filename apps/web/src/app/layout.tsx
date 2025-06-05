@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { Navbar } from "../components/molecules/navbar/Navbar";
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css";
 
 export default function RootLayout({
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="antialiased"> 
         {!isDashboard && <Navbar />}
         <main>{children}</main>
+         <Toaster />
       </body>
     </html>
   );
