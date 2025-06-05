@@ -28,14 +28,14 @@
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.3.3",
-    "zod": "^3.25.49",
-    "typescript": "^5.3.3",
     "zod": "^3.25.49"
   },
   "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.4.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "prisma": "^5.22.0",
+    "prisma-erd-generator": "^2.0.4",
     "tsc-alias": "^1.8.10",
     "tsconfig-paths": "^4.2.0"
   }

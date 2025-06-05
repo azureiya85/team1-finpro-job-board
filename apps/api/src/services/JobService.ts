@@ -274,6 +274,123 @@ class JobService {
     
     return result as GetJobsResult;
   }
+
+  async createJob(data: Prisma.JobPostingCreateInput): Promise<JobPostingFeatured | null> {
+    try {
+      const job = await prisma.jobPosting.create({
+        data,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          employmentType: true,
+          experienceLevel: true,
+          category: true,
+          isRemote: true,
+          createdAt: true,
+          publishedAt: true,
+          salaryMin: true,
+          salaryMax: true,
+          salaryCurrency: true,
+          isPriority: true,
+          tags: true,
+          requirements: true,
+          benefits: true,
+          applicationDeadline: true,
+          company: {
+            select: {
+              id: true,
+              name: true,
+              logo: true,
+              size: true,
+              description: true,
+            },
+          },
+          city: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          province: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      return job as unknown as JobPostingFeatured;
+    } catch (error) {
+      console.error('Failed to create job:', error);
+      return null;
+    }
+  }
+
+  async updateJob(id: string, data: Prisma.JobPostingUpdateInput): Promise<JobPostingFeatured | null> {
+    try {
+      const job = await prisma.jobPosting.update({
+        where: { id },
+        data,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          employmentType: true,
+          experienceLevel: true,
+          category: true,
+          isRemote: true,
+          createdAt: true,
+          publishedAt: true,
+          salaryMin: true,
+          salaryMax: true,
+          salaryCurrency: true,
+          isPriority: true,
+          tags: true,
+          requirements: true,
+          benefits: true,
+          applicationDeadline: true,
+          company: {
+            select: {
+              id: true,
+              name: true,
+              logo: true,
+              size: true,
+              description: true,
+            },
+          },
+          city: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          province: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      return job as unknown as JobPostingFeatured;
+    } catch (error) {
+      console.error('Failed to update job:', error);
+      return null;
+    }
+  }
+
+  async deleteJob(id: string): Promise<boolean> {
+    try {
+      await prisma.jobPosting.delete({ where: { id } });
+      return true;
+    } catch (error) {
+      console.error('Failed to delete job:', error);
+      return false;
+    }
+  }
 }
 
 export const jobService = new JobService();
