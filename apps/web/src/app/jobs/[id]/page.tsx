@@ -7,6 +7,7 @@ import { JobPostingFeatured } from '@/types';
 import { JobDetailsHeader } from '@/components/templates/jobs/JobDetailsHeader';
 import { JobDetailsContent } from '@/components/templates/jobs/JobDetailsContent';
 import { JobDetailsRelated } from '@/components/templates/jobs/JobDetailsRelated';
+import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal';  
 
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
@@ -115,6 +116,7 @@ export default function JobDetailPage() {
           <JobDetailsRelated currentJob={job} />
         </div>
       </div>
+      <CVSubmitModal />
     </div>
   );
 }

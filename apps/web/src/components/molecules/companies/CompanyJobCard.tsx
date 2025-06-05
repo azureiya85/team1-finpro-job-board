@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { MapPin, Clock, DollarSign, Users, Calendar, Briefcase, ChevronDown, ChevronUp, LogIn, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { EmploymentType, ExperienceLevel } from '@prisma/client';
-import { JobPostingInStore } from '@/stores/companyProfileStores';
+import type { JobPostingInStore } from '@/types'; // CORRECTED: Import directly from @/types
 import { employmentTypeLabels, experienceLevelLabels, workTypeLabels } from '@/lib/jobConstants';
 import { useAuthStore } from '@/stores/authStores';
 import { useCVModalStore } from '@/stores/CVModalStores';
@@ -26,7 +26,7 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
   const { isAuthenticated } = useAuthStore();
   const { openModal } = useCVModalStore();
 
-  const formatSalary = (minSalary?: number, maxSalary?: number) => {
+  const formatSalary = (minSalary?: number | null, maxSalary?: number | null) => { 
     const formatNumber = (num: number) => num.toLocaleString('id-ID');
 
     if (minSalary && maxSalary) {
@@ -35,15 +35,15 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
     }
     if (minSalary) return `Rp ${formatNumber(minSalary)}+`;
     if (maxSalary) return `Up to Rp ${formatNumber(maxSalary)}`;
-    
-    return 'Competitive'; 
+
+    return 'Competitive';
   };
 
   const formatJobType = (type: EmploymentType) => {
     return employmentTypeLabels[type] || type;
   };
 
-  const formatWorkType = (workType: string) => { 
+  const formatWorkType = (workType: string) => {
     return workTypeLabels[workType] || workType;
   };
 
@@ -65,15 +65,15 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
             <CardTitle className="text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
               {job.title}
             </CardTitle>
-            
+
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="secondary" className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                {job.location}
+                {job.location} 
               </Badge>
               <Badge variant="outline" className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {formatJobType(job.type)}
+                {formatJobType(job.employmentType)} 
               </Badge>
               <Badge variant="outline" className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
@@ -88,7 +88,7 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1 text-green-600 font-semibold">
                 <DollarSign className="w-4 h-4" />
-                <span>{formatSalary(job.minSalary, job.maxSalary)}</span>
+                <span>{formatSalary(job.salaryMin, job.salaryMax)}</span> 
               </div>
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Calendar className="w-4 h-4" />
@@ -96,10 +96,9 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
               </div>
             </div>
           </div>
-          
-          {/* Apply Button with Authentication Check */}
+
           {isAuthenticated ? (
-            <Button 
+            <Button
               onClick={handleApplyClick}
               className="shrink-0 group/btn"
               size="lg"
@@ -134,9 +133,9 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
                     {job.requirements.length}
                   </Badge>
                 </h4>
-                
+
                 <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  {job.requirements.slice(0, 3).map((requirement, index) => (
+                  {job.requirements.slice(0, 3).map((requirement: string, index: number) => ( // CORRECTED: Added types
                     <li key={index} className="leading-relaxed">
                       {requirement}
                     </li>
@@ -145,7 +144,7 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
 
                 <CollapsibleContent className="space-y-2">
                   <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                    {job.requirements.slice(3).map((requirement, index) => (
+                    {job.requirements.slice(3).map((requirement: string, index: number) => ( 
                       <li key={index + 3} className="leading-relaxed">
                         {requirement}
                       </li>
@@ -186,9 +185,9 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
                     {job.benefits.length}
                   </Badge>
                 </h4>
-                
+
                 <div className="flex flex-wrap gap-2">
-                  {job.benefits.slice(0, 4).map((benefit, index) => (
+                  {job.benefits.slice(0, 4).map((benefit: string, index: number) => (
                     <Badge
                       key={index}
                       variant="secondary"
@@ -201,7 +200,7 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
 
                 <CollapsibleContent className="space-y-3">
                   <div className="flex flex-wrap gap-2">
-                    {job.benefits.slice(4).map((benefit, index) => (
+                    {job.benefits.slice(4).map((benefit: string, index: number) => ( 
                       <Badge
                         key={index + 4}
                         variant="secondary"
@@ -241,10 +240,10 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
           <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 px-3 py-2 rounded-md border border-orange-200">
             <Calendar className="w-4 h-4" />
             <span className="font-medium">
-              Application deadline: {new Date(job.applicationDeadline).toLocaleDateString('id-ID', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              Application deadline: {new Date(job.applicationDeadline).toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}
             </span>
           </div>

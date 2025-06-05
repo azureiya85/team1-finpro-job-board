@@ -1,35 +1,18 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useJobManagementStore } from '@/stores/JobManagementStore';
+import { useCompanyProfileStore } from '@/stores/companyProfileStores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ApplicationStatus } from '@prisma/client';
 import type { ApplicationFilters } from '@/types/applicants';
 import { getStatusDisplay } from '@/lib/applicants/statusValidation'; 
-import { getStatusAction } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 import { toast } from "sonner";
-import { 
-  FileText, 
-  Loader2, 
-  MoreHorizontal,
-} from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Loader2, FileText } from 'lucide-react';
 import ApplicationListFilter from './AppList/ApplicationListFilter';
 import ApplicationListPagination from './AppList/ApplicationListPagination';
 import ApplicationListCVPreview from './AppList/ApplicationListCVPreview';
-import { formatEducationLevelDisplay } from '@/lib/utils';
+import ApplicantListContent from './AppList/ApplicationListContent';
 
 export default function ApplicantListModal() {
   const {
@@ -38,8 +21,8 @@ export default function ApplicantListModal() {
     selectedJobForApplicants,
     applicants,
     setApplicants,
-    isLoadingApplicants,
-    setIsLoadingApplicants,
+    isLoadingApplicants,    
+    setLoadingApplicants, 
     applicantsError,
     setApplicantsError,
     applicantFilters,
@@ -47,18 +30,17 @@ export default function ApplicantListModal() {
     applicantPagination,
     setApplicantPagination,
     updateApplicantInList,
-  } = useJobManagementStore();
+  } = useCompanyProfileStore();
 
   const [showFullCvPreview, setShowFullCvPreview] = useState<string | null>(null);
-
-  const companyId = useJobManagementStore(state => state.selectedJobForApplicants?.companyId);
+  const companyId = selectedJobForApplicants?.companyId;
 
   const fetchApplicants = useCallback(async (jobId: string, filters: ApplicationFilters, page: number, limit: number) => {
     if (!companyId) {
       setApplicantsError("Company context is missing.");
       return;
     }
-    setIsLoadingApplicants(true);
+    setLoadingApplicants(true); 
     setApplicantsError(null);
     try {
       const queryParams = new URLSearchParams();
@@ -93,10 +75,10 @@ export default function ApplicantListModal() {
       console.error("Fetch applicants error:", error);
       setApplicantsError(error instanceof Error ? error.message : 'An unknown error occurred');
       setApplicants([]);
-    } finally {
-      setIsLoadingApplicants(false);
+     } finally {
+      setLoadingApplicants(false); 
     }
-  }, [companyId, setIsLoadingApplicants, setApplicantsError, setApplicants, setApplicantPagination]);
+  }, [companyId, setLoadingApplicants, setApplicantsError, setApplicants, setApplicantPagination, ]);
 
   useEffect(() => {
     if (selectedJobForApplicants && isApplicantModalOpen) {
@@ -144,7 +126,6 @@ export default function ApplicantListModal() {
     let rejectionReason: string | undefined;
     if (newStatus === ApplicationStatus.REJECTED) {
       const reasonInput = prompt("Enter rejection reason (optional):");
-      // Check if prompt was cancelled (null) or user entered empty string
       if (reasonInput !== null && reasonInput.trim() !== "") {
         rejectionReason = reasonInput;
       } else if (reasonInput === null) { // User cancelled
@@ -227,141 +208,11 @@ export default function ApplicantListModal() {
               )}
 
               {!isLoadingApplicants && !applicantsError && applicants.length > 0 && (
-                <div className="w-full">
-                  <Table className="w-full">
-                    <TableHeader>
-                      <TableRow className="bg-gray-50/50">
-                        <TableHead className="w-16 pl-6">Photo</TableHead>
-                        <TableHead className="w-48 font-semibold">Applicant Info</TableHead>
-                        <TableHead className="w-32 font-semibold">Details</TableHead>
-                        <TableHead className="w-36 font-semibold">Salary Expectation</TableHead>
-                        <TableHead className="w-32 font-semibold">Applied Date</TableHead>
-                        <TableHead className="w-24 font-semibold text-center">CV</TableHead>
-                        <TableHead className="w-32 font-semibold">Status</TableHead>
-                        <TableHead className="w-28 font-semibold text-center">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {applicants.map((app) => {
-                        const statusInfo = getStatusDisplay(app.status);
-                        return (
-                          <TableRow key={app.id} className="hover:bg-gray-50/50 transition-colors">
-                            <TableCell className="pl-6">
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage src={app.applicant.profileImage || undefined} alt={app.applicant.name} />
-                                <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                                  {app.applicant.name?.substring(0, 2).toUpperCase()}
-                                </AvatarFallback>
-                              </Avatar>
-                            </TableCell>
-                            
-                            <TableCell>
-                              <div className="space-y-1">
-                                <p className="font-semibold text-gray-900 truncate">{app.applicant.name}</p>
-                                <p className="text-sm text-gray-600 truncate">{app.applicant.email}</p>
-                              </div>
-                            </TableCell>
-                            
-                            <TableCell> {/* Details Cell (Age & Education) */}
-                              <div className="space-y-1">
-                                <p className="text-sm">
-                                  <span className="text-gray-600">Age:</span>
-                                  <span className="font-medium ml-1">{app.applicant.age ?? 'N/A'}</span>
-                                </p>
-                                <p className="text-sm">
-                                  <span className="text-gray-600">Edu:</span>
-                                  <span className="font-medium ml-1 text-xs">
-                                    {formatEducationLevelDisplay(app.applicant.education)}
-                                  </span>
-                                </p>
-                              </div>
-                            </TableCell>
-                            
-                            <TableCell> {/* Salary Expectation Cell  */}
-                              <div className="text-sm">
-                                {app.expectedSalary ? (
-                                  <span className="font-semibold text-green-700">
-                                    Rp {app.expectedSalary.toLocaleString('id-ID')}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400">Not specified</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            
-                            <TableCell> {/* Applied Date Cell */}
-                              <div className="text-sm text-gray-600">
-                                {new Date(app.createdAt).toLocaleDateString('id-ID', { 
-                                  day: '2-digit', 
-                                  month: 'short', 
-                                  year: '2-digit'
-                                })}
-                              </div>
-                            </TableCell>
-                            
-                            <TableCell className="text-center"> {/* CV Cell */}
-                              {app.cvUrl ? (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  onClick={() => setShowFullCvPreview(app.cvUrl || null)}
-                                  className="h-8 px-2 text-xs"
-                                >
-                                  <FileText className="w-3 h-3" />
-                                </Button>
-                              ) : (
-                                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                                  No CV
-                                </span>
-                              )}
-                            </TableCell>
-                            
-                            <TableCell> {/* Status Cell */}
-                              <Badge 
-                                className={`${statusInfo.bgColor} ${statusInfo.color} hover:${statusInfo.bgColor} px-2 py-1 text-xs whitespace-nowrap`}
-                              >
-                                {statusInfo.label}
-                              </Badge>
-                            </TableCell>
-                            
-                            <TableCell className="text-center"> {/* Actions Cell */}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm" className="h-8 px-2">
-                                    <MoreHorizontal className="w-4 h-4" />
-                                    <span className="sr-only">Open menu</span>
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  {Object.values(ApplicationStatus).map(status => {
-                                    const actionConfig = getStatusAction(status);
-                                    const Icon = actionConfig.icon;
-                                    return (
-                                      <DropdownMenuItem 
-                                        key={status} 
-                                        onClick={() => handleStatusChange(app.id, status)}
-                                        disabled={status === app.status}
-                                        className={`${status === app.status ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                      >
-                                        <Icon className={`w-4 h-4 mr-2 ${actionConfig.color}`} />
-                                        {actionConfig.label}
-                                        {status === app.status && (
-                                          <span className="ml-auto text-xs text-gray-400">(Current)</span>
-                                        )}
-                                      </DropdownMenuItem>
-                                    );
-                                  })}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+                <ApplicantListContent
+                  applicants={applicants}
+                  onStatusChange={handleStatusChange}
+                  onCvPreview={(cvUrl) => setShowFullCvPreview(cvUrl)}
+                />
               )}
             </ScrollArea>
           </div>

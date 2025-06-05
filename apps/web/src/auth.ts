@@ -19,6 +19,7 @@ declare module "next-auth" {
     image?: string | null;
   }
 }
+
 declare module "next-auth/jwt" {
   interface JWT {
     uid: string;
@@ -39,31 +40,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials.password) {
           return null;
         }
-        const email = credentials.email as string;
-        const password = credentials.password as string;
 
         try {
-          const { authHelpers } = await import('@/lib/authHelpers'); 
-          const userFromHelper = await authHelpers.verifyCredentials(email, password);
+          const { authHelpers } = await import('@/lib/authHelpers');
+          const user = await authHelpers.verifyCredentials(
+            credentials.email as string,
+            credentials.password as string
+          );
 
-          if (userFromHelper) {
-            console.log("AUTHORIZE: User verified from helper:", {
-              id: userFromHelper.id,
-              email: userFromHelper.email,
-              role: userFromHelper.role
-            });
+          if (user) {
             return {
-              id: userFromHelper.id,
-              email: userFromHelper.email!,
-              name: userFromHelper.name,
-              image: userFromHelper.avatar, 
-              role: userFromHelper.role as UserRole, 
-              isEmailVerified: userFromHelper.isVerified,
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.avatar,
+              role: user.role as UserRole,
+              isEmailVerified: user.isVerified,
             };
           }
-        } catch (e) {
-          console.error("Error in authorize (dynamic import or verifyCredentials):", e);
-          return null; 
+        } catch (error) {
+          console.error("Authorization error:", error);
         }
         
         return null;
@@ -72,74 +68,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, 
-    updateAge: 24 * 60 * 60, // Force session refresh every 24 hours
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 24 * 60 * 60,
   },
   jwt: {
-    maxAge: 24 * 60 * 60, 
+    maxAge: 24 * 60 * 60,
   },
   callbacks: {
-    jwt: async ({ token, user, trigger }) => {
-      console.log("JWT callback trigger:", trigger);
-      
+    jwt: async ({ token, user }) => {
       if (user) {
-        console.log("JWT callback - setting user data in token:", {
-          userId: user.id,
-          email: user.email,
-          role: user.role
-        });
-        // Clear any existing token data first
         token.uid = user.id;
         token.role = user.role;
         token.isEmailVerified = user.isEmailVerified;
-        token.email = user.email; 
+        token.email = user.email;
       }
-      
-      console.log("JWT callback - final token:", {
-        uid: token.uid,
-        email: token.email,
-        role: token.role
-      });
-      
       return token;
     },
     session: async ({ session, token }) => {
-      console.log("SESSION callback - received token:", {
-        tokenUid: token.uid,
-        tokenEmail: token.email,
-        sessionEmail: session.user?.email
-      });
-      
       if (token && session.user) {
         session.user.id = token.uid;
         session.user.role = token.role;
         session.user.isEmailVerified = token.isEmailVerified;
         
-        // Ensure consistency
         if (token.email) {
           session.user.email = token.email;
         }
       }
-      
-      console.log("SESSION callback - final session:", {
-        userId: session.user?.id,
-        email: session.user?.email,
-        role: session.user?.role
-      });
-      
       return session;
     },
-  },
-  events: {
-    async signOut(message) {
-      console.log("SIGNOUT event triggered:", message);
-    },
-    async signIn(message) {
-      console.log("SIGNIN event triggered:", message.user?.email);
-    },
-    async session(message) {
-      console.log("SESSION event triggered for user:", message.session.user?.email);
-    }
   },
   pages: {
     signIn: '/auth/login',

@@ -1,16 +1,16 @@
 'use server';
 
-import { signIn as nextAuthServerSignIn, signOut as nextAuthServerSignOut } from '@/auth'; 
+import { signIn as nextAuthServerSignIn, signOut as nextAuthServerSignOut } from '@/auth';
 import { LoginFormData, RegisterFormData, CompanyRegisterFormData } from '@/lib/validations/zodAuthValidation';
 import { AuthError } from 'next-auth';
-import { UserRole } from '@prisma/client'; 
-import { authHelpers, RegisterResult } from '@/lib/authHelpers'; 
+import { UserRole } from '@prisma/client';
+import { authHelpers, RegisterResult } from '@/lib/authHelpers';
 
 export interface LoggedInUser {
   id: string;
   email: string;
   name?: string;
-  role: UserRole; 
+  role: UserRole;
   avatar?: string;
   isVerified: boolean;
 }
@@ -22,19 +22,36 @@ interface LoginActionResult {
   user?: LoggedInUser;
 }
 
+const cleanupSession = async (): Promise<void> => {
+  try {
+    await nextAuthServerSignOut({ redirect: false });
+  } catch {
+    // Ignore cleanup errors
+  }
+};
+
+interface AuthHelperUser {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  avatar?: string;
+  isVerified: boolean;
+}
+
+const mapToLoggedInUser = (user: AuthHelperUser): LoggedInUser => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  role: user.role as UserRole,
+  avatar: user.avatar,
+  isVerified: user.isVerified,
+});
+
 export async function loginWithCredentialsAction(data: LoginFormData): Promise<LoginActionResult> {
   try {
-    console.log(`LOGIN_ACTION: Starting login for email: ${data.email}`);
-    
-    try {
-      await nextAuthServerSignOut({ redirect: false });
-      console.log('LOGIN_ACTION: Successfully signed out existing session');
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (signOutError) {
-      console.log('LOGIN_ACTION: No existing session to sign out');
-    }
-
-    // Small delay to ensure session is properly cleared
+    // Clean up any existing session
+    await cleanupSession();
     await new Promise(resolve => setTimeout(resolve, 100));
 
     const result = await nextAuthServerSignIn('credentials', {
@@ -43,21 +60,17 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
       redirect: false,
     });
 
-    console.log(`LOGIN_ACTION: SignIn result:`, result);
-
     if (result?.error) {
-      console.log(`LOGIN_ACTION: SignIn failed with error: ${result.error}`);
       return {
         success: false,
         error: 'Invalid credentials. Please check your email and password.',
         errorType: 'CredentialsSignin',
       };
     }
+
+    const user = await authHelpers.verifyCredentials(data.email, data.password);
     
-    // Get user data from your helper for the response
-    const userFromHelper = await authHelpers.verifyCredentials(data.email, data.password);
-    
-    if (!userFromHelper) {
+    if (!user) {
       return {
         success: false,
         error: 'Failed to retrieve user data after login.',
@@ -65,51 +78,30 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
       };
     }
 
-    // Map the user data
-    const loggedInUser: LoggedInUser = {
-      id: userFromHelper.id,
-      email: userFromHelper.email,
-      name: userFromHelper.name,
-      role: userFromHelper.role as UserRole,
-      avatar: userFromHelper.avatar,
-      isVerified: userFromHelper.isVerified,
-    };
-
-    console.log(`LOGIN_ACTION: About to update last login for user ID: ${loggedInUser.id}`);
+    const loggedInUser = mapToLoggedInUser(user);
     
-    // Update last login time 
+    // Update last login time
     await authHelpers.updateLastLogin(loggedInUser.id);
 
-    console.log(`LOGIN_ACTION: Login successful for user: ${loggedInUser.email}`);
     return { success: true, user: loggedInUser };
-
   } catch (error) {
-    console.error('LOGIN_ACTION: Unexpected error:', error);
+    console.error('Login error:', error);
     
-    // Ensure we sign out on any error to prevent stale sessions
-    try {
-      await nextAuthServerSignOut({ redirect: false });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (signOutError) {
-      console.log('LOGIN_ACTION: Failed to sign out after error');
-    }
+    // Cleanup on error
+    await cleanupSession();
 
     if (error instanceof AuthError) {
-      if (error.type === 'CredentialsSignin') {
-        return {
-          success: false,
-          error: 'Invalid credentials. Please check your email and password.',
-          errorType: error.type,
-        };
-      }
-      console.error('AuthError in loginAction:', error);
+      const errorMessage = error.type === 'CredentialsSignin' 
+        ? 'Invalid credentials. Please check your email and password.'
+        : error.message || 'An authentication error occurred.';
+        
       return {
         success: false,
-        error: error.message || 'An authentication error occurred.',
+        error: errorMessage,
         errorType: error.type,
       };
     }
-    
+
     return {
       success: false,
       error: 'An unexpected error occurred during login. Please try again.',
@@ -118,26 +110,21 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
   }
 }
 
-// Server action for logout
 export async function logoutAction(): Promise<{ success: boolean }> {
   try {
-    console.log('LOGOUT_ACTION: Starting logout process');
     await nextAuthServerSignOut({ redirect: false });
-    console.log('LOGOUT_ACTION: Successfully signed out');
     return { success: true };
   } catch (error) {
-    console.error('LOGOUT_ACTION: Error during logout:', error);
-    return { success: true };
+    console.error('Logout error:', error);
+    return { success: true }; // Always return success for logout
   }
 }
 
-// Directly calls the Node.js specific registration logic
 export async function registerUserAction(data: RegisterFormData): Promise<RegisterResult> {
   try {
-    const result = await authHelpers.register(data);
-    return result;
+    return await authHelpers.register(data);
   } catch (error) {
-    console.error('Unexpected error in registerUserAction:', error);
+    console.error('Registration error:', error);
     return {
       success: false,
       message: 'An unexpected server error occurred during registration. Please try again.',
@@ -145,32 +132,30 @@ export async function registerUserAction(data: RegisterFormData): Promise<Regist
   }
 }
 
-// Server Actions
-export async function verifyEmailTokenAction(token: string): Promise<{ success: boolean; message: string }> {
-    return authHelpers.verifyEmailToken(token);
-}
-
-export async function generatePasswordResetTokenAction(email: string): Promise<{ success: boolean; message: string }> {
-    return authHelpers.generatePasswordResetToken(email);
-}
-
-export async function resetPasswordAction(token: string, newPassword: string):Promise<{ success: boolean; message: string }> {
-    return authHelpers.resetPassword(token, newPassword);
-}
-
-export async function resendVerificationEmailAction(email: string): Promise<{ success: boolean; message: string }> {
-    return authHelpers.resendVerificationEmail(email);
-}
-
 export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
   try {
-    const result = await authHelpers.registerCompanyAdmin(data);
-    return result;
+    return await authHelpers.registerCompanyAdmin(data);
   } catch (error) {
-    console.error('Unexpected error in registerCompanyAdminAction:', error);
+    console.error('Company registration error:', error);
     return {
       success: false,
       message: 'An unexpected server error occurred during company registration. Please try again.',
     };
   }
+}
+
+export async function verifyEmailTokenAction(token: string): Promise<{ success: boolean; message: string }> {
+  return authHelpers.verifyEmailToken(token);
+}
+
+export async function generatePasswordResetTokenAction(email: string): Promise<{ success: boolean; message: string }> {
+  return authHelpers.generatePasswordResetToken(email);
+}
+
+export async function resetPasswordAction(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+  return authHelpers.resetPassword(token, newPassword);
+}
+
+export async function resendVerificationEmailAction(email: string): Promise<{ success: boolean; message: string }> {
+  return authHelpers.resendVerificationEmail(email);
 }

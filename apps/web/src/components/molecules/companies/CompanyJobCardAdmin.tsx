@@ -1,11 +1,12 @@
 'use client';
 
-import { JobPostingWithApplicantCount, useJobManagementStore } from '@/stores/JobManagementStore';
+import type { JobPostingInStore } from '@/types';
+import { useCompanyProfileStore } from '@/stores/companyProfileStores'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Briefcase, Calendar, Users, Edit, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { employmentTypeLabels } from '@/lib/jobConstants'; 
+import { employmentTypeLabels } from '@/lib/jobConstants';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,17 +19,19 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { useCompanyProfileStore } from '@/stores/companyProfileStores';
-
 
 interface CompanyJobCardAdminProps {
-  job: JobPostingWithApplicantCount;
+  job: JobPostingInStore;
   companyId: string;
 }
 
 export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAdminProps) {
-  const { setSelectedJobForApplicants, removeJobFromList, updateJobInList } = useJobManagementStore();
-  const { decrementTotalJobs } = useCompanyProfileStore(); // To update count in main profile store
+  const {
+    setSelectedJobForApplicants,
+    removeJobFromManagement,    
+    updateJobInManagement,     
+    decrementTotalJobs
+  } = useCompanyProfileStore();
 
   const applicantCount = job._count?.applications ?? 0;
 
@@ -46,13 +49,13 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
       if (!response.ok) {
         throw new Error(result.error || 'Failed to delete job posting.');
       }
-      
+
       toast.success(result.message || 'Job posting processed successfully.');
       if (result.job && result.job.isActive === false) { // Soft delete
-        updateJobInList(result.job); // Update the job in store to show it as inactive
+        updateJobInManagement(result.job as JobPostingInStore); 
       } else { // Hard delete
-        removeJobFromList(job.id);
-        decrementTotalJobs(); // Update count in main profile store if hard deleted
+        removeJobFromManagement(job.id); 
+        decrementTotalJobs();
       }
 
     } catch (error) {
@@ -62,7 +65,7 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
   };
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full"> 
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{job.title}</CardTitle>
@@ -76,8 +79,8 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
           Posted {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="space-y-2 text-sm text-gray-600">
+      <CardContent className="flex-grow space-y-2"> 
+        <div className="text-sm text-gray-600">
           <div className="flex items-center">
             <Briefcase className="w-4 h-4 mr-2 text-gray-400" />
             <span>{employmentTypeLabels[job.employmentType] || job.employmentType}</span>
@@ -89,13 +92,18 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
           {job.applicationDeadline && (
             <div className="flex items-center">
               <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-              <span>Deadline: {new Date(job.applicationDeadline).toLocaleDateString()}</span>
+              <span>Deadline: {new Date(job.applicationDeadline).toLocaleDateString('en-CA')}</span> 
             </div>
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end space-x-2">
-        <Button variant="outline" size="sm" onClick={handleViewApplicants} disabled={!job.isActive && applicantCount === 0}>
+      <CardFooter className="flex flex-wrap justify-end space-x-2"> 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleViewApplicants}
+          disabled={!job.isActive && applicantCount === 0}
+        >
           <Eye className="w-4 h-4 mr-1" /> Applicants
         </Button>
         <Button variant="outline" size="sm" disabled> {/* Placeholder for Edit */}
@@ -111,14 +119,13 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the job posting
-                {applicantCount > 0 ? " (or mark it as inactive if there are applicants)." : "."}
+                This action will {job._count && job._count.applications > 0 ? "mark the job as inactive." : "permanently delete the job posting."} This cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteJob} className="bg-destructive hover:bg-destructive/90">
-                Delete
+                Confirm Delete
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
