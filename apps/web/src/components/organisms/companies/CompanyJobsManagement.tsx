@@ -13,10 +13,7 @@ const DEBOUNCE_DELAY_JOBS = 500;
 
 export default function CompanyJobsManagement() {
   const {
-    // Company
     company,
-    
-    // Management Jobs State
     managementJobs: jobs,
     setManagementJobs: setJobs,
     isLoadingManagementJobs: isLoadingJobs,
@@ -25,8 +22,6 @@ export default function CompanyJobsManagement() {
     setManagementJobsError: setJobsError,
     managementJobPagination: jobPagination,
     setManagementJobPagination: setJobPagination,
-    
-    // Shared job count
     setTotalJobs,
   } = useCompanyProfileStore();
   
