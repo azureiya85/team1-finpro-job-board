@@ -1,7 +1,7 @@
 // apps/api/src/controllers/plan.controller.ts
 import { RequestHandler } from "express";
 import prisma from "../lib/prisma";
-import { createPlanSchema, updatePlanSchema } from "../lib/validations/zodPlanvalidation";
+import { createPlanSchema, updatePlanSchema } from "../lib/validations/zodPlanValidation";
 
 /**
  * GET /api/plan
