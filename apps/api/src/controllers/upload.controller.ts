@@ -16,7 +16,6 @@ export class UploadController {
         body: req.body
       });
 
-      // Now we have the real user ID from auth middleware
       const userId = req.user?.id;
       
       if (!userId) {

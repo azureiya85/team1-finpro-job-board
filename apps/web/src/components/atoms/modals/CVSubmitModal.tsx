@@ -70,15 +70,23 @@ export default function CVSubmitModal() {
    const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!validTypes.includes(file.type)) {
-        setUploadError('Please upload a PDF or Word document');
+      const documentTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ];
+      
+      if (!documentTypes.includes(file.type)) {
+        setUploadError('Please upload a PDF or Word document (PDF, DOC, DOCX)');
         return;
       }
+      
+      // Check file size (5MB limit to match API)
       if (file.size > 5 * 1024 * 1024) {
         setUploadError('File size should not exceed 5MB');
         return;
       }
+      
       setCvFile(file);
       setUploadError('');
     }
@@ -122,7 +130,7 @@ export default function CVSubmitModal() {
       if (cvFile) {
         const formData = new FormData();
         formData.append('file', cvFile);
-        formData.append('folder', 'cvs');
+        formData.append('folder', 'cv-uploads');
 
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
@@ -130,8 +138,8 @@ export default function CVSubmitModal() {
         });
 
         if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          throw new Error(`Failed to upload CV: ${errorText}`);
+          const errorData = await uploadResponse.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to upload CV');
         }
         
         const uploadJson = await uploadResponse.json();
