@@ -33,7 +33,7 @@ export function CredentialsLogin() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
 
-  const { login: loginToStore, setLoading } = useAuthStore();
+  const { login: loginToStore, logout: logoutFromStore, setLoading } = useAuthStore();
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -48,7 +48,15 @@ export function CredentialsLogin() {
       try {
         setLoading(true);
 
+        // Clear any existing user data from store first
+        console.log('CLIENT: Clearing existing auth state before login');
+        logoutFromStore();
+
+        // Small delay to ensure store is cleared
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         // Call the server action
+        console.log('CLIENT: Calling login server action');
         const result = await loginWithCredentialsAction(formData);
 
         if (!result.success || !result.user) {
@@ -65,6 +73,7 @@ export function CredentialsLogin() {
         }
 
         // If action is successful and user data is returned
+        console.log('CLIENT: Login successful, updating store with user:', result.user);
         loginToStore({
           id: result.user.id,
           email: result.user.email,
@@ -78,10 +87,19 @@ export function CredentialsLogin() {
           description: 'You have successfully signed in.',
         });
 
+        // Force a hard refresh to ensure all components get the new session
+        console.log('CLIENT: Redirecting and refreshing');
         router.push(callbackUrl);
-        router.refresh(); 
+        setTimeout(() => {
+          window.location.href = callbackUrl;
+        }, 100);
+        
       } catch (error) {
         console.error('Login submission client-side error:', error);
+        
+        // Clear any partial state on error
+        logoutFromStore();
+        
         toast.error('Something went wrong', {
           description: 'An unexpected client-side error occurred. Please try again later.',
         });

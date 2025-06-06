@@ -12,12 +12,12 @@ import {
 
 export interface ApplicantProfile {
   id: string;
-  name: string; // Combined firstName and lastName
+  name: string; 
   firstName?: string | null;
   lastName?: string | null;
   email: string;
   profileImage?: string | null;
-  age?: number | null; // Calculated, can be null if dateOfBirth is missing
+  age?: number | null; 
   education?: Education | null;
   phoneNumber?: string | null;
   location?: string; 
@@ -29,7 +29,7 @@ export interface JobApplicationDetails {
   status: ApplicationStatus;
   expectedSalary?: number | null;
   coverLetter?: string | null;
-  cvUrl: string; // Non-nullable in your schema
+  cvUrl: string; 
   testScore?: number | null;
   testCompletedAt?: Date | null;
   rejectionReason?: string | null;

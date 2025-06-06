@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react'; 
 import { Briefcase } from 'lucide-react';
-import { useCompanyProfileStore, JobPostingInStore } from '@/stores/companyProfileStores';
-import type { JobPosting, City, Province } from '@prisma/client';
+import { useCompanyProfileStore } from '@/stores/companyProfileStores';
+import type { JobPostingInStore } from '@/types';
+import type { JobPosting, City, Province, CompanySize } from '@prisma/client';
 import CompanyJobCard from '@/components/molecules/companies/CompanyJobCard';
-import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal'; 
+import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal';
 
 interface CompanyProfileJobsProps {
   companyId: string;
@@ -13,67 +14,97 @@ interface CompanyProfileJobsProps {
 }
 
 type ApiJob = JobPosting & {
-  city: Pick<City, 'name'> | null;
-  province: Pick<Province, 'name'> | null;
-  workType?: string; 
+  company: { 
+    id: string;
+    name: string;
+    logo: string | null;
+    size: CompanySize | null;
+  } | null;
+  city: Pick<City, 'id' | 'name' | 'type'> | null; 
+  province: Pick<Province, 'id' | 'name' | 'code'> | null; 
+  _count: { applications: number } | null; 
 };
+
 
 export default function CompanyProfileJobs({ companyId, className }: CompanyProfileJobsProps) {
   const {
-    jobs,
-    isLoadingJobs,
-    jobsPage,
-    hasMoreJobs,
-    totalJobs,
-    setJobs,
-    addJobs,
-    setLoadingJobs,
-    setJobsPagination
+    displayJobs: jobs, 
+    isLoadingDisplayJobs: isLoadingJobs,
+    displayJobsPage: jobsPage,
+    hasMoreDisplayJobs: hasMoreJobs,
+    setDisplayJobs: setJobs,
+    addDisplayJobs: addJobs,
+    setLoadingDisplayJobs: setLoadingJobs,
+    setDisplayJobsPagination 
   } = useCompanyProfileStore();
+
+  const totalJobsCount = useCompanyProfileStore(state => state.totalJobs); // Get the count separately
 
   const [initialLoad, setInitialLoad] = useState(true);
 
-  const transformApiJobToStoreJob = (apiJob: ApiJob): JobPostingInStore => {
+  const transformApiJobToStoreJob = useCallback((apiJob: ApiJob): JobPostingInStore => {
     let locationString = 'Location not specified';
-    if (apiJob.city && apiJob.province) {
-      locationString = `${apiJob.city.name}, ${apiJob.province.name}`;
-    } else if (apiJob.city) {
-      locationString = apiJob.city.name;
-    } else if (apiJob.province) {
-      locationString = apiJob.province.name;
-    } else if (apiJob.isRemote) {
+    if (apiJob.isRemote) {
       locationString = 'Remote';
+    } else if (apiJob.city?.name && apiJob.province?.name) {
+      locationString = `${apiJob.city.name}, ${apiJob.province.name}`;
+    } else if (apiJob.city?.name) {
+      locationString = apiJob.city.name;
+    } else if (apiJob.province?.name) {
+      locationString = apiJob.province.name;
     }
 
-    let workType = apiJob.workType;
-    if (!workType) {
-      if (apiJob.isRemote) { 
-        workType = 'REMOTE';
-      } else {
-        workType = 'ON_SITE';
-      }
+    let derivedWorkType = 'ON_SITE'; 
+    if (apiJob.isRemote) {
+        derivedWorkType = 'REMOTE';
     }
 
+    const companyForStore = apiJob.company ? {
+        id: apiJob.company.id,
+        name: apiJob.company.name,
+        logo: apiJob.company.logo,
+        size: apiJob.company.size,
+    } : null;
+ 
     return {
       id: apiJob.id,
       title: apiJob.title,
-      type: apiJob.employmentType,
-      workType: workType,
-      location: locationString,
-      minSalary: apiJob.salaryMin === null ? undefined : apiJob.salaryMin,
-      maxSalary: apiJob.salaryMax === null ? undefined : apiJob.salaryMax,
       description: apiJob.description,
-      requirements: apiJob.requirements || [],
-      benefits: apiJob.benefits || [],
+      employmentType: apiJob.employmentType,
+      experienceLevel: apiJob.experienceLevel,
+      category: apiJob.category,
+      isRemote: apiJob.isRemote,
+      createdAt: new Date(apiJob.createdAt),
+      publishedAt: apiJob.publishedAt ? new Date(apiJob.publishedAt) : null,
+      salaryMin: apiJob.salaryMin,
+      salaryMax: apiJob.salaryMax,
+      salaryCurrency: apiJob.salaryCurrency,
+      isPriority: apiJob.isPriority,
+      tags: apiJob.tags,
+      requirements: apiJob.requirements,
+      benefits: apiJob.benefits,
+      applicationDeadline: apiJob.applicationDeadline ? new Date(apiJob.applicationDeadline) : null,
+      requiresCoverLetter: apiJob.requiresCoverLetter,
+      banner: apiJob.banner,
       isActive: apiJob.isActive,
-      createdAt: apiJob.createdAt.toString(),
-      updatedAt: apiJob.updatedAt.toString(),
-      applicationDeadline: apiJob.applicationDeadline?.toString(),
-      experienceLevel: apiJob.experienceLevel, 
+      companyId: apiJob.companyId,
+      cityId: apiJob.cityId,
+      provinceId: apiJob.provinceId,
+      preSelectionTestId: apiJob.preSelectionTestId,
+      updatedAt: new Date(apiJob.updatedAt),
+      latitude: apiJob.latitude,
+      longitude: apiJob.longitude,
+      country: apiJob.country,
+      workType: derivedWorkType,
+      location: locationString,
+      company: companyForStore,
+      city: apiJob.city ? { id: apiJob.city.id, name: apiJob.city.name, type: apiJob.city.type } : null,
+      province: apiJob.province ? { id: apiJob.province.id, name: apiJob.province.name, code: apiJob.province.code } : null,
+      _count: apiJob._count ? { applications: apiJob._count.applications } : { applications: 0 },
     };
-  };
+  }, []);
 
-  const fetchJobs = async (pageToFetch: number = 1, append: boolean = false) => {
+  const fetchJobs = useCallback(async (pageToFetch: number = 1, append: boolean = false) => {
     if (!companyId) {
       console.error('[CompanyProfileJobs] companyId is undefined or null. Cannot fetch jobs.');
       setLoadingJobs(false);
@@ -81,29 +112,28 @@ export default function CompanyProfileJobs({ companyId, className }: CompanyProf
       return;
     }
 
+    setLoadingJobs(true);
     try {
-      setLoadingJobs(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-      const itemsPerPage = 30; 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const itemsPerPage = 10; 
       const skip = (pageToFetch - 1) * itemsPerPage;
-      const take = itemsPerPage;
 
       const queryParams = new URLSearchParams({
         skip: skip.toString(),
-        take: take.toString(),
+        take: itemsPerPage.toString(),
       });
 
       const response = await fetch(
         `${apiUrl}/api/companies/${companyId}/jobs?${queryParams.toString()}`
       );
-        
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[CompanyProfileJobs] Failed to fetch jobs. Status: ${response.status}, StatusText: ${response.statusText}, URL: ${response.url}, Body: ${errorText}`);
-        throw new Error(`Failed to fetch jobs: ${response.status} ${response.statusText}`);
+        console.error(`[CompanyProfileJobs] Failed to fetch jobs. Status: ${response.status}, URL: ${response.url}, Body: ${errorText}`);
+        throw new Error(`Failed to fetch jobs: ${response.status}`);
       }
-      
-      const data = await response.json(); 
+
+      const data = await response.json();
       const transformedJobs = (data.jobPostings || []).map(transformApiJobToStoreJob);
 
       if (append) {
@@ -111,12 +141,12 @@ export default function CompanyProfileJobs({ companyId, className }: CompanyProf
       } else {
         setJobs(transformedJobs);
       }
-      
-      setJobsPagination(
-        data.pagination?.page || pageToFetch, 
-        data.pagination?.hasNext || false,
-        data.pagination?.total || 0
+
+      setDisplayJobsPagination(
+        data.pagination?.page || pageToFetch,
+        data.pagination?.hasNext || false
       );
+
     } catch (error) {
       console.error('[CompanyProfileJobs] Error fetching jobs:', error);
     } finally {
@@ -125,14 +155,14 @@ export default function CompanyProfileJobs({ companyId, className }: CompanyProf
         setInitialLoad(false);
       }
     }
-  };
+   
+  }, [companyId, setLoadingJobs, transformApiJobToStoreJob, addJobs, setJobs, setDisplayJobsPagination]); 
 
   useEffect(() => {
     if (companyId && initialLoad) {
       fetchJobs(1, false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyId, initialLoad]);
+  }, [companyId, initialLoad, fetchJobs]);
 
   const loadMoreJobs = () => {
     if (hasMoreJobs && !isLoadingJobs) {
@@ -176,7 +206,7 @@ export default function CompanyProfileJobs({ companyId, className }: CompanyProf
       <div className={`space-y-6 ${className}`}>
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">
-            Open Positions ({totalJobs})
+            Open Positions ({totalJobsCount ?? 0}) 
           </h2>
         </div>
         <div className="space-y-4">

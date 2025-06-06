@@ -1,6 +1,7 @@
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@700,800,900&f[]=general-sans@400,500,600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 /* Fontshare Imports */
 

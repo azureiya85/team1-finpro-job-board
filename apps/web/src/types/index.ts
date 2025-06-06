@@ -1,4 +1,8 @@
-import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client'; 
+import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client';
+
+// ============================================================================
+// JOB POSTING TYPES
+// ============================================================================
 
 export type JobPostingFeatured = Pick<
   JobPosting,
@@ -18,14 +22,87 @@ export type JobPostingFeatured = Pick<
   | 'tags'  
   | 'benefits' 
   | 'requirements' 
-  | 'applicationDeadline'           
+  | 'applicationDeadline'
+  | 'requiresCoverLetter'              
 > & {
   company: Pick<Company, 'id' | 'name' | 'logo' | 'size'> | null;
   city: Pick<City, 'name'> | null;
   province: Pick<Province, 'name'> | null;
 };
 
-// Interface for the parameters passed to the getJobs function
+
+export type JobCompanyInfoForStore = Pick<Company, 'id' | 'name' | 'logo' | 'size'>;
+
+export type JobPostingDetailed = JobPosting & {
+  company: Company | null;
+  city: City | null;
+  province: Province | null;
+};
+
+// Company info for job postings
+export interface JobCompanyInfo {
+  id: string;
+  name: string;
+  logo?: string | null;
+  adminId: string;
+}
+
+// Extended JobPosting interface for stores - used across different stores
+export interface JobPostingInStore {
+  id: string;
+  title: string;
+  description: string;
+  employmentType: EmploymentType;
+  experienceLevel: ExperienceLevel;
+  category: JobCategory;
+  isRemote: boolean;
+  createdAt: Date;
+  publishedAt: Date | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string;
+  isPriority: boolean;
+  tags: string[];
+  requirements: string[];
+  benefits: string[];
+  applicationDeadline: Date | null;
+  requiresCoverLetter: boolean;
+  banner: string | null;
+  isActive: boolean;
+  updatedAt: Date;
+  latitude: number | null;      
+  longitude: number | null;    
+  country: string;              
+
+  // Foreign keys
+  companyId: string;
+  cityId: string | null;
+  provinceId: string | null;
+  preSelectionTestId: string | null;
+
+  // Custom/Derived fields
+  workType: string;
+  location?: string;
+
+  // Aligned relational data 
+  company: JobCompanyInfoForStore | null;
+  city: Pick<City, 'id' | 'name' | 'type'> | null;
+  province: Pick<Province, 'id' | 'name' | 'code'> | null;
+
+  _count?: {
+    applications: number;
+  };
+}
+
+
+
+// Alias for JobManagementStore compatibility
+export type JobPostingWithApplicantCount = JobPostingInStore;
+
+// ============================================================================
+// SEARCH AND FILTER TYPES
+// ============================================================================
+
 export interface JobPostingSearchAndFilterParams {
   take?: number;
   skip?: number;
@@ -58,13 +135,21 @@ export interface GetJobsParams {
   companyId?: string;
 }
 
-export type JobPostingDetailed = JobPosting & {
-  company: Company | null;
-  city: City | null;
-  province: Province | null;
-};
+export interface GetJobsResult {
+  jobs: JobPostingFeatured[];
+  pagination?: {
+    total: number;
+    page: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
 
-//  Company Types
+// ============================================================================
+// COMPANY TYPES
+// ============================================================================
+
 export type CompanyWithLocation = Company & {
   province: Province | null;
   city: City | null;
@@ -115,6 +200,28 @@ export interface CompanyJobsParams {
   search?: string;
 }
 
+// ============================================================================
+// COMPANY PROFILE STORE TYPES
+// ============================================================================
+
+// Extended tab types for company profile
+export type BaseTabId = 'overview' | 'jobs';
+export type AdminTabId = 'profile-management' | 'job-management';
+export type CompanyProfileTabId = BaseTabId | AdminTabId;
+
+// ============================================================================
+// APPLICANT TYPES
+// ============================================================================
+
+export type {
+  ApplicantProfile, 
+  JobApplicationDetails,
+  ApplicationFilters,
+} from './applicants';
+// ============================================================================
+// API RESPONSE TYPES
+// ============================================================================
+
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
@@ -127,7 +234,10 @@ export interface ApiResponse<T> {
   };
 }
 
-// Job Update Data Types
+// ============================================================================
+// JOB UPDATE TYPES
+// ============================================================================
+
 export interface JobUpdateData {
   title?: string;
   description?: string;

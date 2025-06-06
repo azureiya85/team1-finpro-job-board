@@ -190,6 +190,7 @@ model JobPosting {
   applicationDeadline DateTime?
   isActive          Boolean   @default(true)
   isPriority        Boolean   @default(false)
+  requiresCoverLetter Boolean  @default(true)
 
   requirements      String[]
   benefits          String[]
@@ -736,7 +737,7 @@ enum EmploymentStatus {
    INTERVIEW_REMINDER        // For User & Company Admin
    SUBSCRIPTION_EXPIRING
    SUBSCRIPTION_ENDED
-   NEW_JOB_MATCHING_PROFILE  // For User (if recommendations implemented)
+   NEW_JOB_MATCHING_PROFILE  
    ASSESSMENT_COMPLETED
    CERTIFICATE_ISSUED
  }

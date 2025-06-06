@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { useJobManagementStore } from '@/stores/JobManagementStore';
 import { useCompanyProfileStore } from '@/stores/companyProfileStores'; 
 import CompanyJobCardAdmin from '@/components/molecules/companies/CompanyJobCardAdmin';
 import ApplicantListModal from '@/components/atoms/modals/companies/ApplicationListModal';
@@ -13,22 +12,22 @@ const DEBOUNCE_DELAY_JOBS = 500;
 
 export default function CompanyJobsManagement() {
   const {
-    jobs,
-    setJobs,
-    isLoadingJobs,
-    setIsLoadingJobs,
-    jobsError,
-    setJobsError,
-    jobPagination,
-    setJobPagination,
-  } = useJobManagementStore();
+    company,
+    managementJobs: jobs,
+    setManagementJobs: setJobs,
+    isLoadingManagementJobs: isLoadingJobs,
+    setLoadingManagementJobs: setIsLoadingJobs,
+    managementJobsError: jobsError,
+    setManagementJobsError: setJobsError,
+    managementJobPagination: jobPagination,
+    setManagementJobPagination: setJobPagination,
+    setTotalJobs,
+  } = useCompanyProfileStore();
   
-  const company = useCompanyProfileStore(state => state.company);
   const [searchTerm, setSearchTerm] = useState('');
-
   const companyId = company?.id;
 
- const fetchJobs = useCallback(async (cId: string, page: number, limit: number, search?: string) => {
+  const fetchJobs = useCallback(async (cId: string, page: number, limit: number, search?: string) => {
     if (!cId) return; // Guard against undefined companyId
     setIsLoadingJobs(true);
     setJobsError(null);
@@ -55,6 +54,10 @@ export default function CompanyJobsManagement() {
         hasPrev: data.pagination.hasPrev,
         limit: limit,
       });
+      
+      // Update the shared total jobs count
+      setTotalJobs(data.pagination.total);
+      
     } catch (error) {
       console.error("Fetch jobs error:", error);
       setJobsError(error instanceof Error ? error.message : 'An unknown error occurred');
@@ -62,17 +65,14 @@ export default function CompanyJobsManagement() {
     } finally {
       setIsLoadingJobs(false);
     }
-  }, [setIsLoadingJobs, setJobsError, setJobs, setJobPagination]); 
-
+  }, [setIsLoadingJobs, setJobsError, setJobs, setJobPagination, setTotalJobs]); 
 
   // Initial fetch and page change fetch
   useEffect(() => {
     if (companyId) {
-      // For the initial load or page change, use the current searchTerm from state
       fetchJobs(companyId, jobPagination.page, jobPagination.limit, searchTerm || undefined);
     }
   }, [companyId, jobPagination.page, jobPagination.limit, fetchJobs, searchTerm]); 
-
 
   // Debounced search effect
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function CompanyJobsManagement() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          {/* Add Sort Dropdown if needed */}
+          {/* TODO: Add Sort Dropdown */}
         </div>
       </div>
 

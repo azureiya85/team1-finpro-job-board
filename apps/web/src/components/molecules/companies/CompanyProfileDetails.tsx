@@ -13,9 +13,9 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
       <Star
         key={i}
         className={`w-4 h-4 ${
-          i < Math.floor(rating) 
-            ? 'fill-yellow-400 text-yellow-400' 
-            : i < rating 
+          i < Math.floor(rating)
+            ? 'fill-yellow-400 text-yellow-400'
+            : i < rating
             ? 'fill-yellow-200 text-yellow-400' 
             : 'text-gray-300'
         }`}
@@ -31,13 +31,11 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             About {company.name}
           </h2>
-          <div className="prose max-w-none text-gray-700">
-            {company.description.split('\n').map((paragraph, index) => (
-              <p key={index} className="mb-3 last:mb-0">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+    
+          <div
+            className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none text-gray-700"
+            dangerouslySetInnerHTML={{ __html: company.description }}
+          />
         </div>
       )}
 
@@ -56,7 +54,7 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
                   href={company.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline break-all" 
                 >
                   {company.website}
                 </a>
@@ -68,7 +66,7 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
                 <Mail className="w-5 h-5 text-gray-400" />
                 <a
                   href={`mailto:${company.email}`}
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-600 hover:underline break-all" 
                 >
                   {company.email}
                 </a>
@@ -91,7 +89,7 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
           <div>
             {company.address && (
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" /> 
                 <p className="text-gray-700">{company.address}</p>
               </div>
             )}
@@ -100,7 +98,7 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
       </div>
 
       {/* Detailed Ratings */}
-      {company.stats.totalReviews > 0 && (
+      {company.stats && company.stats.totalReviews > 0 && ( // Added check for company.stats existence
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Employee Ratings
@@ -121,7 +119,7 @@ export default function CompanyProfileDetails({ company }: CompanyProfileDetails
                   <div className="flex">
                     {renderRatingStars(rating.value)}
                   </div>
-                  <span className="text-sm font-semibold w-8">
+                  <span className="text-sm font-semibold w-8 text-right"> 
                     {rating.value.toFixed(1)}
                   </span>
                 </div>

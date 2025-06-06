@@ -19,6 +19,7 @@ declare module "next-auth" {
     image?: string | null;
   }
 }
+
 declare module "next-auth/jwt" {
   interface JWT {
     uid: string;
@@ -39,36 +40,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials.password) {
           return null;
         }
-        const email = credentials.email as string;
-        const password = credentials.password as string;
 
         try {
-          // Dynamically import the Node.js-specific logic
-          const { authHelpers } = await import('@/lib/authHelpers'); 
-          const userFromHelper = await authHelpers.verifyCredentials(email, password);
+          const { authHelpers } = await import('@/lib/authHelpers');
+          const user = await authHelpers.verifyCredentials(
+            credentials.email as string,
+            credentials.password as string
+          );
 
-          if (userFromHelper) {
-            console.log("User from helper in authorize:", userFromHelper.id, userFromHelper.email, userFromHelper.role);
+          if (user) {
             return {
-              id: userFromHelper.id,
-              email: userFromHelper.email!,
-              name: userFromHelper.name,
-              image: userFromHelper.avatar, 
-              role: userFromHelper.role as UserRole, 
-              isEmailVerified: userFromHelper.isVerified,
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.avatar,
+              role: user.role as UserRole,
+              isEmailVerified: user.isVerified,
             };
           }
-        } catch (e) {
-          console.error("Error in authorize (dynamic import or verifyCredentials):", e);
-          return null; 
+        } catch (error) {
+          console.error("Authorization error:", error);
         }
         
-        return null; // If userFromHelper is null (invalid credentials)
+        return null;
       },
     }),
   ],
   session: {
-    strategy: "jwt", 
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 24 * 60 * 60,
+  },
+  jwt: {
+    maxAge: 24 * 60 * 60,
   },
   callbacks: {
     jwt: async ({ token, user }) => {
@@ -76,6 +80,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.uid = user.id;
         token.role = user.role;
         token.isEmailVerified = user.isEmailVerified;
+        token.email = user.email;
       }
       return token;
     },
@@ -84,6 +89,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.uid;
         session.user.role = token.role;
         session.user.isEmailVerified = token.isEmailVerified;
+        
+        if (token.email) {
+          session.user.email = token.email;
+        }
       }
       return session;
     },
@@ -91,4 +100,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: '/auth/login',
   },
+  debug: process.env.NODE_ENV === 'development',
 });

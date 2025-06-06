@@ -7,10 +7,10 @@ import cloudinary, { UploadApiResponse } from '@/lib/cloudinary';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  const { id: targetUserId } = params;
+  const { id: targetUserId } = await params; // Await params here
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

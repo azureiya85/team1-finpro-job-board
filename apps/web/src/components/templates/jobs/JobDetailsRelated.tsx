@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Briefcase, Loader2 } from 'lucide-react';
@@ -10,9 +11,22 @@ import { AnimatePresence } from 'framer-motion';
 import { buildRelatedJobsQuery, filterRelatedJobs, parseJobsResponse } from '@/lib/attemptFilterHelper';
 import { useHorizontalScroll, createScrollIndicators } from '@/lib/scrollHelper';
 
+const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
+
 interface JobDetailsRelatedProps {
   currentJob: JobPostingFeatured;
 }
+
+// Create axios instance with proper configuration
+const apiClient = axios.create({
+  baseURL: EXPRESS_API_BASE_URL,
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true, // Important for CORS
+});
 
 export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
   const [relatedJobs, setRelatedJobs] = useState<JobPostingFeatured[]>([]);
@@ -40,16 +54,11 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         console.warn("Query string seems empty, might not fetch anything useful.", queryString);
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const response = await fetch(`${baseUrl}/api/jobs?${queryString}`, {
-        cache: 'no-store',
+      // Use the configured axios instance
+      const response = await apiClient.get(`/jobs?${queryString}`, {
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch related jobs (attempt ${attempt}, status: ${response.status})`);
-      }
-
-      const responseData: unknown = await response.json();
+      const responseData: unknown = response.data;
       const fetchedJobsArray = parseJobsResponse(responseData);
       const filteredJobs = filterRelatedJobs(fetchedJobsArray, currentJob.id, 5);
 
@@ -66,11 +75,28 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
 
     } catch (err) {
       console.error(`Error fetching related jobs (attempt ${attempt}):`, err);
+      
       const MAX_ATTEMPTS = 4;
       if (attempt < MAX_ATTEMPTS) {
         fetchRelatedJobs(attempt + 1);
       } else {
-        setError('Failed to load related jobs after multiple attempts.');
+        let errorMessage = 'Failed to load related jobs after multiple attempts.';
+        
+        if (axios.isAxiosError(err)) {
+          if (err.code === 'NETWORK_ERR' || err.message === 'Network Error') {
+            errorMessage = 'Network connection error. Please check your connection and try again.';
+          } else if (err.response) {
+            errorMessage = err.response.data?.error || 
+                          err.response.data?.message || 
+                          `Server error: ${err.response.status}`;
+          } else if (err.request) {
+            errorMessage = 'No response from server. Please try again later.';
+          } else {
+            errorMessage = err.message;
+          }
+        }
+        
+        setError(errorMessage);
         setRelatedJobs([]);
         setIsLoading(false);
       }
@@ -116,6 +142,12 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         <CardContent>
           <div className="text-center py-8">
             <p className="text-muted-foreground">{error}</p>
+            <button 
+              onClick={() => fetchRelatedJobs(1)} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         </CardContent>
       </Card>

@@ -10,7 +10,8 @@ import {
   Heart,
   FileText,
   Crown,
-  Building2
+  Building2,
+  Loader2
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStores';
 import { useNavbarStore } from '@/stores/navbarStore';
@@ -24,15 +25,42 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import { logoutAction } from '@/lib/actions/authActions';
+import { toast } from 'sonner';
 
 export function NavbarDesktop() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { navigationItems } = useNavbarStore();
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleLogout = () => {
-    logout();
-    router.push('/');
+    if (isPending) return; // Prevent multiple clicks
+    
+    startTransition(async () => {
+      try {
+        // Clear the auth store first
+        logout();
+        
+        // Call server action to clear NextAuth session
+        const result = await logoutAction();
+        
+        if (result.success) {
+          toast.success('Logged out successfully');
+          window.location.href = '/';
+        } else {
+          toast.success('Logged out successfully');
+          router.push('/');
+          router.refresh();
+        }
+      } catch (error) {
+        console.error('NAVBAR: Error during logout:', error);
+        toast.error('Logout failed. Please try again.');
+        router.push('/');
+        router.refresh();
+      }
+    });
   };
 
   // Helper function to get profile link based on user role
@@ -41,8 +69,6 @@ export function NavbarDesktop() {
     
     switch (user.role) {
       case 'COMPANY_ADMIN':
-        // If you have companyId in user object, use it. Otherwise, you'll need to fetch it.
-        // For now, you might need to create a separate page that redirects to the correct company
         return user.companyId ? `/companies/${user.companyId}` : '/dashboard/company-redirect';
       case 'ADMIN':
       case 'USER':
@@ -176,8 +202,13 @@ export function NavbarDesktop() {
                 <DropdownMenuItem 
                   onClick={handleLogout}
                   className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  disabled={isPending}
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  {isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="mr-2 h-4 w-4" />
+                  )}
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>

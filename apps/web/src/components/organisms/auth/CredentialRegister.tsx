@@ -253,7 +253,7 @@ export function CredentialsRegister() {
             Sign In <ChevronsRight className="inline h-4 w-4 -mt-0.5" />
           </Link>
         </motion.div>
-        <motion.div 
+          <motion.div 
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
           transition={{ delay: 0.55 }} 
@@ -267,6 +267,7 @@ export function CredentialsRegister() {
             Register Your Company Here
           </Link>
         </motion.div>
+
       </CardContent>
     </Card>
   );

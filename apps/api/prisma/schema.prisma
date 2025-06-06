@@ -24,7 +24,7 @@ model User {
   name              String?   
   image             String?   
   
-  // Your existing fields
+  // Basic Info
   password          String?
   firstName         String?
   lastName          String?
@@ -831,7 +831,7 @@ enum EmploymentStatus {
    INTERVIEW_REMINDER        // For User & Company Admin
    SUBSCRIPTION_EXPIRING
    SUBSCRIPTION_ENDED
-   NEW_JOB_MATCHING_PROFILE  // For User (if recommendations implemented)
+   NEW_JOB_MATCHING_PROFILE  
    ASSESSMENT_COMPLETED
    CERTIFICATE_ISSUED
  }

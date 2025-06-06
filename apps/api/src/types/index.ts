@@ -56,11 +56,11 @@ export interface GetJobsParams {
   employmentTypes?: EmploymentType[];
   experienceLevels?: ExperienceLevel[];
   companySizes?: CompanySize[]; 
-  isRemote?: boolean;
+   isRemote?: boolean | string;
   companyId?: string; // Filter by specific company
   
   // Response options
-  includePagination?: boolean; // Whether to return pagination info
+ includePagination?: string | boolean; 
 }
 
 export type JobPostingDetailed = JobPosting & {
