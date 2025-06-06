@@ -1,13 +1,10 @@
 import { Request, Response } from 'express';
 import { ApplicationService } from '@/services/application.service';
+import { AuthUser } from '@/types/company';
 
+// Use the global Express Request type that already has AuthUser
 interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    name?: string;
-    email?: string;
-    role?: string;
-  };
+  user?: AuthUser;
 }
 
 export class ApplicationController {
@@ -54,7 +51,7 @@ export class ApplicationController {
         fullName,
         phoneNumber,
         currentLocation
-      }, userName);
+      }, userName || undefined);
 
       // Create application
       const application = await ApplicationService.createApplication({

@@ -17,6 +17,17 @@ interface JobDetailsRelatedProps {
   currentJob: JobPostingFeatured;
 }
 
+// Create axios instance with proper configuration
+const apiClient = axios.create({
+  baseURL: EXPRESS_API_BASE_URL,
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true, // Important for CORS
+});
+
 export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
   const [relatedJobs, setRelatedJobs] = useState<JobPostingFeatured[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,11 +54,8 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         console.warn("Query string seems empty, might not fetch anything useful.", queryString);
       }
 
-      const response = await axios.get(`${EXPRESS_API_BASE_URL}/jobs?${queryString}`, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+      // Use the configured axios instance
+      const response = await apiClient.get(`/jobs?${queryString}`, {
       });
 
       const responseData: unknown = response.data;
@@ -75,10 +83,17 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         let errorMessage = 'Failed to load related jobs after multiple attempts.';
         
         if (axios.isAxiosError(err)) {
-          errorMessage = err.response?.data?.error || 
-                        err.response?.data?.message || 
-                        `HTTP error! status: ${err.response?.status}` ||
-                        err.message;
+          if (err.code === 'NETWORK_ERR' || err.message === 'Network Error') {
+            errorMessage = 'Network connection error. Please check your connection and try again.';
+          } else if (err.response) {
+            errorMessage = err.response.data?.error || 
+                          err.response.data?.message || 
+                          `Server error: ${err.response.status}`;
+          } else if (err.request) {
+            errorMessage = 'No response from server. Please try again later.';
+          } else {
+            errorMessage = err.message;
+          }
         }
         
         setError(errorMessage);
@@ -127,6 +142,12 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         <CardContent>
           <div className="text-center py-8">
             <p className="text-muted-foreground">{error}</p>
+            <button 
+              onClick={() => fetchRelatedJobs(1)} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         </CardContent>
       </Card>

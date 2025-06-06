@@ -1,13 +1,10 @@
 import { Request, Response } from 'express';
 import { UploadService } from '@/services/upload.service';
+import { AuthUser } from '@/types/company';
 
+// Use the global Express Request type that already has AuthUser
 interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    name?: string;
-    email?: string;
-    role?: string;
-  };
+  user?: AuthUser;
 }
 
 export class UploadController {

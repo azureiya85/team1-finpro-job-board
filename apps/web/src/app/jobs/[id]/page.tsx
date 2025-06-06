@@ -12,6 +12,17 @@ import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal';
 
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
+// Create axios instance with proper configuration
+const apiClient = axios.create({
+  baseURL: EXPRESS_API_BASE_URL,
+  timeout: 10000, // 10 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+  withCredentials: true, // Important for CORS
+});
+
 export default function JobDetailPage() {
   const params = useParams();
   const jobId = params.id as string;
@@ -32,17 +43,8 @@ export default function JobDetailPage() {
         setLoading(true);
         setError(null);
         
-        const response = await axios.get<JobPostingFeatured>(
-          `${EXPRESS_API_BASE_URL}/jobs/${jobId}`,
-          {
-            // Axios equivalent of cache: 'no-store'
-            headers: {
-              'Cache-Control': 'no-cache',
-              'Pragma': 'no-cache'
-            }
-          }
-        );
-
+        // Use the configured axios instance
+        const response = await apiClient.get<JobPostingFeatured>(`/jobs/${jobId}`);
         setJob(response.data);
         
       } catch (err) {
@@ -54,10 +56,20 @@ export default function JobDetailPage() {
             return;
           }
           
-          const errorMessage = err.response?.data?.error || 
-                              err.response?.data?.message || 
-                              `HTTP error! status: ${err.response?.status}` ||
-                              err.message;
+          let errorMessage: string;
+          
+          if (err.code === 'NETWORK_ERR' || err.message === 'Network Error') {
+            errorMessage = 'Network connection error. Please check your connection and try again.';
+          } else if (err.response) {
+            errorMessage = err.response?.data?.error || 
+                          err.response?.data?.message || 
+                          `Server error: ${err.response.status}`;
+          } else if (err.request) {
+            errorMessage = 'No response from server. Please try again later.';
+          } else {
+            errorMessage = err.message;
+          }
+          
           setError(errorMessage);
         } else {
           const errorMessage = err instanceof Error 
@@ -99,7 +111,7 @@ export default function JobDetailPage() {
               <p className="text-red-500 mb-4">Error: {error}</p>
               <button 
                 onClick={() => window.location.reload()} 
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
               >
                 Try Again
               </button>
