@@ -4,18 +4,29 @@ import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
 
-// File filter function
+// File filter function 
 const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const validTypes = [
+  const imageTypes = [
+    'image/jpeg',
+    'image/jpg', 
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/svg+xml'
+  ];
+
+  const documentTypes = [
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
 
-  if (validTypes.includes(file.mimetype)) {
+  const allValidTypes = [...imageTypes, ...documentTypes];
+
+  if (allValidTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PDF, DOC, and DOCX files are allowed.'));
+    cb(new Error('Invalid file type. Only images (JPEG, PNG, GIF, WebP, SVG) and documents (PDF, DOC, DOCX) are allowed.'));
   }
 };
 

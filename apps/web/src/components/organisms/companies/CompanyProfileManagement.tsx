@@ -14,6 +14,7 @@ import axios, { AxiosError } from 'axios';
 import CompanyProfileBasicInfo from '@/components/molecules/companies/CompanyProfileBasicInfo';
 import CompanyProfileCompanyInfo from '@/components/molecules/companies/CompanyProfileCompanyInfo';
 import CompanyProfileContactInfo from '@/components/molecules/companies/CompanyProfileContactInfo';
+import CompanyProfileImage from '@/components/molecules/companies/CompanyProfileImage';
 
 interface CompanyProfileEditProps {
   className?: string;
@@ -241,6 +242,12 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
           editableFields={editableFields}
           toggleFieldEdit={toggleFieldEdit}
         />
+
+         <CompanyProfileImage
+    form={form}
+    editableFields={editableFields}
+    toggleFieldEdit={toggleFieldEdit}
+  />
 
         <CompanyProfileCompanyInfo
           form={form}

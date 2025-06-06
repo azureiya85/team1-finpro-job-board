@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { UploadService } from '@/services/upload.service';
 import { AuthUser } from '@/types/company';
 
-// Use the global Express Request type that already has AuthUser
 interface AuthenticatedRequest extends Request {
   user?: AuthUser;
 }
@@ -38,6 +37,13 @@ export class UploadController {
 
       const folder = req.body.folder || 'uploads';
 
+      // Validate file size (5MB max) - additional check
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (req.file.size > maxSize) {
+        res.status(400).json({ error: 'File size exceeds 5MB limit' });
+        return;
+      }
+
       const result = await UploadService.uploadFile({
         userId,
         folder,
@@ -52,9 +58,21 @@ export class UploadController {
       });
     } catch (error) {
       console.error('Upload controller error:', error);
-      res.status(500).json({
-        error: error instanceof Error ? error.message : 'Failed to upload file'
-      });
+      
+      // Return specific error messages from service
+      if (error instanceof Error) {
+        const statusCode = error.message.includes('Invalid file type') || 
+                          error.message.includes('Only image files') || 
+                          error.message.includes('Only document files') ? 400 : 500;
+        
+        res.status(statusCode).json({
+          error: error.message
+        });
+      } else {
+        res.status(500).json({
+          error: 'Failed to upload file'
+        });
+      }
     }
   }
 }

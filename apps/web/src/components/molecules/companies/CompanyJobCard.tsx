@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { MapPin, Clock, DollarSign, Users, Calendar, Briefcase, ChevronDown, ChevronUp, LogIn, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { EmploymentType, ExperienceLevel } from '@prisma/client';
-import type { JobPostingInStore } from '@/types'; // CORRECTED: Import directly from @/types
+import type { JobPostingInStore } from '@/types'; 
 import { employmentTypeLabels, experienceLevelLabels, workTypeLabels } from '@/lib/jobConstants';
 import { useAuthStore } from '@/stores/authStores';
 import { useCVModalStore } from '@/stores/CVModalStores';
