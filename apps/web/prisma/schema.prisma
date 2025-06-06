@@ -23,8 +23,6 @@ model User {
   emailVerified     DateTime? 
   name              String?   
   image             String?   
-  
-  // Your existing fields
   password          String?
   firstName         String?
   lastName          String?
@@ -37,36 +35,27 @@ model User {
   role              UserRole  @default(USER)
   provider          AuthProvider @default(EMAIL)
   providerId        String?
-
-  // Personal Information
   dateOfBirth       DateTime?
   gender            Gender?
   lastEducation     Education?
   currentAddress    String?
   phoneNumber       String?
-
-  // Location 
   latitude          Float?
   longitude         Float?
-  
-  // Foreign keys for location
+
   provinceId        String?
   province          Province? @relation(fields: [provinceId], references: [id])
   cityId            String?
   city              City?     @relation(fields: [cityId], references: [id])
-  
   country           String    @default("Indonesia")
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   lastLoginAt       DateTime?
 
-  // NextAuth Relations
   accounts          Account[]
   sessions          Session[]
   authenticators    Authenticator[]
-
-  // Relations
   company           Company?
   jobApplications   JobApplication[]
   savedJobs         SavedJob[]
@@ -105,6 +94,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
@@ -119,7 +109,6 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// Optional: For WebAuthn support
 model Authenticator {
   credentialID         String  @unique
   userId               String
@@ -146,38 +135,27 @@ model Company {
   industry          String?
   size              CompanySize?
   foundedYear       Int?
-
-  // Contact Information
   email             String?
   phone             String?
   address           String?
-
-  // Location 
   latitude          Float?
   longitude         Float?
-  
-  // Foreign keys for location
+
   provinceId        String?
   province          Province? @relation(fields: [provinceId], references: [id])
   cityId            String?
   city              City?     @relation(fields: [cityId], references: [id])
   country           String    @default("Indonesia")
-
-  // Social Media
   linkedinUrl       String?
   facebookUrl       String?
   twitterUrl        String?
   instagramUrl      String?
-
-  // Admin user
   adminId           String    @unique
   admin             User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
 
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Relations
   jobPostings       JobPosting[]
   companyReviews    CompanyReview[]
   preSelectionTests PreSelectionTest[]
@@ -194,51 +172,37 @@ model JobPosting {
   title             String
   description       String
   banner            String?
-
-  // Job Details
   category          JobCategory
   employmentType    EmploymentType @default(FULL_TIME)
   experienceLevel   ExperienceLevel @default(ENTRY_LEVEL)
   salaryMin         Int?
   salaryMax         Int?
   salaryCurrency    String    @default("IDR")
-
-  // Location - UPDATED APPROACH
   isRemote          Boolean   @default(false)
   latitude          Float?
   longitude         Float?
-  
-  // Foreign keys for location
+
   provinceId        String?
   province          Province? @relation(fields: [provinceId], references: [id])
   cityId            String?
   city              City?     @relation(fields: [cityId], references: [id])
   country           String    @default("Indonesia")
-
-  // Application Settings
   applicationDeadline DateTime?
   isActive          Boolean   @default(true)
   isPriority        Boolean   @default(false)
 
-  // Requirements & Benefits
   requirements      String[]
   benefits          String[]
   tags              String[]
 
-  // Company relation
   companyId         String
   company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Pre-selection test
   preSelectionTestId String?
   preSelectionTest  PreSelectionTest? @relation(fields: [preSelectionTestId], references: [id])
-
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   publishedAt       DateTime?
 
-  // Relations
   applications      JobApplication[]
   savedByUsers      SavedJob[]
   interviewSchedules InterviewSchedule[]
@@ -248,33 +212,23 @@ model JobPosting {
 
 model JobApplication {
   id                String    @id @default(cuid())
-
-  // Application Details
-  cvUrl             String    // URL to uploaded CV
+  cvUrl             String 
   expectedSalary    Int?
   coverLetter       String?
-
-  // Application Status
   status            ApplicationStatus @default(PENDING)
   rejectionReason   String?   // Reason for rejection
   adminNotes        String?   // Internal notes from company admin
-
-  // Test Results (if pre-selection test exists)
   testScore         Int?      // Score out of 100
   testCompletedAt   DateTime?
-
-  // User and Job relations
   userId            String
+
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobPostingId      String
   jobPosting        JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
-
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   reviewedAt        DateTime? // When admin reviewed the application
 
-  // Relations
   interviewSchedules InterviewSchedule[]
 
   @@unique([userId, jobPostingId]) // One application per user per job
@@ -309,7 +263,6 @@ model Province {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // Relations
   cities    City[]
   users     User[]
   companies Company[]
@@ -325,14 +278,12 @@ model City {
   latitude   Float?
   longitude  Float?
   
-  // Province relation
   provinceId String
   province   Province @relation(fields: [provinceId], references: [id])
   
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   
-  // Relations
   users      User[]
   companies  Company[]
   jobPostings JobPosting[]
@@ -347,19 +298,15 @@ model City {
 
 model InterviewSchedule {
   id                String    @id @default(cuid())
-
-  // Interview Details
   scheduledAt       DateTime
   duration          Int       @default(60) // Duration in minutes
   location          String?   // Physical location or meeting URL
   interviewType     InterviewType @default(ONLINE)
   notes             String?
 
-  // Status
   status            InterviewStatus @default(SCHEDULED)
   reminderSent      Boolean   @default(false)
 
-  // Relations
   jobApplicationId  String
   jobApplication    JobApplication @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
   jobPostingId      String
@@ -367,7 +314,6 @@ model InterviewSchedule {
   candidateId       String
   candidate         User      @relation(fields: [candidateId], references: [id])
 
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -386,15 +332,12 @@ model PreSelectionTest {
   timeLimit         Int       @default(30) // Time limit in minutes
   isActive          Boolean   @default(true)
 
-  // Company relation
   companyId         String
   company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Relations
   questions         PreSelectionQuestion[]
   jobPostings       JobPosting[]
 
@@ -431,13 +374,11 @@ model SubscriptionPlan {
   duration          Int       @default(30) // Duration in days
   description       String?
 
-  // Features
   features          Json      // JSON object containing feature flags
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Relations
   subscriptions     Subscription[]
 
   @@map("subscription_plans")
@@ -445,26 +386,21 @@ model SubscriptionPlan {
 
 model Subscription {
   id                String    @id @default(cuid())
-
-  // Subscription Details
   startDate         DateTime  @default(now())
   endDate           DateTime
   status            SubscriptionStatus @default(ACTIVE)
   autoRenew         Boolean   @default(false)
 
-  // Payment Information
   paymentMethod     PaymentMethod
   paymentProof      String?   // URL to payment proof image
   paymentStatus     PaymentStatus @default(PENDING)
   transactionId     String?
 
-  // Relations
   userId            String
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId            String
   plan              SubscriptionPlan @relation(fields: [planId], references: [id])
 
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -484,7 +420,6 @@ model SkillCategory {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Relations
   skillAssessments  SkillAssessment[]
 
   @@map("skill_categories")
@@ -498,15 +433,12 @@ model SkillAssessment {
   timeLimit         Int       @default(30) // Time limit in minutes
   isActive          Boolean   @default(true)
 
-  // Category relation
   categoryId        String
   category          SkillCategory @relation(fields: [categoryId], references: [id])
 
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  // Relations
   questions         SkillAssessmentQuestion[]
   userAssessments   UserSkillAssessment[]
 
@@ -535,23 +467,18 @@ model SkillAssessmentQuestion {
 model UserSkillAssessment {
   id                String    @id @default(cuid())
 
-  // Assessment Results
   score             Int       // Score out of 100
   isPassed          Boolean   @default(false)
   completedAt       DateTime  @default(now())
   timeSpent         Int       // Time spent in minutes
-
-  // Badge Information
   badgeEarned       Boolean   @default(false)
   badgeIssuedAt     DateTime?
 
-  // Relations
   userId            String
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   assessmentId      String
   assessment        SkillAssessment @relation(fields: [assessmentId], references: [id])
 
-  // Certificate relation
   certificates      Certificate[]
 
   @@unique([userId, assessmentId])
@@ -565,16 +492,11 @@ model Certificate {
   description       String?
   issueDate         DateTime  @default(now())
   expiryDate        DateTime? // Optional expiry date
-
-  // Certificate file
   certificateUrl    String    // URL to generated PDF certificate
   qrCodeUrl         String?   // URL to QR code image
-
-  // Verification
   isValid           Boolean   @default(true)
   verificationCount Int       @default(0) // Track how many times verified
 
-  // Relations
   userId            String
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userAssessmentId  String
@@ -592,35 +514,25 @@ model Certificate {
 
 model CompanyReview {
   id                String    @id @default(cuid())
-
-  // Review Content
   title             String?
   review            String
   rating            Float     // Overall rating (1-5)
-
-  // Specific Ratings
   cultureRating     Float?    // Work culture rating
   workLifeBalance   Float?    // Work-life balance rating
   facilitiesRating  Float?    // Facilities rating
   careerRating      Float?    // Career opportunities rating
-
-  // Employment Information
   jobPosition       String
   employmentStatus  EmploymentStatus
   workDuration      String?   // e.g., "2 years", "6 months"
   salaryEstimate    Int?      // Monthly salary estimate
-
-  // Review Settings
   isAnonymous       Boolean   @default(true)
   isVerified        Boolean   @default(false)
 
-  // Relations
   userId            String
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyId         String
   company           Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  // Timestamps
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -635,23 +547,16 @@ model WebsiteAnalytics {
   id                String    @id @default(cuid())
   date              DateTime  @db.Date
 
-  // User Analytics
   totalUsers        Int       @default(0)
   newUsers          Int       @default(0)
   activeUsers       Int       @default(0)
-
-  // Job Analytics
   totalJobPostings  Int       @default(0)
   newJobPostings    Int       @default(0)
   totalApplications Int       @default(0)
   newApplications   Int       @default(0)
-
-  // Subscription Analytics
   totalSubscriptions Int      @default(0)
   newSubscriptions  Int       @default(0)
   subscriptionRevenue Float   @default(0)
-
-  // Assessment Analytics
   assessmentsTaken  Int       @default(0)
   certificatesIssued Int      @default(0)
 

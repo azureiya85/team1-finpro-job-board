@@ -8,7 +8,6 @@ import ApplicantListModal from '@/components/atoms/modals/companies/ApplicationL
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, Search, Loader2, AlertTriangle, RefreshCw, Briefcase } from 'lucide-react';
-import { toast } from 'sonner';
 
 const DEBOUNCE_DELAY_JOBS = 500;
 
@@ -90,7 +89,7 @@ export default function CompanyJobsManagement() {
   };
 
   const handleCreateJob = () => {
-    toast.info("Create Job Posting feature is under construction.");
+    window.location.href = '/jobs/create-jobs';
   };
 
   if (!companyId) {
