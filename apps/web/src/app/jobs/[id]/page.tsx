@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
+import axios from 'axios';
 import { JobPostingFeatured } from '@/types';
 import { JobDetailsHeader } from '@/components/templates/jobs/JobDetailsHeader';
 import { JobDetailsContent } from '@/components/templates/jobs/JobDetailsContent';
@@ -30,35 +31,42 @@ export default function JobDetailPage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`${EXPRESS_API_BASE_URL}/jobs/${jobId}`, {
-          cache: 'no-store', // Fresh data
-        });
+        
+        const response = await axios.get<JobPostingFeatured>(
+          `${EXPRESS_API_BASE_URL}/jobs/${jobId}`,
+          {
+            // Axios equivalent of cache: 'no-store'
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          }
+        );
 
-        if (!response.ok) {
-          if (response.status === 404) {
+        setJob(response.data);
+        
+      } catch (err) {
+        console.error(`Failed to fetch job ${jobId} from Express API:`, err);
+        
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 404) {
             notFound();
             return;
           }
           
-          let errorData;
-          try {
-            errorData = await response.json();
-          } catch {
-            // Not a JSON response
-          }
-          throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+          const errorMessage = err.response?.data?.error || 
+                              err.response?.data?.message || 
+                              `HTTP error! status: ${err.response?.status}` ||
+                              err.message;
+          setError(errorMessage);
+        } else {
+          const errorMessage = err instanceof Error 
+            ? err.message 
+            : typeof err === 'string'
+              ? err 
+              : "Failed to load job details from Express. Please try again later.";
+          setError(errorMessage);
         }
-
-        const data: JobPostingFeatured = await response.json();
-        setJob(data);
-      } catch (err) {
-        console.error(`Failed to fetch job ${jobId} from Express API:`, err);
-        const errorMessage = err instanceof Error 
-          ? err.message 
-          : typeof err === 'string'
-            ? err 
-            : "Failed to load job details from Express. Please try again later.";
-        setError(errorMessage);
       } finally {
         setLoading(false);
       }

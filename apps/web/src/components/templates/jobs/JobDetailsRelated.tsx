@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Briefcase, Loader2 } from 'lucide-react';
@@ -42,15 +43,14 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
         console.warn("Query string seems empty, might not fetch anything useful.", queryString);
       }
 
-      const response = await fetch(`${EXPRESS_API_BASE_URL}/jobs?${queryString}`, {
-        cache: 'no-store',
+      const response = await axios.get(`${EXPRESS_API_BASE_URL}/jobs?${queryString}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch related jobs (attempt ${attempt}, status: ${response.status})`);
-      }
-
-      const responseData: unknown = await response.json();
+      const responseData: unknown = response.data;
       const fetchedJobsArray = parseJobsResponse(responseData);
       const filteredJobs = filterRelatedJobs(fetchedJobsArray, currentJob.id, 5);
 
@@ -67,11 +67,21 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
 
     } catch (err) {
       console.error(`Error fetching related jobs (attempt ${attempt}):`, err);
+      
       const MAX_ATTEMPTS = 4;
       if (attempt < MAX_ATTEMPTS) {
         fetchRelatedJobs(attempt + 1);
       } else {
-        setError('Failed to load related jobs after multiple attempts.');
+        let errorMessage = 'Failed to load related jobs after multiple attempts.';
+        
+        if (axios.isAxiosError(err)) {
+          errorMessage = err.response?.data?.error || 
+                        err.response?.data?.message || 
+                        `HTTP error! status: ${err.response?.status}` ||
+                        err.message;
+        }
+        
+        setError(errorMessage);
         setRelatedJobs([]);
         setIsLoading(false);
       }
