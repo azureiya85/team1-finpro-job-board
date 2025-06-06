@@ -36,6 +36,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",
+    "@tiptap/extension-placeholder": "^2.13.0",
+    "@tiptap/extension-underline": "^2.13.0",
     "@types/axios": "^0.14.0",
     "@types/cookie-parser": "^1.4.8",
     "axios": "^1.7.2",
