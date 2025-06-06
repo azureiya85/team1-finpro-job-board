@@ -4,9 +4,8 @@ export const createSubscriptionSchema = z.object({
   planId: z.string().cuid(),
   paymentMethod: z.enum([
     "BANK_TRANSFER",
-    "CREDIT_CARD",
-    "E_WALLET",
-    "PAYMENT_GATEWAY",
+    "MIDTRANS_BCA_VA",
+    "MIDTRANS_QRIS",
   ]),
   // For manual upload, later we’ll accept a multipart form to handle proof,
   // but here we simply store the paymentMethod. Status starts as PENDING.

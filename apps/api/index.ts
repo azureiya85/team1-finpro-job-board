@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { jobsRouter } from './src/routers/jobsRouters';
+import { jobsRouter } from './src/routers/jobs.router';
 import { errorHandler } from './src/middleware/errorHandler';
 
 dotenv.config();
