@@ -6,6 +6,7 @@ import { CreateJobFormInput } from '@/components/atoms/jobs/CreateJobFormInputs'
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -321,26 +322,36 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
           </Select>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+        <div className="flex gap-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isRemote"
               checked={formData.isRemote}
-              onChange={(e) => setFormData({ ...formData, isRemote: e.target.checked })}
-              className="rounded border-gray-300"
+              onCheckedChange={(checked: boolean) => {
+                setFormData(prev => ({
+                  ...prev,
+                  isRemote: checked,
+                  isPriority: checked ? false : prev.isPriority
+                }));
+              }}
             />
-            <span>Remote Job</span>
-          </label>
+            <label htmlFor="isRemote">Remote Job</label>
+          </div>
 
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="isPriority"
               checked={formData.isPriority}
-              onChange={(e) => setFormData({ ...formData, isPriority: e.target.checked })}
-              className="rounded border-gray-300"
+              onCheckedChange={(checked: boolean) => {
+                setFormData(prev => ({
+                  ...prev,
+                  isPriority: checked,
+                  isRemote: checked ? false : prev.isRemote
+                }));
+              }}
             />
-            <span>Priority Job</span>
-          </label>
+            <label htmlFor="isPriority">Priority Job</label>
+          </div>
         </div>
       </CreateJobFormSection>
 
