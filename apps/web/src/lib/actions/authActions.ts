@@ -132,18 +132,6 @@ export async function registerUserAction(data: RegisterFormData): Promise<Regist
   }
 }
 
-export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
-  try {
-    return await authHelpers.registerCompanyAdmin(data);
-  } catch (error) {
-    console.error('Company registration error:', error);
-    return {
-      success: false,
-      message: 'An unexpected server error occurred during company registration. Please try again.',
-    };
-  }
-}
-
 export async function verifyEmailTokenAction(token: string): Promise<{ success: boolean; message: string }> {
   return authHelpers.verifyEmailToken(token);
 }

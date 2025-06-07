@@ -268,3 +268,61 @@ export interface JobUpdateData {
 }
 
 export type ProcessedJobUpdateData = JobUpdateData;
+
+export interface CompanyData {
+  id: string;
+  name: string;
+  longitude?: number;
+  latitude?: number;
+}
+
+export interface CreateJobFormProps {
+  jobId?: string;
+  isEditing?: boolean;
+  companyId: string;
+}
+
+export interface FormData {
+  title: string;
+  employmentType: EmploymentType | '';
+  category: JobCategory | '';
+  experienceLevel: ExperienceLevel | '';
+  provinceId: string;
+  cityId: string;
+  country: string;
+  companyId: string;
+  salaryMin: string;
+  salaryMax: string;
+  description: string;
+  requirements: string[];
+  benefits: string[];
+  tags: string[];
+  isActive: boolean;
+  isRemote: boolean;
+  isPriority: boolean;
+  applicationDeadline: string;
+}
+
+export interface JobPayload {
+  title: string;
+  description: string;
+  category: JobCategory;
+  employmentType: EmploymentType;
+  experienceLevel: ExperienceLevel;
+  salaryMin?: number;
+  salaryMax?: number;
+  salaryCurrency: string;
+  isRemote: boolean;
+  isPriority: boolean;
+  isActive: boolean;
+  provinceId?: string;
+  cityId?: string;
+  country: string;
+  longitude?: number;
+  latitude?: number;
+  applicationDeadline?: string;
+  requirements: string[];
+  benefits: string[];
+  tags: string[];
+  companyId: string;
+}
