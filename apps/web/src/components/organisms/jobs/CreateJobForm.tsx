@@ -86,6 +86,49 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
     fetchLocations();
   }, []);
 
+  useEffect(() => {
+    const fetchJobData = async () => {
+      if (isEditing && jobId) {
+        try {
+          const response = await fetch(`/api/jobs/${jobId}`);
+          if (!response.ok) {
+            throw new Error('Failed to fetch job data');
+          }
+          const jobData = await response.json();
+          
+          // Update formData dengan data job yang ada
+          setFormData({
+            title: jobData.title || '',
+            employmentType: jobData.employmentType || '',
+            category: jobData.category || '',
+            experienceLevel: jobData.experienceLevel || '',
+            provinceId: jobData.provinceId || '',
+            cityId: jobData.cityId || '',
+            country: jobData.country || 'Indonesia',
+            companyId: companyId,
+            salaryMin: jobData.salaryMin?.toString() || '',
+            salaryMax: jobData.salaryMax?.toString() || '',
+            description: jobData.description || '',
+            requirements: jobData.requirements || [],
+            benefits: jobData.benefits || [],
+            tags: jobData.tags || [],
+            isActive: jobData.isActive ?? true,
+            isRemote: jobData.isRemote || false,
+            isPriority: jobData.isPriority || false,
+            applicationDeadline: jobData.applicationDeadline 
+              ? new Date(jobData.applicationDeadline).toISOString().split('T')[0]
+              : '',
+          });
+        } catch (error) {
+          console.error('Error fetching job data:', error);
+          toast.error('Failed to load job data');
+        }
+      }
+    };
+
+    fetchJobData();
+  }, [isEditing, jobId, companyId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -158,17 +201,29 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify(payload),
       });
 
-      console.log("Payload Detail: ", payload)
-      console.log('Server response:', response);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Server response:', errorData);
-        throw new Error(errorData.message || 'Failed to save job posting');
+        const contentType = response.headers.get('content-type');
+        let errorMessage = 'Failed to save job posting';
+
+        if (contentType?.includes('application/json')) {
+          const errorData = await response.json();
+          console.error('JSON error response:', errorData);
+          errorMessage = errorData.message || errorMessage;
+        } else {
+          const textError = await response.text();
+          console.error('Non-JSON response:', textError);
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
 
       toast.success(isEditing ? 'Job updated successfully' : 'Job created successfully');
@@ -194,14 +249,14 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <CreateJobFormSection title="Basic Information">
-      <CreateJobFormInput
-        label="Job Title"
-        name="title"
-        value={formData.title}
-        onChange={handleInputChange}
-        placeholder="Example: Senior Frontend Developer"
-        required={true}
-      />
+        <CreateJobFormInput
+          label="Job Title"
+          name="title"
+          value={formData.title}
+          onChange={handleInputChange}
+          placeholder="Example: Senior Frontend Developer"
+          required={true}
+        />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select 

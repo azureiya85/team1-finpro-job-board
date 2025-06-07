@@ -159,16 +159,3 @@ export async function resetPasswordAction(token: string, newPassword: string): P
 export async function resendVerificationEmailAction(email: string): Promise<{ success: boolean; message: string }> {
   return authHelpers.resendVerificationEmail(email);
 }
-
-export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
-  try {
-    const result = await authHelpers.registerCompanyAdmin(data);
-    return result;
-  } catch (error) {
-    console.error('Unexpected error in registerCompanyAdminAction:', error);
-    return {
-      success: false,
-      message: 'An unexpected server error occurred during company registration. Please try again.',
-    };
-  }
-}
