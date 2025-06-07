@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-
     // Dapatkan company ID dari user yang terautentikasi
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -58,7 +57,6 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date()
     };
 
-
     // Buat job posting baru menggunakan prisma.jobPosting.create
     const job = await prisma.jobPosting.create({
       data: jobData
@@ -73,7 +71,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[API_JOBS_POST] Detailed Error:', error);
     
-    // Handle Prisma-specific errors
     if (error instanceof Error) {
       console.error('Error name:', error.name);
       console.error('Error message:', error.message);

@@ -53,7 +53,6 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Input states for badge inputs
   const [requirementInput, setRequirementInput] = useState('');
   const [benefitInput, setBenefitInput] = useState('');
   const [tagInput, setTagInput] = useState('');
