@@ -1,27 +1,28 @@
 import prisma from "../lib/prisma";
-import { createSubscriptionSchema, updateSubscriptionSchema } from "../lib/validations/zodSubscriptionValidation";
 import { sendEmail } from "../utils/email";
 import { scheduleReminder } from "../controllers/scheduler";
 import { coreApi } from "../utils/midtrans";
 import type { ChargeParams } from "midtrans-client";
 
 export class SubscriptionService {
-  static async createManualSubscription(userId: string, planId: string, paymentMethod: string, filePath?: string) {
+  static async createManualSubscription(
+    userId: string,
+    planId: string,
+    paymentMethod: string,
+    filePath?: string
+  ) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
     if (!plan) throw { status: 404, message: "Plan not found" };
 
-    // compute dates
     const now = new Date();
     const endDate = new Date(now.getTime() + plan.duration * 24 * 60 * 60 * 1000);
 
-    // require proof for bank transfer
     let proofUrl: string | undefined;
     if (paymentMethod === "BANK_TRANSFER") {
-      if (!filePath) throw { status: 400, message: "Bank Transfer requires file upload (proof)" };
+      if (!filePath) throw { status: 400, message: "Bank Transfer requires proof file" };
       proofUrl = filePath;
     }
 
-    // insert
     const sub = await prisma.subscription.create({
       data: {
         userId,
@@ -34,7 +35,6 @@ export class SubscriptionService {
       },
     });
 
-    // email
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user?.email) {
       await sendEmail(
@@ -47,7 +47,11 @@ export class SubscriptionService {
     return sub;
   }
 
-  static async createMidtransSubscription(userId: string, planId: string, paymentMethod: string) {
+  static async createMidtransSubscription(
+    userId: string,
+    planId: string,
+    paymentMethod: string
+  ) {
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
     if (!plan) throw { status: 404, message: "Plan not found" };
 
@@ -75,7 +79,7 @@ export class SubscriptionService {
 
   static async confirmMidtrans(orderId: string, transactionId: string, userId: string) {
     const existing = await prisma.subscription.findUnique({ where: { midtransOrderId: orderId } });
-    if (!existing) throw { status: 404, message: "Subscription not found." };
+    if (!existing) throw { status: 404, message: "Subscription not found" };
     if (existing.userId !== userId) throw { status: 403, message: "Forbidden" };
 
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id: existing.planId } });
@@ -94,7 +98,6 @@ export class SubscriptionService {
       },
     });
 
-    // email + schedule
     const user = await prisma.user.findUnique({ where: { id: existing.userId } });
     if (user?.email) {
       await sendEmail(
@@ -132,12 +135,12 @@ export class SubscriptionService {
   }
 
   static async listAll(userRole: string) {
-    if (userRole !== "DEVELOPER") throw { status: 403, message: "Forbidden" };
+    if (userRole !== "Developer") throw { status: 403, message: "Forbidden" };
     return prisma.subscription.findMany({ include: { user: true, plan: true } });
   }
 
   static async approve(id: string, userRole: string) {
-    if (userRole !== "DEVELOPER") throw { status: 403, message: "Forbidden" };
+    if (userRole !== "Developer") throw { status: 403, message: "Forbidden" };
     const sub = await prisma.subscription.update({ where: { id }, data: { status: "ACTIVE" } });
     const user = await prisma.user.findUnique({ where: { id: sub.userId } });
     const plan = await prisma.subscriptionPlan.findUnique({ where: { id: sub.planId } });
