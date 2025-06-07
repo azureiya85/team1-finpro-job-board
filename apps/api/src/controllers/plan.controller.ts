@@ -1,65 +1,76 @@
-// apps/api/src/controllers/plan.controller.ts
-import { RequestHandler } from "express";
-import prisma from "../lib/prisma";
+// src/controllers/plan.controller.ts
+import { Request, Response } from "express";
+import { PlanService } from "../services/plan.service";
 import { createPlanSchema, updatePlanSchema } from "../lib/validations/zodPlanValidation";
 
-/**
- * GET /api/plan
- * List all subscription plans (public).
- */
-export const listPlans: RequestHandler = async (req, res) => {
-  const plans = await prisma.subscriptionPlan.findMany();
-  res.json(plans);
-};
-
-/**
- * POST /api/plan
- * (DEVELOPER only) Create a new subscription plan.
- */
-export const createPlan: RequestHandler = async (req, res) => {
-  // @ts-ignore: userRole was injected by auth.middleware
-  if ((req as any).userRole !== "DEVELOPER") {
-    res.status(403).json({ message: "Forbidden" });
-    return;
+export class PlanController {
+  static async list(req: Request, res: Response): Promise<void> {
+    try {
+      const plans = await PlanService.listPlans();
+      res.json(plans);
+      return;
+    } catch (err: any) {
+      console.error("Error listing plans:", err);
+      res.status(500).json({ message: "Failed to list plans" });
+      return;
+    }
   }
 
-  const data = createPlanSchema.parse(req.body);
-  const plan = await prisma.subscriptionPlan.create({ data });
+  static async create(req: Request, res: Response): Promise<void> {
+    const userRole = (req as any).userRole as string;
+    let data: { name: string; price: number; duration: number; description?: string };
 
-  res.status(201).json(plan);
-};
+    try {
+      data = createPlanSchema.parse(req.body);
+    } catch {
+      res.status(400).json({ message: "Invalid request body." });
+      return;
+    }
 
-/**
- * PUT /api/plan/:id
- * (DEVELOPER only) Update an existing plan.
- */
-export const updatePlan: RequestHandler = async (req, res) => {
-  // @ts-ignore
-  if ((req as any).userRole !== "DEVELOPER") {
-    res.status(403).json({ message: "Forbidden" });
-    return;
+    try {
+      const plan = await PlanService.createPlan(userRole, data);
+      res.status(201).json(plan);
+      return;
+    } catch (err: any) {
+      console.error("Error creating plan:", err);
+      res.status(err.status || 500).json({ message: err.message || "Failed to create plan" });
+      return;
+    }
   }
 
-  const data = updatePlanSchema.parse(req.body);
-  const updated = await prisma.subscriptionPlan.update({
-    where: { id: req.params.id },
-    data,
-  });
+  static async update(req: Request, res: Response): Promise<void> {
+    const userRole = (req as any).userRole as string;
+    let data: { name?: string; price?: number; duration?: number; description?: string };
 
-  res.json(updated);
-};
+    try {
+      data = updatePlanSchema.parse(req.body);
+    } catch {
+      res.status(400).json({ message: "Invalid request body." });
+      return;
+    }
 
-/**
- * DELETE /api/plan/:id
- * (DEVELOPER only) Delete a plan.
- */
-export const deletePlan: RequestHandler = async (req, res) => {
-  // @ts-ignore
-  if ((req as any).userRole !== "DEVELOPER") {
-    res.status(403).json({ message: "Forbidden" });
-    return;
+    try {
+      const updated = await PlanService.updatePlan(userRole, req.params.id, data);
+      res.json(updated);
+      return;
+    } catch (err: any) {
+      console.error("Error updating plan:", err);
+      res.status(err.status || 500).json({ message: err.message || "Failed to update plan" });
+      return;
+    }
   }
 
-  await prisma.subscriptionPlan.delete({ where: { id: req.params.id } });
-  res.status(204).send();
-};
+  static async delete(req: Request, res: Response): Promise<void> {
+    const userRole = (req as any).userRole as string;
+
+    try {
+      await PlanService.deletePlan(userRole, req.params.id);
+      res.status(204).send();
+      return;
+    } catch (err: any) {
+      console.error("Error deleting plan:", err);
+      res.status(err.status || 500).json({ message: err.message || "Failed to delete plan" });
+      return;
+    }
+  }
+}
