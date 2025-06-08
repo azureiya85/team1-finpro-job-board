@@ -95,23 +95,22 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
             throw new Error('Failed to fetch job data');
           }
           const jobData = await response.json();
-          
-          // Update formData dengan data job yang ada
+    
           setFormData({
             title: jobData.title || '',
             employmentType: jobData.employmentType || '',
             category: jobData.category || '',
             experienceLevel: jobData.experienceLevel || '',
-            provinceId: jobData.provinceId || '',
-            cityId: jobData.cityId || '',
+            provinceId: jobData.province?.id || '', // Ubah ini
+            cityId: jobData.city?.id || '', // Ubah ini
             country: jobData.country || 'Indonesia',
             companyId: companyId,
             salaryMin: jobData.salaryMin?.toString() || '',
             salaryMax: jobData.salaryMax?.toString() || '',
             description: jobData.description || '',
-            requirements: jobData.requirements || [],
-            benefits: jobData.benefits || [],
-            tags: jobData.tags || [],
+            requirements: Array.isArray(jobData.requirements) ? jobData.requirements : [],
+            benefits: Array.isArray(jobData.benefits) ? jobData.benefits : [],
+            tags: Array.isArray(jobData.tags) ? jobData.tags : [],
             isActive: jobData.isActive ?? true,
             isRemote: jobData.isRemote || false,
             isPriority: jobData.isPriority || false,
@@ -213,14 +212,16 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
         const contentType = response.headers.get('content-type');
         let errorMessage = 'Failed to save job posting';
 
-        if (contentType?.includes('application/json')) {
-          const errorData = await response.json();
-          console.error('JSON error response:', errorData);
-          errorMessage = errorData.message || errorMessage;
-        } else {
-          const textError = await response.text();
-          console.error('Non-JSON response:', textError);
-          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errorText = await response.text();
+          
+          if (contentType?.includes('application/json')) {
+            const errorData = JSON.parse(errorText);
+            console.error('Parsed error data:', errorData);
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          }
+        } catch (parseError) {
+          console.error('Error parsing response:', parseError);
         }
 
         throw new Error(errorMessage);
