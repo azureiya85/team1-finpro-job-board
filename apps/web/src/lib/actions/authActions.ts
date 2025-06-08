@@ -132,18 +132,6 @@ export async function registerUserAction(data: RegisterFormData): Promise<Regist
   }
 }
 
-export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
-  try {
-    return await authHelpers.registerCompanyAdmin(data);
-  } catch (error) {
-    console.error('Company registration error:', error);
-    return {
-      success: false,
-      message: 'An unexpected server error occurred during company registration. Please try again.',
-    };
-  }
-}
-
 export async function verifyEmailTokenAction(token: string): Promise<{ success: boolean; message: string }> {
   return authHelpers.verifyEmailToken(token);
 }
@@ -158,4 +146,17 @@ export async function resetPasswordAction(token: string, newPassword: string): P
 
 export async function resendVerificationEmailAction(email: string): Promise<{ success: boolean; message: string }> {
   return authHelpers.resendVerificationEmail(email);
+}
+
+export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
+  try {
+    const result = await authHelpers.registerCompanyAdmin(data);
+    return result;
+  } catch (error) {
+    console.error('Unexpected error in registerCompanyAdminAction:', error);
+    return {
+      success: false,
+      message: 'An unexpected server error occurred during company registration. Please try again.',
+    };
+  }
 }

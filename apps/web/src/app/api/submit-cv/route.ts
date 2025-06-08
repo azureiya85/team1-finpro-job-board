@@ -5,12 +5,11 @@ import { z } from 'zod';
 import { ApplicationStatus } from '@prisma/client';
 import { submitCVSchema } from '@/lib/validations/zodApplicationValidation';
 
-// Define the user update type
+// Define the user update type 
 interface UserUpdateData {
   phoneNumber?: string;
-  currentAddress?: string;
+  currentAddress?: string;  
   name?: string;
-  currentLocation?: string;
   fullName?: string;
 }
 
@@ -46,7 +45,7 @@ export async function POST(request: NextRequest) {
       coverLetter, 
       fullName,
       phoneNumber,
-      currentLocation,
+      currentLocation,  
     } = validationResult.data;
 
     // Check if job posting exists and is active
@@ -103,7 +102,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update user profile with application info (if provided) - FIXED TYPE
+    // Update user profile with application info
     const userUpdateData: UserUpdateData = {};
     
     if (phoneNumber) {
@@ -111,7 +110,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (currentLocation) {
-      userUpdateData.currentLocation = currentLocation;
+      userUpdateData.currentAddress = currentLocation;
     }
     
     // Update name if not set
@@ -173,7 +172,6 @@ export async function POST(request: NextRequest) {
         }
       });
     } catch (notificationError) {
-      // Log but don't fail the application submission
       console.error('Failed to create notification:', notificationError);
     }
 
@@ -188,7 +186,6 @@ export async function POST(request: NextRequest) {
         }
       });
     } catch (notificationError) {
-      // Log but don't fail the application submission
       console.error('Failed to create user notification:', notificationError);
     }
 
@@ -224,7 +221,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET method remains the same...
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
