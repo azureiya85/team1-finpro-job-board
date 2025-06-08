@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Briefcase, Calendar, Users, Edit, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { employmentTypeLabels } from '@/lib/jobConstants';
+import { useRouter } from 'next/navigation';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,7 @@ interface CompanyJobCardAdminProps {
 }
 
 export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAdminProps) {
+  const router = useRouter();
   const {
     setSelectedJobForApplicants,
     removeJobFromManagement,    
@@ -37,6 +39,10 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
 
   const handleViewApplicants = () => {
     setSelectedJobForApplicants(job);
+  };
+
+  const handleEditJob = () => {
+    router.push(`/jobs/create-jobs/edit-jobs/${job.id}`);
   };
 
   const handleDeleteJob = async () => {
@@ -106,7 +112,12 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
         >
           <Eye className="w-4 h-4 mr-1" /> Applicants
         </Button>
-        <Button variant="outline" size="sm" disabled> {/* Placeholder for Edit */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleEditJob}
+          disabled={!job.isActive}
+        >
           <Edit className="w-4 h-4 mr-1" /> Edit
         </Button>
         <AlertDialog>
