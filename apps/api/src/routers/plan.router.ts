@@ -1,6 +1,6 @@
 import { Router } from "express";
-import {listPlans,createPlan,updatePlan,deletePlan,} from "../../controllers/plan.controller";
-import { requireAuth } from "../../middleware/auth.middleware";
+import {listPlans,createPlan,updatePlan,deletePlan,} from "../controllers/plan.controller";
+import { requireAuth } from "../middleware/auth.middleware";
 
 const router = Router();
 

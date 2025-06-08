@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import planRoutes from "./src/routers/developer/plan.router";
+import planRoutes from "./src/routers/plan.router";
 import subscriptionRoutes from "./src/routers/subscription.router";
-import devPlanRoutes from "./src/routers/developer/subscription-plans.router";
-import devUserSubsRoutes from "./src/routers/developer/user-subscriptions.router";
+import devPlanRoutes from "./src/routers/plan.router";
+import devUserSubsRoutes from "./src/routers/plan.router";
 import cvRoutes from "./src/routers/cv.router";
 
 dotenv.config();

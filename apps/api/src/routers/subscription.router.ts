@@ -3,16 +3,7 @@ import { Router } from "express";
 import multer from "multer";
 import { cloudinaryStorage } from "../utils/cloudinary";
 import { requireAuth } from "../middleware/auth.middleware";
-
-import {
-  createSubscription,
-  confirmSubscription,
-  listSubscriptions,
-  updateSubscription,
-  cancelSubscription,
-  listAllSubscriptions,
-  approveSubscription,
-} from "../controllers/subscription.controller";
+import {createSubscription,confirmSubscription,listSubscriptions,updateSubscription,cancelSubscription,listAllSubscriptions,approveSubscription,} from "../controllers/subscriptions.controller";
 
 const router = Router();
 const upload = multer({ storage: cloudinaryStorage });
