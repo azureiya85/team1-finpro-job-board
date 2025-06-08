@@ -1,7 +1,7 @@
 // apps/api/src/middleware/auth.middleware.ts
-import { RequestHandler } from "express";
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import prisma from "../lib/prisma";
+import prisma from "../prisma";    // ← your prisma client
 
 declare global {
   namespace Express {
@@ -18,7 +18,11 @@ const JWT_SECRET = process.env.JWT_SECRET!;
  * requireAuth checks for a Bearer token, verifies it,
  * and attaches `userId` and `userRole` to `req`.
  */
-export const requireAuth: RequestHandler = async (req, res, next) => {
+export const requireAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     res.status(401).json({ message: "No token provided" });
@@ -32,7 +36,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
   }
 
   try {
-    const payload = (jwt.verify(token, JWT_SECRET) as unknown) as { sub: string };
+    const payload = jwt.verify(token, JWT_SECRET) as { sub: string };
     req.userId = payload.sub;
 
     const user = await prisma.user.findUnique({ where: { id: payload.sub } });
@@ -47,4 +51,17 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     res.status(401).json({ message: "Invalid token" });
     return;
   }
+};
+
+/**
+ * requireRole ensures the authenticated user has the given role.
+ */
+export const requireRole = (role: string) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (req.userRole !== role) {
+      res.status(403).json({ message: "Forbidden: insufficient role" });
+      return;
+    }
+    next();
+  };
 };
