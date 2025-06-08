@@ -1,4 +1,3 @@
-import { Cog } from 'lucide-react'; 
 // import { Button } from '@/components/ui/button'; // For CTA button
 // import Link from 'next/link';
 
@@ -13,9 +12,6 @@ export function HeroSection() {
       {/* <div className="absolute inset-0 bg-black/50 z-0"></div> */}
       
       <div className="container relative z-10 mx-auto px-4 text-center">
-        <div className="mb-6 flex justify-center">
-          <Cog className="h-20 w-20 md:h-28 md:w-28 text-tertiary-400 dark:text-tertiary-300" />
-        </div>
         <h1 className="mb-4 font-heading text-5xl font-extrabold tracking-tight md:text-6xl lg:text-7xl">
           Work Vault
         </h1>
@@ -27,21 +23,6 @@ export function HeroSection() {
             to view more of the website.
           </p>
         </div>
-        {/* Optional Call to Action Buttons */}
-        {/*
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link href="/jobs">
-            <Button size="lg" className="bg-tertiary-500 hover:bg-tertiary-600 text-tertiary-foreground dark:text-secondary-900 w-full sm:w-auto">
-              Find a Job
-            </Button>
-          </Link>
-          <Link href="/companies/post-job">
-            <Button size="lg" variant="outline" className="border-primary-foreground/50 hover:bg-primary-foreground/10 text-primary-foreground w-full sm:w-auto">
-              Post a Job
-            </Button>
-          </Link>
-        </div>
-        */}
       </div>
     </section>
   );
