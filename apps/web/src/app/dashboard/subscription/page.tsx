@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import useSWR from "swr";
 import { api } from "../../../lib/axios";
 import { Button } from "../../../components/subscription/button";
@@ -180,11 +181,15 @@ export default function SubscriptionPage() {
           {midtransInfo && paymentMethod === "MIDTRANS_QRIS" && (
             <div className="mt-4 p-4 border rounded bg-gray-50 text-center">
               <h3 className="text-md font-semibold mb-2">QRIS Code</h3>
-              <img
-                src={`data:image/png;base64,${midtransInfo.qr_string}`}
-                alt="QRIS Code"
-                className="w-48 h-48 mx-auto"
-              />
+              <div className="mx-auto" style={{ width: '192px', height: '192px' }}>
+                <Image
+                  src={`data:image/png;base64,${midtransInfo.qr_string}`}
+                  alt="QRIS Code"
+                  width={192}
+                  height={192}
+                  className="mx-auto"
+                />
+              </div>
               <p className="text-sm text-gray-600 mt-2">
                 Scan this QR with any e-wallet / QRIS app. Once you complete payment, your
                 subscription will be activated.
