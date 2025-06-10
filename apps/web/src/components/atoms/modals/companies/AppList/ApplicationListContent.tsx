@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ApplicationStatus } from '@prisma/client';
 import { getStatusDisplay } from '@/lib/applicants/statusValidation'; 
-import { getStatusAction } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
+import { getStatusAction } from '@/lib/statusConfig';
 import { FileText, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,

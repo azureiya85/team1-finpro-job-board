@@ -1,7 +1,8 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { formatDistanceToNowStrict } from 'date-fns';
-import { id as IndonesianLocale } from 'date-fns/locale'; // Optional: for Indonesian "lalu" suffix
+import { id as IndonesianLocale } from 'date-fns/locale';
+import { Plan } from '@/types/subscription';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -49,3 +50,26 @@ export function formatEducationLevel(educationLevel: string): string {
     .toLowerCase()
     .replace(/\b\w/g, (l) => l.toUpperCase());
 }
+
+// Helper function to convert features object to readable array
+export const formatFeatures = (features: Plan['features']): string[] => {
+  const featureList: string[] = [];
+  
+  if (features.cvGenerator) {
+    featureList.push("CV Generator Access");
+  }
+  
+  if (features.skillAssessmentLimit) {
+    if (features.skillAssessmentLimit === 'unlimited' || features.skillAssessmentLimit === 999) {
+      featureList.push("Unlimited Skill Assessments");
+    } else {
+      featureList.push(`${features.skillAssessmentLimit} Skill Assessments per month`);
+    }
+  }
+  
+  if (features.priorityCvReview) {
+    featureList.push("Priority CV Review");
+  }
+  
+  return featureList;
+};
