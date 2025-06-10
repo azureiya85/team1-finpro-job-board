@@ -68,17 +68,17 @@ export function JobDetailsContent({ job }: JobDetailsContentProps) {
           <Card className="border-2 border-border/50 hover:border-primary/20 transition-colors duration-300">
             <CardContent className="p-8">
               <h3 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-                <Gift className="h-6 w-6 text-primary" />
+                <CheckCircle className="h-6 w-6 text-primary" />
                 Benefits
               </h3>
               <ul className="space-y-3">
-                {job.benefits.map((benefit, index) => (
+                {job.benefits.map((requirement, index) => (
                   <li key={index} className="flex items-start gap-3 group">
                     <div className="flex-shrink-0 mt-1">
-                      <CheckCircle className="w-5 h-5 text-green-500 group-hover:scale-110 transition-transform duration-200" />
+                      <div className="w-2 h-2 bg-primary rounded-full group-hover:scale-125 transition-transform duration-200"></div>
                     </div>
                     <span className="text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors duration-200">
-                      {benefit}
+                      {requirement}
                     </span>
                   </li>
                 ))}

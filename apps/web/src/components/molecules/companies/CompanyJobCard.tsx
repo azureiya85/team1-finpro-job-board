@@ -179,37 +179,29 @@ export default function CompanyJobCard({ job }: CompanyJobCardProps) {
             <Separator />
             <Collapsible open={showAllBenefits} onOpenChange={setShowAllBenefits}>
               <div className="space-y-3">
-                <h4 className="font-semibold text-foreground flex items-center gap-2">
+              <h4 className="font-semibold text-foreground flex items-center gap-2">
                   Benefits
                   <Badge variant="secondary" className="text-xs">
                     {job.benefits.length}
                   </Badge>
                 </h4>
 
-                <div className="flex flex-wrap gap-2">
-                  {job.benefits.slice(0, 4).map((benefit: string, index: number) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
-                    >
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  {job.benefits.slice(0, 3).map((benefit: string, index: number) => (
+                    <li key={index} className="leading-relaxed">
                       {benefit}
-                    </Badge>
+                    </li>
                   ))}
-                </div>
+                </ul>
 
-                <CollapsibleContent className="space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    {job.benefits.slice(4).map((benefit: string, index: number) => ( 
-                      <Badge
-                        key={index + 4}
-                        variant="secondary"
-                        className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
-                      >
+                <CollapsibleContent className="space-y-2">
+                  <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                    {job.benefits.slice(3).map((benefit: string, index: number) => (
+                      <li key={index + 3} className="leading-relaxed">
                         {benefit}
-                      </Badge>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </CollapsibleContent>
 
                 {job.benefits.length > 4 && (
