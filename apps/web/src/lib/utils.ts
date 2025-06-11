@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge"
 import { formatDistanceToNowStrict } from 'date-fns';
 import { id as IndonesianLocale } from 'date-fns/locale';
 import { Plan } from '@/types/subscription';
+import { Subscription as PrismaSubscription, SubscriptionPlan } from '@prisma/client';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -13,7 +14,7 @@ export function formatRelativeDate(date: Date | string | undefined): string {
   try {
     return formatDistanceToNowStrict(new Date(date), { 
       addSuffix: true,
-      locale: IndonesianLocale // Optional: if you want "X hari yang lalu" instead of "X days ago"
+      locale: IndonesianLocale 
     });
   } catch (error) {
     console.error("Error formatting date:", error);
@@ -73,3 +74,105 @@ export const formatFeatures = (features: Plan['features']): string[] => {
   
   return featureList;
 };
+
+// ====== SUBSCRIPTION UTILITIES ======
+
+export interface RefundCalculation {
+  daysUsed: number;
+  daysRemaining: number;
+  totalDays: number;
+  refundAmount: number;
+  refundPercentage: number;
+}
+
+export interface SubscriptionWithPlan extends PrismaSubscription {
+  plan: SubscriptionPlan;
+}
+
+export function calculateRefund(
+  subscription: SubscriptionWithPlan,
+  cancellationDate: Date = new Date()
+): RefundCalculation {
+  const startDate = subscription.startDate;
+  const endDate = subscription.endDate;
+  const planPrice = subscription.plan.price;
+
+  // Calculate days
+  const daysUsed = Math.floor((cancellationDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const totalDays = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.max(0, totalDays - daysUsed);
+
+  // Calculate refund
+  const refundPercentage = totalDays > 0 ? (daysRemaining / totalDays) : 0;
+  const refundAmount = Math.max(0, planPrice * refundPercentage);
+
+  return {
+    daysUsed: Math.max(0, daysUsed),
+    daysRemaining,
+    totalDays,
+    refundAmount: Math.round(refundAmount * 100) / 100, // Round to 2 decimal places
+    refundPercentage: Math.round(refundPercentage * 100 * 100) / 100, // Percentage with 2 decimal places
+  };
+}
+
+export function canCancelSubscription(subscription: PrismaSubscription): { canCancel: boolean; reason?: string } {
+  if (subscription.status === 'CANCELLED') {
+    return { canCancel: false, reason: 'Subscription is already cancelled' };
+  }
+
+  if (subscription.status === 'EXPIRED') {
+    return { canCancel: false, reason: 'Cannot cancel an expired subscription' };
+  }
+
+  return { canCancel: true };
+}
+
+
+export function getRefundPolicy(subscription: SubscriptionWithPlan): {
+  eligibleForRefund: boolean;
+  refundType: 'full' | 'partial' | 'none';
+  reason?: string;
+} {
+  const now = new Date();
+  const daysSinceStart = Math.floor((now.getTime() - subscription.startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysSinceStart <= 3) {
+    return { eligibleForRefund: true, refundType: 'full' };
+  } else if (daysSinceStart <= 30) {
+    return { eligibleForRefund: true, refundType: 'partial' };
+  } else {
+    return { 
+      eligibleForRefund: false, 
+      refundType: 'none',
+      reason: 'Refund period has expired (30 days)'
+    };
+  }
+}
+
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+}
+
+export function generateCancellationMessage(
+  subscription: SubscriptionWithPlan,
+  refundInfo: RefundCalculation,
+  immediateCancel: boolean
+): string {
+  const planName = subscription.plan.name;
+  const endDate = subscription.endDate.toLocaleDateString('id-ID');
+  
+  if (immediateCancel) {
+    if (refundInfo.refundAmount > 0) {
+      return `Your ${planName} subscription has been cancelled immediately. You will receive a refund of ${formatCurrency(refundInfo.refundAmount)} for the unused ${refundInfo.daysRemaining} days.`;
+    } else {
+      return `Your ${planName} subscription has been cancelled immediately.`;
+    }
+  } else {
+    return `Your ${planName} subscription will be cancelled at the end of the current period (${endDate}). You will continue to have access until then.`;
+  }
+}

@@ -1,3 +1,9 @@
+import { 
+  SubscriptionStatus as PrismaSubscriptionStatus, 
+  PaymentStatus, 
+  RefundStatus 
+} from '@prisma/client';
+
 export interface Plan {
   id: string;
   name: string;
@@ -48,3 +54,15 @@ export type PaymentMethod =
   | "E_WALLET";
 
 export type SubscriptionStatus = "ACTIVE" | "PENDING" | "CANCELLED" | "EXPIRED";
+
+export interface SubscriptionUpdateData {
+  status: PrismaSubscriptionStatus;
+  cancelledAt: Date;
+  updatedAt: Date;
+  cancellationReason?: string;
+  endDate?: Date;
+  refundAmount?: number;
+  refundStatus?: RefundStatus;
+  autoRenew?: boolean;
+  paymentStatus?: PaymentStatus;
+}

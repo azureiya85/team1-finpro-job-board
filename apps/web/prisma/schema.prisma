@@ -391,9 +391,13 @@ model Subscription {
   endDate           DateTime
   status            SubscriptionStatus @default(ACTIVE)
   autoRenew         Boolean   @default(false)
+  cancelledAt       DateTime? 
+  cancellationReason String?  
+  refundAmount      Float?    
+  refundStatus      RefundStatus? 
 
   paymentMethod     PaymentMethod
-  paymentProof      String?   // URL to payment proof image
+  paymentProof      String?   
   paymentStatus     PaymentStatus @default(PENDING)
   transactionId     String?
 
@@ -745,4 +749,11 @@ enum EmploymentStatus {
 enum CityType {
   CITY  
   REGENCY  
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  REJECTED
 }
