@@ -13,6 +13,7 @@ import ApplicationListFilter from './AppList/ApplicationListFilter';
 import ApplicationListPagination from './AppList/ApplicationListPagination';
 import ApplicationListCVPreview from './AppList/ApplicationListCVPreview';
 import ApplicantListContent from './AppList/ApplicationListContent';
+import RejectionReasonDialog from './AppList/RejectionReasonDialog';
 
 export default function ApplicantListModal() {
   const {
@@ -34,6 +35,10 @@ export default function ApplicantListModal() {
 
   const [showFullCvPreview, setShowFullCvPreview] = useState<string | null>(null);
   const companyId = selectedJobForApplicants?.companyId;
+
+  // Tambahkan state untuk dialog
+  const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
+  const [pendingRejection, setPendingRejection] = useState<{ applicationId: string; status: ApplicationStatus } | null>(null);
 
   const fetchApplicants = useCallback(async (jobId: string, filters: ApplicationFilters, page: number, limit: number) => {
     if (!companyId) {
@@ -78,7 +83,7 @@ export default function ApplicantListModal() {
      } finally {
       setLoadingApplicants(false); 
     }
-  }, [companyId, setLoadingApplicants, setApplicantsError, setApplicants, setApplicantPagination, ]);
+  }, [companyId, setLoadingApplicants, setApplicantsError, setApplicants, setApplicantPagination]);
 
   useEffect(() => {
     if (selectedJobForApplicants && isApplicantModalOpen) {
@@ -123,16 +128,18 @@ export default function ApplicantListModal() {
   const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
     if (!selectedJobForApplicants || !companyId) return;
     
-    let rejectionReason: string | undefined;
     if (newStatus === ApplicationStatus.REJECTED) {
-      const reasonInput = prompt("Enter rejection reason (optional):");
-      if (reasonInput !== null && reasonInput.trim() !== "") {
-        rejectionReason = reasonInput;
-      } else if (reasonInput === null) { // User cancelled
-        return; 
-      }
+      setPendingRejection({ applicationId, status: newStatus });
+      setIsRejectionDialogOpen(true);
+      return;
     }
 
+    await updateApplicationStatus(applicationId, newStatus);
+  };
+
+  const updateApplicationStatus = async (applicationId: string, newStatus: ApplicationStatus, rejectionReason?: string) => {
+    if (!selectedJobForApplicants || !companyId) return;
+    
     try {
       const response = await fetch(`/api/companies/${companyId}/jobs/${selectedJobForApplicants.id}/applicants/${applicationId}`, {
         method: 'PUT',
@@ -148,6 +155,13 @@ export default function ApplicantListModal() {
     } catch (error) {
       console.error("Status update error:", error);
       toast.error(error instanceof Error ? error.message : 'Failed to update status');
+    }
+  };
+
+  const handleRejectionConfirm = (reason: string) => {
+    if (pendingRejection) {
+      updateApplicationStatus(pendingRejection.applicationId, pendingRejection.status, reason);
+      setPendingRejection(null);
     }
   };
 
@@ -232,6 +246,16 @@ export default function ApplicantListModal() {
         cvUrl={showFullCvPreview}
         isOpen={!!showFullCvPreview}
         onClose={() => setShowFullCvPreview(null)}
+      />
+
+      {/* Rejection Reason Dialog */}
+      <RejectionReasonDialog
+        isOpen={isRejectionDialogOpen}
+        onClose={() => {
+          setIsRejectionDialogOpen(false);
+          setPendingRejection(null);
+        }}
+        onConfirm={handleRejectionConfirm}
       />
     </>
   );

@@ -77,6 +77,22 @@ export function buildFilterQuery(filters: ApplicationFilters): {
     where.status = filters.status;
   }
 
+  if (filters.ageMin !== undefined || filters.ageMax !== undefined) {
+    const today = new Date();
+    const userFilter: Prisma.UserWhereInput = {
+      ...((where.user as Prisma.UserWhereInput) || {}),
+      dateOfBirth: {
+        ...(filters.ageMax !== undefined && {
+          gte: new Date(today.getFullYear() - filters.ageMax, today.getMonth(), today.getDate())
+        }),
+        ...(filters.ageMin !== undefined && {
+          lte: new Date(today.getFullYear() - filters.ageMin, today.getMonth(), today.getDate())
+        })
+      }
+    };
+    where.user = userFilter;
+  }
+  
   if (filters.dateFrom || filters.dateTo) {
     const createdAtFilter: Prisma.DateTimeFilter = {};
     if (filters.dateFrom) {
