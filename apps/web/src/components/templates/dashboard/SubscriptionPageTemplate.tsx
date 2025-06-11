@@ -4,7 +4,7 @@ import React, { useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { subscriptionApi } from '@/services/subscription.service';
 import { getSubscriptionStatusBadge } from '@/lib/statusConfig';
@@ -39,8 +39,12 @@ export default function SubscriptionPageTemplate() {
       const data = await subscriptionApi.getCurrentSubscription();
       setSubscription(data);
     } catch (err) {
-      setError('Failed to fetch current subscription. Please try again.');
-      console.error('Error fetching subscription:', err);
+      if (err instanceof Error && err.message.includes('404')) {
+        setSubscription(null);
+      } else {
+        setError('Failed to fetch current subscription. Please try again.');
+        console.error('Error fetching subscription:', err);
+      }
     }
   }, [setSubscription, setError]);
 
@@ -104,8 +108,8 @@ export default function SubscriptionPageTemplate() {
         </Alert>
       )}
 
-      {/* Current Subscription */}
-      {subscription && (
+      {/* Current Subscription or No Subscription Message */}
+      {subscription ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -134,6 +138,13 @@ export default function SubscriptionPageTemplate() {
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            You are currently not subscribing to any plans. Choose a plan below to get started!
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Plan Selection Component */}
