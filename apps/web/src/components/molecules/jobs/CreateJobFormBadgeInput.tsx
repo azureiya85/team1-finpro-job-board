@@ -140,11 +140,12 @@ export function CreateJobFormBadgeInput({ formData, setFormData }: CreateJobForm
           </p>
           
           <div className="relative">
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-            </div>
             <div className="border rounded-lg focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-200 bg-background">
-              <div className="p-3 min-h-[100px]">
-                <div className="flex flex-wrap gap-2 mb-2">
+              <div className="p-3 min-h-[100px] relative">
+                <div className="absolute left-3 top-3 h-4 w-4 text-muted-foreground">
+                  {getIcon(section.fieldName)}
+                </div>
+                <div className="flex flex-wrap gap-2 mb-2 pl-10">
                   {section.array.map((item, index) => (
                     <motion.div
                       key={index}
@@ -182,7 +183,7 @@ export function CreateJobFormBadgeInput({ formData, setFormData }: CreateJobForm
                     20
                   )}
                   placeholder={section.array.length === 0 ? section.placeholder : `Add another ${section.label.toLowerCase()}...`}
-                  className="border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 pl-0 h-auto p-0 bg-transparent"
+                  className="border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 h-auto pl-10 bg-transparent"
                   disabled={section.array.length >= 20}
                 />
               </div>
