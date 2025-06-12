@@ -14,6 +14,7 @@ interface Question {
   optionC: string;
   optionD: string;
   correctAnswer: string;
+  explanation: string;
 }
 
 interface TestCreationFormProps {
@@ -21,6 +22,7 @@ interface TestCreationFormProps {
     title: string;
     description: string;
     timeLimit: number;
+    passingScore: number;
     questions: Question[];
   }) => void;
 }
@@ -28,7 +30,8 @@ interface TestCreationFormProps {
 export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [timeLimit, setTimeLimit] = useState(30); // default 30 menit
+  const [timeLimit, setTimeLimit] = useState(30);
+  const [passingScore, setPassingScore] = useState(70); // default 70%
   const [questions, setQuestions] = useState<Question[]>([]);
 
   const handleAddQuestion = () => {
@@ -39,7 +42,8 @@ export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
       optionB: '',
       optionC: '',
       optionD: '',
-      correctAnswer: 'A'
+      correctAnswer: 'A',
+      explanation: '' // Menambahkan field explanation
     }]);
   };
 
@@ -54,6 +58,7 @@ export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
       title,
       description,
       timeLimit,
+      passingScore,
       questions
     });
   };

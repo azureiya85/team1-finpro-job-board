@@ -16,8 +16,10 @@ interface TestFormProps {
     optionB: string;
     optionC: string;
     optionD: string;
+    explanation: string;
   }[];
-  timeLimit: number; // dalam menit
+  timeLimit: number;
+  passingScore: number;
   onSubmit: (answers: Record<string, string>) => void;
 }
 

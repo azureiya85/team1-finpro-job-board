@@ -11,6 +11,7 @@ interface Question {
   optionC: string;
   optionD: string;
   correctAnswer: string;
+  explanation: string;
 }
 
 interface TestQuestionListProps {

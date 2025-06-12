@@ -4,10 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CreateTestTemplateProps {
+  jobId: string;
   onSubmit: (data: {
     title: string;
     description: string;
     timeLimit: number;
+    passingScore: number;
     questions: {
       id: string;
       question: string;
@@ -16,6 +18,7 @@ interface CreateTestTemplateProps {
       optionC: string;
       optionD: string;
       correctAnswer: string;
+      explanation: string;
     }[];
   }) => void;
   existingQuestions?: {
@@ -26,19 +29,21 @@ interface CreateTestTemplateProps {
     optionC: string;
     optionD: string;
     correctAnswer: string;
+    explanation: string;
   }[];
   onEditQuestion?: (questionId: string) => void;
   onDeleteQuestion?: (questionId: string) => void;
 }
 
 export function CreateTestTemplate({
+  jobId,
   onSubmit,
   existingQuestions = [],
   onEditQuestion,
   onDeleteQuestion
 }: CreateTestTemplateProps) {
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="max-w-3xl mx-auto py-6 space-y-6 px-4">
       <Card className="p-6">
         <h1 className="text-2xl font-bold mb-4">Create Test</h1>
         <p className="text-gray-500">

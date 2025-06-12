@@ -141,7 +141,6 @@ export function CreateJobFormBadgeInput({ formData, setFormData }: CreateJobForm
           
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-              {getIcon(section.fieldName)}
             </div>
             <div className="border rounded-lg focus-within:ring-2 focus-within:ring-primary focus-within:border-primary transition-all duration-200 bg-background">
               <div className="p-3 min-h-[100px]">
