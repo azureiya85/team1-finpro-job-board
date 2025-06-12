@@ -21,8 +21,8 @@ export const UpdateSubscriptionPlanSchema = CreateSubscriptionPlanSchema.partial
 export type UpdateSubscriptionPlanInput = z.infer<typeof UpdateSubscriptionPlanSchema>;
 
 export const SubscriptionCheckoutSchema = z.object({
-  planId: z.string().cuid("Invalid plan ID"),
-  paymentMethod: z.nativeEnum(PaymentMethod).default(PaymentMethod.PAYMENT_GATEWAY),
+  planId: z.string().min(1, { message: "Plan ID is required" }), 
+  paymentMethod: z.nativeEnum(PaymentMethod),
 });
 export type SubscriptionCheckoutInput = z.infer<typeof SubscriptionCheckoutSchema>;
 

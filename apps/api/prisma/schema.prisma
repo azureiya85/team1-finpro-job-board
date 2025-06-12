@@ -807,7 +807,9 @@ enum PaymentMethod {
   BANK_TRANSFER
   CREDIT_CARD
   E_WALLET
-  PAYMENT_GATEWAY
+  PAYMENT_GATEWAY  
+  MIDTRANS_BCA_VA
+  MIDTRANS_QRIS
 }
 
 enum PaymentStatus {

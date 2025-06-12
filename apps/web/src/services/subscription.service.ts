@@ -67,8 +67,8 @@ class SubscriptionApiService {
   }
 
   // Cancel current subscription
-  async cancelSubscription(): Promise<{ success: boolean; message: string }> {
-    const response = await axiosInstance.delete(this.baseUrl);
+     async cancelSubscription(subscriptionId: string): Promise<{ success: boolean; message: string }> {
+    const response = await axiosInstance.post(`/api/subscription/${subscriptionId}/cancel`);
     return response.data;
   }
 
