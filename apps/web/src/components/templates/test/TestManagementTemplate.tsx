@@ -15,20 +15,18 @@ export function TestManagementTemplate() {
   const params = useParams();
   const jobId = params.id as string;
 
-  useEffect(() => {
+    useEffect(() => {
     const getTests = async () => {
       try {
         const data = await fetchTests(jobId);
         setTests(data);
       } catch (error) {
-        console.error('Error in getTests:', error);
+        setTests([]);
       }
     };
     
     if (jobId) {
       getTests();
-    } else {
-      console.error('Job ID is undefined');
     }
   }, [jobId]);
 

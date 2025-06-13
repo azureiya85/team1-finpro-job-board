@@ -1,6 +1,5 @@
-import { Question, Test, TestState } from '@/types/testTypes';
+import { Question, Test } from '@/types/testTypes';
 
-// Fungsi untuk state management
 export async function fetchTests(jobId: string): Promise<Test[]> {
   try {
     const response = await fetch(`/api/jobs/${jobId}/test`, {
@@ -19,14 +18,12 @@ export async function fetchTests(jobId: string): Promise<Test[]> {
     
     // Validasi data yang diterima
     if (!Array.isArray(data)) {
-      console.error('Received invalid data format:', data);
       throw new Error('Invalid data format received');
     }
 
     // Pastikan setiap test memiliki id
     const validatedTests = data.map(test => {
       if (!test.id) {
-        console.error('Test missing id:', test);
         throw new Error('Received test data without id');
       }
       return test;
@@ -34,7 +31,6 @@ export async function fetchTests(jobId: string): Promise<Test[]> {
 
     return validatedTests;
   } catch (error) {
-    console.error('Error fetching tests:', error);
     throw error;
   }
 }
