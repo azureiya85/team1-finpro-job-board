@@ -2,38 +2,16 @@ import { TestCreationForm } from '@/components/organisms/test/TestCreationForm';
 import { TestQuestionList } from '@/components/organisms/test/TestQuestionList';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreateTestData, CreateQuestionData, Question } from '@/types/testTypes';
 
 interface CreateTestTemplateProps {
   jobId: string;
-  onSubmit: (data: {
-    title: string;
-    description: string;
-    timeLimit: number;
-    passingScore: number;
-    questions: {
-      id: string;
-      question: string;
-      optionA: string;
-      optionB: string;
-      optionC: string;
-      optionD: string;
-      correctAnswer: string;
-      explanation: string;
-    }[];
-  }) => void;
-  existingQuestions?: {
-    id: string;
-    question: string;
-    optionA: string;
-    optionB: string;
-    optionC: string;
-    optionD: string;
-    correctAnswer: string;
-    explanation: string;
-  }[];
+  onSubmit: (data: CreateTestData) => void;
+  existingQuestions?: CreateQuestionData[];
   onEditQuestion?: (questionId: string) => void;
   onDeleteQuestion?: (questionId: string) => void;
 }
+
 
 export function CreateTestTemplate({
   jobId,
@@ -62,11 +40,11 @@ export function CreateTestTemplate({
         </TabsContent>
 
         <TabsContent value="questions" className="space-y-6">
-          <TestQuestionList
-            questions={existingQuestions}
-            onEdit={onEditQuestion}
-            onDelete={onDeleteQuestion}
-          />
+        <TestQuestionList
+          questions={existingQuestions as unknown as Question[]}
+          onEdit={onEditQuestion}
+          onDelete={onDeleteQuestion}
+        />
         </TabsContent>
       </Tabs>
     </div>

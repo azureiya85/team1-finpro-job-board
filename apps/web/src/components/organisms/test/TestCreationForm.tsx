@@ -5,37 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-
-interface Question {
-  id: string;
-  question: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctAnswer: string;
-  explanation: string;
-}
+import { Question, Test } from '@/types/testTypes';
+import { validateQuestion, prepareTestData } from '@/lib/actions/testActions';
+import { CreateTestData } from '@/types/testTypes';
 
 interface TestCreationFormProps {
-  onSubmit: (data: {
-    title: string;
-    description: string;
-    timeLimit: number;
-    passingScore: number;
-    questions: Question[];
-  }) => void;
+  onSubmit: (data: CreateTestData) => void;
 }
 
 export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [timeLimit, setTimeLimit] = useState(30);
-  const [passingScore, setPassingScore] = useState(70); // default 70%
+  const [passingScore, setPassingScore] = useState(70);
   const [questions, setQuestions] = useState<Question[]>([]);
 
   const handleAddQuestion = () => {
-    setQuestions([...questions, {
+    const newQuestion: Question = {
       id: Date.now().toString(),
       question: '',
       optionA: '',
@@ -43,24 +29,47 @@ export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
       optionC: '',
       optionD: '',
       correctAnswer: 'A',
-      explanation: '' // Menambahkan field explanation
-    }]);
+      explanation: '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      testId: '', // Akan diisi saat test dibuat
+      isValid: true
+    };
+    setQuestions([...questions, newQuestion]);
   };
 
   const handleQuestionChange = (index: number, field: keyof Question, value: string) => {
     const newQuestions = [...questions];
-    newQuestions[index] = { ...newQuestions[index], [field]: value };
+    newQuestions[index] = { 
+      ...newQuestions[index], 
+      [field]: value,
+      errors: validateQuestion({ ...newQuestions[index], [field]: value })
+    };
     setQuestions(newQuestions);
   };
 
   const handleSubmit = () => {
-    onSubmit({
+    const testData: CreateTestData = {
       title,
-      description,
+      description: description || '',
       timeLimit,
       passingScore,
-      questions
-    });
+      questions: questions.map(q => ({
+        id: q.id,
+        question: q.question,
+        optionA: q.optionA,
+        optionB: q.optionB,
+        optionC: q.optionC,
+        optionD: q.optionD,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation || '',
+        testId: ''
+      })),
+      isActive: true,
+      companyId: ''
+    };
+    
+    onSubmit(testData);
   };
 
   return (
@@ -106,12 +115,15 @@ export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
                   onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
                   placeholder="Enter question"
                 />
+                {q.errors?.question && (
+                  <p className="text-red-500 text-sm mt-1">{q.errors.question}</p>
+                )}
               </div>
               {['A', 'B', 'C', 'D'].map((option) => (
                 <div key={option}>
                   <label className="block text-sm font-medium mb-1">Option {option}</label>
                   <Input
-                    value={q[`option${option}` as keyof Question]}
+                    value={q[`option${option}` as keyof Question]?.toString() || ''}
                     onChange={(e) => handleQuestionChange(index, `option${option}` as keyof Question, e.target.value)}
                     placeholder={`Enter option ${option}`}
                   />

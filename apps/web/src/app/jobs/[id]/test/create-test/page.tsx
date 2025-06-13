@@ -3,28 +3,14 @@
 import { useParams, useRouter } from 'next/navigation';
 import { CreateTestTemplate } from '@/components/templates/test/CreateTestTemplate';
 import { toast } from 'sonner';
+import { CreateTestData } from '@/types/testTypes';
 
 export default function CreateTestPage() {
   const params = useParams();
   const router = useRouter();
   const jobId = params.id as string;
 
-  const handleSubmit = async (data: {
-    title: string;
-    description: string;
-    timeLimit: number;
-    passingScore: number;
-    questions: {
-      id: string;
-      question: string;
-      optionA: string;
-      optionB: string;
-      optionC: string;
-      optionD: string;
-      correctAnswer: string;
-      explanation: string;
-    }[];
-  }) => {
+  const handleSubmit = async (data: CreateTestData) => {
     try {
       const response = await fetch(`/api/jobs/${jobId}/test`, {
         method: 'POST',

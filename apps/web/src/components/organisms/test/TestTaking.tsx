@@ -7,19 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Question } from '@/types/testTypes';
+import { validateQuestion } from '@/lib/actions/testActions';
 
 interface TestFormProps {
-  questions: {
-    id: string;
-    question: string;
-    optionA: string;
-    optionB: string;
-    optionC: string;
-    optionD: string;
-    explanation: string;
-  }[];
+  questions: Question[];
   timeLimit: number;
-  passingScore: number;
+  passingScore?: number; // buat menjadi opsional
   onSubmit: (answers: Record<string, string>) => void;
 }
 
@@ -51,6 +45,10 @@ export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      const isValid = questions.every(q => validateQuestion(q));
+      if (!isValid) {
+        throw new Error('Invalid question format');
+      }
       await onSubmit(answers);
     } finally {
       setIsSubmitting(false);
@@ -86,10 +84,10 @@ export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
             questionNumber={index + 1}
             question={q.question}
             options={[
-              { value: 'A', text: q.optionA },
-              { value: 'B', text: q.optionB },
-              { value: 'C', text: q.optionC },
-              { value: 'D', text: q.optionD }
+              { value: 'optionA', text: q.optionA },
+              { value: 'optionB', text: q.optionB },
+              { value: 'optionC', text: q.optionC },
+              { value: 'optionD', text: q.optionD }
             ]}
             selectedAnswer={answers[q.id]}
             onAnswerSelect={(value) => handleAnswerSelect(q.id, value)}
