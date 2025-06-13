@@ -4,6 +4,8 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { id as IndonesianLocale } from 'date-fns/locale';
 import { Plan } from '@/types/subscription';
 import { Subscription as PrismaSubscription, SubscriptionPlan } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -75,6 +77,27 @@ export const formatFeatures = (features: Plan['features']): string[] => {
   return featureList;
 };
 
+// ====== ASSESSMENT & CERTIFICATE UTILITIES ======
+
+export async function generateCertificate(userId: string, userAssessmentId: string, assessmentTitle: string) {
+    const certificateCode = uuidv4(); // Unique code
+    // TODO: Implement actual PDF generation and upload to a storage (e.g., S3)
+    const certificateUrl = `/certificates/placeholder/${certificateCode}.pdf`;
+    const qrCodeUrl = `/certificates/qr/${certificateCode}.png`; // Placeholder for QR
+
+    return prisma.certificate.create({
+        data: {
+            userId,
+            userAssessmentId,
+            title: `${assessmentTitle} Completion Certificate`,
+            certificateCode,
+            certificateUrl,
+            qrCodeUrl,
+            issueDate: new Date(),
+        }
+    });
+}
+
 // ====== SUBSCRIPTION UTILITIES ======
 
 export interface RefundCalculation {
@@ -126,7 +149,6 @@ export function canCancelSubscription(subscription: PrismaSubscription): { canCa
 
   return { canCancel: true };
 }
-
 
 export function getRefundPolicy(subscription: SubscriptionWithPlan): {
   eligibleForRefund: boolean;
