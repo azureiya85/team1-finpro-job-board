@@ -16,7 +16,23 @@ export async function fetchTests(jobId: string): Promise<Test[]> {
     }
     
     const data = await response.json();
-    return data;
+    
+    // Validasi data yang diterima
+    if (!Array.isArray(data)) {
+      console.error('Received invalid data format:', data);
+      throw new Error('Invalid data format received');
+    }
+
+    // Pastikan setiap test memiliki id
+    const validatedTests = data.map(test => {
+      if (!test.id) {
+        console.error('Test missing id:', test);
+        throw new Error('Received test data without id');
+      }
+      return test;
+    });
+
+    return validatedTests;
   } catch (error) {
     console.error('Error fetching tests:', error);
     throw error;

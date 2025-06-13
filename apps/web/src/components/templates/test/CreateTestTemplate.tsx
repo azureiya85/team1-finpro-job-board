@@ -1,25 +1,45 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
 import { TestCreationForm } from '@/components/organisms/test/TestCreationForm';
 import { TestQuestionList } from '@/components/organisms/test/TestQuestionList';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreateTestData, CreateQuestionData, Question } from '@/types/testTypes';
+import { CreateTestData } from '@/types/testTypes';
+import { toast } from 'sonner';
 
-interface CreateTestTemplateProps {
-  jobId: string;
-  onSubmit: (data: CreateTestData) => void;
-  existingQuestions?: CreateQuestionData[];
-  onEditQuestion?: (questionId: string) => void;
-  onDeleteQuestion?: (questionId: string) => void;
-}
+export function CreateTestTemplate() {
+  const params = useParams();
+  const router = useRouter();
+  const jobId = params.id as string;
 
+  const handleSubmit = async (data: CreateTestData) => {
+    try {
+      const response = await fetch(`/api/jobs/${jobId}/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create test');
+      }
 
-export function CreateTestTemplate({
-  jobId,
-  onSubmit,
-  existingQuestions = [],
-  onEditQuestion,
-  onDeleteQuestion
-}: CreateTestTemplateProps) {
+      toast.success('Test has been created successfully');
+      
+      const result = await response.json();
+      const companyId = result.companyId;
+
+      router.push(`/companies/${companyId}`);
+      
+    } catch (error) {
+      console.error('Error creating test:', error);
+      toast.error('Failed to create test. Please try again.');
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto py-6 space-y-6 px-4">
       <Card className="p-6">
@@ -32,19 +52,19 @@ export function CreateTestTemplate({
       <Tabs defaultValue="create" className="space-y-6">
         <TabsList>
           <TabsTrigger value="create">Create Test</TabsTrigger>
-          <TabsTrigger value="questions">Questions ({existingQuestions.length})</TabsTrigger>
+          <TabsTrigger value="questions">Questions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="create" className="space-y-6">
-          <TestCreationForm onSubmit={onSubmit} />
+          <TestCreationForm onSubmit={handleSubmit} />
         </TabsContent>
 
         <TabsContent value="questions" className="space-y-6">
-        <TestQuestionList
-          questions={existingQuestions as unknown as Question[]}
-          onEdit={onEditQuestion}
-          onDelete={onDeleteQuestion}
-        />
+          <TestQuestionList
+            questions={[]}
+            onEdit={() => {}}
+            onDelete={() => {}}
+          />
         </TabsContent>
       </Tabs>
     </div>

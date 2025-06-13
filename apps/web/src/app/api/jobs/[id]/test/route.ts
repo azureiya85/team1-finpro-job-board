@@ -29,6 +29,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Pastikan untuk selalu include id dalam query
     const tests = await prisma.preSelectionTest.findMany({
       where: {
         jobPostings: {
@@ -37,36 +38,37 @@ export async function GET(
           }
         }
       },
-      include: { 
-        questions: true,
-        jobPostings: true // tambahkan ini untuk memastikan relasi ada
+      select: {
+        id: true,        // Pastikan id selalu diambil
+        title: true,
+        description: true,
+        timeLimit: true,
+        passingScore: true,
+        isActive: true,
+        questions: {
+          select: {
+            id: true,    // Pastikan id question juga diambil
+            question: true,
+            optionA: true,
+            optionB: true,
+            optionC: true,
+            optionD: true,
+            correctAnswer: true,
+            explanation: true
+          }
+        }
       }
     });
-
+    
     if (!tests || tests.length === 0) {
       return NextResponse.json({ error: 'No tests found for this job' }, { status: 404 });
     }
 
-    // Ubah TestWithQuestions menjadi Test sebelum memanggil prepareTestData
-    const processedTests = tests.map((test: TestWithQuestions): Test => ({
-      ...test,
-      questions: test.questions.map((q: PreSelectionQuestion): Question => ({
-        ...q,
-        explanation: q.explanation || '', // Pastikan explanation tidak null
-        isValid: true,
-        errors: {}
-      })),
-      isEditing: false,
-      isDraft: false
-    }));
-
-    const formattedTests = processedTests.map(prepareTestData);
-
-    return NextResponse.json(formattedTests);
+    return NextResponse.json(tests);
   } catch (error) {
-    console.error('Error fetching tests:', error);
+    console.error('Error in GET /api/jobs/[id]/test:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch tests' },
+      { error: 'Failed to fetch tests' },
       { status: 500 }
     );
   }
@@ -111,17 +113,17 @@ export async function POST(
     };
 
     const questions = data.questions.map((q: QuestionInput): Question => ({
-      id: '', // akan di-generate oleh Prisma
+      id: '',
       question: q.question || '',
       optionA: q.optionA || '',
       optionB: q.optionB || '',
       optionC: q.optionC || '',
       optionD: q.optionD || '',
       correctAnswer: q.correctAnswer || '',
-      explanation: q.explanation || '', // memastikan tidak null
+      explanation: q.explanation || '',
       createdAt: new Date(),
       updatedAt: new Date(),
-      testId: '', // akan di-set oleh Prisma
+      testId: '',
       isValid: true,
       errors: {}
     }));

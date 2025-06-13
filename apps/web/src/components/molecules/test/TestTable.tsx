@@ -13,6 +13,31 @@ interface TestTableProps {
 export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
   const router = useRouter();
 
+  // Validasi data test
+  const validTests = tests.filter(test => test && test.id);
+
+  // Handler untuk delete dengan validasi
+  const handleDelete = async (testId: string) => {
+    if (!testId) {
+      console.error('Test ID is undefined');
+      return;
+    }
+    try {
+      await onDelete(testId);
+    } catch (error) {
+      console.error('Error deleting test:', error);
+    }
+  };
+
+  // Handler untuk navigasi dengan validasi
+  const handleNavigation = (testId: string, action: 'edit' | 'view') => {
+    if (!testId) {
+      console.error('Test ID is undefined');
+      return;
+    }
+    router.push(`/jobs/${jobId}/test/${testId}${action === 'edit' ? '/edit' : ''}`);
+  };
+
   return (
     <Card className="p-6 overflow-x-auto">
       <Table>
@@ -27,33 +52,33 @@ export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-        {tests.map((test, index) => (
-          <TableRow key={test.id || `test-${index}`}>
+          {validTests.map((test) => (
+            <TableRow key={test.id}>
               <TableCell className="text-center">{test.title}</TableCell>
               <TableCell className="text-center">{test.description}</TableCell>
               <TableCell className="text-center">{test.timeLimit} minutes</TableCell>
               <TableCell className="text-center">{test.passingScore}%</TableCell>
-              <TableCell className="text-center">{test.questions.length}</TableCell>
+              <TableCell className="text-center">{test.questions?.length || 0}</TableCell>
               <TableCell>
                 <div className="flex justify-center space-x-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/jobs/${jobId}/test/${test.id}/edit`)}
+                    onClick={() => handleNavigation(test.id, 'edit')}
                   >
                     Edit
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => router.push(`/jobs/${jobId}/test/${test.id}`)}
+                    onClick={() => handleNavigation(test.id, 'view')}
                   >
                     View
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => onDelete(test.id)}
+                    onClick={() => handleDelete(test.id)}
                   >
                     Delete
                   </Button>

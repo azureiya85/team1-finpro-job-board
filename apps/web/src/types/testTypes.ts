@@ -3,6 +3,7 @@ import { PreSelectionTest, PreSelectionQuestion } from '@prisma/client';
 
 // Interface untuk data test
 export interface Test extends PreSelectionTest {
+  id: string;
   questions: Question[];
   isEditing?: boolean;
   isDraft?: boolean;
