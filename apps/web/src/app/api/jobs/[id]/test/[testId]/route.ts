@@ -3,49 +3,91 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
-    request: NextRequest,
-    { params }: { params: { id: string; testId: string } }
-  ) {
-    try {
-      const session = await auth();
-      if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-  
-      const test = await prisma.preSelectionTest.findUnique({
-        where: {
-          id: params.testId
+  request: NextRequest,
+  { params }: { params: { id: string; testId: string } }
+) {
+  try {
+    const test = await prisma.preSelectionTest.findUnique({
+      where: {
+        id: params.testId
+      },
+      include: {
+        questions: true,
+        jobPostings: {
+          where: {
+            id: params.id
+          }
+        }
+      },
+    });
+
+    if (!test) {
+      return NextResponse.json({ error: 'Test not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(test);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to fetch test' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string; testId: string } }
+) {
+  try {
+    const data = await request.json();
+
+    const updatedTest = await prisma.preSelectionTest.update({
+      where: {
+        id: params.testId
+      },
+      data: {
+        title: data.title,
+        description: data.description,
+        timeLimit: data.timeLimit,
+        passingScore: data.passingScore,
+        questions: {
+          deleteMany: {},
+          create: data.questions.map((question: any) => ({
+            question: question.question,
+            optionA: question.optionA,
+            optionB: question.optionB,
+            optionC: question.optionC,
+            optionD: question.optionD,
+            correctAnswer: question.correctAnswer,
+            explanation: question.explanation,
+          })),
         },
-        include: {
-          questions: true,
-          jobPostings: {
-            where: {
-              id: params.id
+      },
+      include: {
+        questions: true,
+        jobPostings: {
+          where: {
+            id: params.id
+          },
+          select: {
+            company: {
+              select: {
+                id: true
+              }
             }
           }
         }
-      });
-  
-      if (!test) {
-        return NextResponse.json({ error: 'Test not found' }, { status: 404 });
-      }
-  
-      if (test.jobPostings.length === 0) {
-        return NextResponse.json(
-          { error: 'Test not associated with this job' },
-          { status: 404 }
-        );
-      }
-  
-      return NextResponse.json(test);
-    } catch (error) {
-      console.error('Error in GET /api/jobs/[id]/test/[testId]/detail:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch test details' },
-        { status: 500 }
-      );
-    }
+      },
+    });
+
+    return NextResponse.json(updatedTest);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to update test' },
+      { status: 500 }
+    );
   }
+}
 
 export async function DELETE(
     request: NextRequest,

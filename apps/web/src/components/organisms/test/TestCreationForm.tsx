@@ -11,14 +11,22 @@ import { CreateTestData } from '@/types/testTypes';
 
 interface TestCreationFormProps {
   onSubmit: (data: CreateTestData) => void;
+  initialData?: CreateTestData;
 }
 
-export function TestCreationForm({ onSubmit }: TestCreationFormProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [timeLimit, setTimeLimit] = useState(30);
-  const [passingScore, setPassingScore] = useState(70);
-  const [questions, setQuestions] = useState<Question[]>([]);
+export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProps) {
+  const [title, setTitle] = useState(initialData?.title || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [timeLimit, setTimeLimit] = useState(initialData?.timeLimit || 30);
+  const [passingScore, setPassingScore] = useState(initialData?.passingScore || 70);
+  const [questions, setQuestions] = useState<Question[]>(
+    initialData?.questions ? initialData.questions.map(q => ({
+      ...q,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isValid: true
+    })) : []
+  );
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {

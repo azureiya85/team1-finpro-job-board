@@ -35,7 +35,7 @@ export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
       console.error('Test ID is undefined');
       return;
     }
-    router.push(`/jobs/${jobId}/test/${testId}${action === 'edit' ? '/edit' : ''}`);
+    router.push(`/jobs/${jobId}/test/${testId}${action === 'edit' ? '/edit-test' : ''}`);
   };
 
   return (
@@ -54,8 +54,22 @@ export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
         <TableBody>
           {validTests.map((test) => (
             <TableRow key={test.id}>
-              <TableCell className="text-center">{test.title}</TableCell>
-              <TableCell className="text-center">{test.description}</TableCell>
+              <TableCell className="text-center">
+                <div 
+                  className="max-w-[200px] mx-auto whitespace-pre-line" 
+                  title={test.title || undefined}
+                >
+                  {test.title}
+                </div>
+              </TableCell>
+              <TableCell className="text-center">
+                <div 
+                  className="max-w-[200px] mx-auto whitespace-pre-line" 
+                  title={test.description || undefined}
+                >
+                  {test.description}
+                </div>
+              </TableCell>
               <TableCell className="text-center">{test.timeLimit} minutes</TableCell>
               <TableCell className="text-center">{test.passingScore}%</TableCell>
               <TableCell className="text-center">{test.questions?.length || 0}</TableCell>
