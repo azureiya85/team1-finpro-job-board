@@ -58,7 +58,7 @@ const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : nul
 
   return (
     <Card className={cn(
-      "mb-8 overflow-hidden border-2 transition-all duration-300",
+      "mb-8 mt-16 overflow-hidden border-2 transition-all duration-300",
       job.isPriority ? "border-primary/30 bg-gradient-to-br from-primary/5 via-background to-background" : "border-border"
     )}>
       <CardContent className="p-8">
