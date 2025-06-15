@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { SubscriptionStatus } from '@prisma/client';
+// import { SubscriptionStatus } from '@prisma/client';
 
 // Get All Active Skill Assessments for Subscribed Users
 export async function GET() {
@@ -11,6 +11,9 @@ export async function GET() {
   }
 
   try {
+    // Check for active subscription
+  // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
+    /*
     // Check for active subscription
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
@@ -23,6 +26,8 @@ export async function GET() {
     if (!activeSubscription) {
       return NextResponse.json({ error: 'Active subscription required to access skill assessments.' }, { status: 403 });
     }
+    */
+    // --- END OF TEMPORARY COMMENT ---
 
     const assessments = await prisma.skillAssessment.findMany({
       where: { 

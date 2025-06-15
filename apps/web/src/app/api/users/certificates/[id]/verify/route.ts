@@ -1,17 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-interface Params {
-  params: { certificateCode: string };
+interface RouteContext {
+  params: Promise<{ id: string }>; 
 }
 
 // Verify Certificate
-export async function GET(request: Request, { params }: Params) {
+export async function GET(request: Request, { params }: RouteContext) {
   try {
+    const { id: certificateCode } = await params;
+
     const certificate = await prisma.certificate.findUnique({
-      where: { certificateCode: params.certificateCode },
+      where: { certificateCode: certificateCode },
       include: {
-        user: { select: { name: true, email: true } }, 
+        user: { select: { name: true, email: true } },
         userAssessment: {
           select: {
             assessment: { select: { title: true } },

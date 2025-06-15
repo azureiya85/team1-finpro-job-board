@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { SubscriptionStatus } from '@prisma/client';
+// import { SubscriptionStatus } from '@prisma/client';
 import { AssessmentSubmissionSchema } from '@/lib/validations/zodAssessmentValidation';
-import { isPrismaError, SubmissionRouteParams } from '@/types/assessments';
-import { generateCertificate } from '@/lib/utils'; 
+import { isPrismaError } from '@/types/assessments';
+import { generateCertificate } from '@/lib/utils';
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 // User submits assessment answers
-export async function POST(request: Request, { params }: SubmissionRouteParams) {
+export async function POST(request: Request, { params }: RouteContext) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,12 +19,19 @@ export async function POST(request: Request, { params }: SubmissionRouteParams) 
   const userId = session.user.id;
 
   try {
+    // FIX: Await the params promise and get the 'id'
+    const { id: assessmentId } = await params;
+
+    // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
+    /*
     const activeSubscription = await prisma.subscription.findFirst({
       where: { userId, status: SubscriptionStatus.ACTIVE, endDate: { gt: new Date() } },
     });
     if (!activeSubscription) {
       return NextResponse.json({ error: 'Active subscription required.' }, { status: 403 });
     }
+    */
+    // --- END OF TEMPORARY COMMENT ---
 
     const body = await request.json();
     const validation = AssessmentSubmissionSchema.safeParse(body);
@@ -30,7 +41,7 @@ export async function POST(request: Request, { params }: SubmissionRouteParams) 
     const { answers, timeSpent } = validation.data;
 
     const assessment = await prisma.skillAssessment.findUnique({
-      where: { id: params.assessmentId, isActive: true },
+      where: { id: assessmentId, isActive: true },
       include: { questions: true },
     });
 
