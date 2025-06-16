@@ -31,8 +31,7 @@ export async function GET() {
 
     const assessments = await prisma.skillAssessment.findMany({
       where: { 
-        isActive: true,
-        userAssessments: { none: { userId: session.user.id, isPassed: true } }
+        isActive: true
       },
       orderBy: { title: 'asc' },
       select: {
@@ -42,9 +41,38 @@ export async function GET() {
         timeLimit: true,
         category: { select: { name: true, icon: true } },
         _count: { select: { questions: true } },
+        userAssessments: {
+          where: { userId: session.user.id },
+          select: {
+            isPassed: true,
+            score: true,
+            completedAt: true,
+            certificates: {
+              select: {
+                certificateUrl: true,
+                certificateCode: true
+              }
+            }
+          }
+        }
       },
     });
-    return NextResponse.json(assessments);
+
+    // Transform the data to include userAssessment info at the top level
+    const transformedAssessments = assessments.map(assessment => ({
+      id: assessment.id,
+      title: assessment.title,
+      description: assessment.description,
+      timeLimit: assessment.timeLimit,
+      category: assessment.category,
+      _count: assessment._count,
+      userAssessment: assessment.userAssessments.length > 0 ? {
+        ...assessment.userAssessments[0],
+        certificate: assessment.userAssessments[0].certificates.length > 0 ? assessment.userAssessments[0].certificates[0] : null
+      } : null
+    }));
+
+    return NextResponse.json(transformedAssessments);
   } catch (error) {
     console.error("Error fetching available skill assessments:", error);
     return NextResponse.json({ error: 'Failed to fetch skill assessments' }, { status: 500 });
