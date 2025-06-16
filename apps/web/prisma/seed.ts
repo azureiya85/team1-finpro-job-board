@@ -378,6 +378,7 @@ async function seedJobApplications() {
           adminNotes: appData.adminNotes,
           testScore: appData.testScore,
           testCompletedAt: appData.testCompletedAt ? new Date(appData.testCompletedAt) : undefined,
+          testId: appData.testId || null, // Tambahkan field ini
           userId: userActualId,
           jobPostingId: jobPostingActualId,
           createdAt: appData.createdAt ? new Date(appData.createdAt) : new Date(),

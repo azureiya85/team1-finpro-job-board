@@ -29,17 +29,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import ApplicationDetailsTimeline from './AppDetails/ApplicationDetailsTimeline';
 import ApplicationDetailsInterview from './AppDetails/ApplicationDetailsInterview';
 import { statusConfig } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
+import { PreSelectionTest } from '@prisma/client';
 
 export type ApplicationWithDetails = JobApplication & {
   jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote'> & {
     province?: { name: string } | null;
     city?: { name: string } | null;
     company: Pick<Company, 'id' | 'name' | 'logo'>;
+    preSelectionTest?: PreSelectionTest | null; // tambahkan ini
   };
   interviewSchedules: (Pick<
     InterviewSchedule,
     'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'
   >)[];
+  testScore?: number | null; // tambahkan ini
 };
 
 interface ApplicationDetailModalProps {
@@ -105,6 +108,31 @@ export default function ApplicationDetailModal({ application, isOpen, onClose }:
               status={status}
               interviewSchedules={interviewSchedules}
             />
+
+            {/* Pre-Selection Test Information */}
+            {jobPosting.preSelectionTest && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Pre-Selection Test</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <span className="font-medium">Test Score:</span>{' '}
+                      {application.testScore !== null ? `${application.testScore}%` : 'Not taken'}
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">Passing Score:</span>{' '}
+                      {jobPosting.preSelectionTest.passingScore}%
+                    </p>
+                    <p className="text-sm">
+                      <span className="font-medium">Time Limit:</span>{' '}
+                      {jobPosting.preSelectionTest.timeLimit} minutes
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Rejection Information */}
             {status === ApplicationStatus.REJECTED && (

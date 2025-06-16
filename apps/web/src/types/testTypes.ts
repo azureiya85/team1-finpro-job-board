@@ -18,7 +18,7 @@ export interface Question extends PreSelectionQuestion {
   optionC: string;
   optionD: string;
   correctAnswer: string;
-  explanation: string;
+  explanation: string | null;
   createdAt: Date;
   updatedAt: Date;
   isValid?: boolean;
@@ -53,4 +53,24 @@ export interface TestState {
   currentTest: Test | null;
   isLoading: boolean;
   error: string | null;
+}
+
+export interface TestAnswer {
+  questionId: string;
+  selectedAnswer: string;
+}
+
+export interface TestResult {
+  id: string;
+  testId: string;
+  userId: string;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  timeTaken: number;
+  passingScore: number;
+  isPassed: boolean;
+  answers: TestAnswer[];
+  createdAt: Date;
+  test: Test;
 }

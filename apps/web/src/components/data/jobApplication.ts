@@ -21,6 +21,7 @@ export interface JobApplicationMockData {
   status: ApplicationStatus;
   rejectionReason?: string;
   adminNotes?: string; // Internal notes from company admin
+  testId?: string | null;
   testScore?: number;
   testCompletedAt?: Date;
   userId: string;

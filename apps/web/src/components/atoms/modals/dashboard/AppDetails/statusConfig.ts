@@ -9,7 +9,8 @@ import {
   AlertTriangle,
   Eye,
   Calendar,
-  LucideIcon
+  LucideIcon,
+  FileText
 } from 'lucide-react';
 
 // Complete status configuration for badges and UI elements
@@ -64,6 +65,18 @@ export const statusConfig: Record<
     icon: AlertTriangle,
     text: 'Withdrawn',
   },
+  TEST_REQUIRED: {
+    variant: 'secondary',
+    className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+    icon: FileText,
+    text: 'Test Required'
+  },
+  TEST_COMPLETED: {
+    variant: 'secondary',
+    className: 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100',
+    icon: CheckCircle,
+    text: 'Test Completed'
+  }
 };
 
 // Status action configurations for dropdown actions
@@ -81,6 +94,16 @@ export const statusActionConfig: Record<ApplicationStatus, {
     icon: Eye, 
     label: 'Mark Reviewed', 
     color: 'text-blue-600' 
+  },
+  [ApplicationStatus.TEST_REQUIRED]: {
+    icon: FileText,
+    label: 'Require Test',
+    color: 'text-purple-600'
+  },
+  [ApplicationStatus.TEST_COMPLETED]: {
+    icon: CheckCircle,
+    label: 'Mark Test Completed',
+    color: 'text-teal-600'
   },
   [ApplicationStatus.INTERVIEW_SCHEDULED]: { 
     icon: Calendar, 
@@ -106,7 +129,7 @@ export const statusActionConfig: Record<ApplicationStatus, {
     icon: XCircle, 
     label: 'Mark Withdrawn', 
     color: 'text-gray-600' 
-  },
+  }
 };
 
 // Helper function to get status action configuration

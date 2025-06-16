@@ -10,7 +10,7 @@ interface TakeTestTemplateProps {
   questions: TakeQuestionData[];
   timeLimit: number;
   passingScore: number; // tambahkan ini
-  onSubmit: (answers: Record<string, string>) => void;
+  onSubmit: (answers: Record<string, string>) => Promise<void>;
 }
 
 export function TakeTestTemplate({
