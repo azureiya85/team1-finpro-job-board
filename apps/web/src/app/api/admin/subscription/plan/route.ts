@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         price: data.price,
         duration: data.duration,
         description: data.description,
-        features: data.features, // Prisma will handle JSON serialization
+        features: data.features, 
       },
     });
     return NextResponse.json(newPlan, { status: 201 });

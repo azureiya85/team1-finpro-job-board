@@ -25,7 +25,7 @@ const navItems = [
   },
   {
     name: 'Subscriptions',
-    href: '/dashboard/subscriptions',
+    href: '/dashboard/subscription',
     icon: ShoppingCart,
     description: 'Manage your plan',
   },
