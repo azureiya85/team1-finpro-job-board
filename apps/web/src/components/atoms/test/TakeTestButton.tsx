@@ -16,10 +16,10 @@ export function TakeTestButton({ applicationId, status, testCompleted, onTakeTes
   return (
     <Button 
       onClick={onTakeTest}
-      className="w-full mt-2"
+      className="bg-primary text-white"
       variant="secondary"
     >
-      Take Pre-selection Test
+      Attempt Pre-Selection Test
     </Button>
   );
 }

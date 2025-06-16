@@ -23,7 +23,8 @@ export type JobPostingFeatured = Pick<
   | 'benefits' 
   | 'requirements' 
   | 'applicationDeadline'
-  | 'requiresCoverLetter'              
+  | 'requiresCoverLetter'   
+  | 'preSelectionTestId'           
 > & {
   company: Pick<Company, 'id' | 'name' | 'logo' | 'size'> | null;
   city: Pick<City, 'name'> | null;

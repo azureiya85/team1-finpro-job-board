@@ -17,12 +17,12 @@ export default function TestDetailPage() {
 
   const fetchTestDetail = async () => {
     try {
-      const response = await fetch(`/api/jobs/${jobId}/test/${testId}`);
-      if (!response.ok) throw new Error('Failed to fetch test details');
+      const response = await fetch(`/api/jobs/${jobId}/test/take-test`);
+      if (!response.ok) throw new Error('Failed to fetch landing test');
       const data = await response.json();
       setTest(data);
     } catch (error) {
-      console.error('Error fetching test details:', error);
+      console.error('Error fetching landing test:', error);
     }
   };
 

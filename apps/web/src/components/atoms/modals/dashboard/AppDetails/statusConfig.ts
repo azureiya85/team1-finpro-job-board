@@ -145,6 +145,8 @@ export const getStatusAction = (status: ApplicationStatus) => {
 export const statusOrder: ApplicationStatus[] = [
   ApplicationStatus.PENDING,
   ApplicationStatus.REVIEWED,
+  ApplicationStatus.TEST_REQUIRED,
+  ApplicationStatus.TEST_COMPLETED,
   ApplicationStatus.INTERVIEW_SCHEDULED,
   ApplicationStatus.INTERVIEW_COMPLETED,
   ApplicationStatus.ACCEPTED,

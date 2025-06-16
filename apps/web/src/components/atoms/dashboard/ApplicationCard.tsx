@@ -11,7 +11,7 @@ import { ApplicationStatus } from '@prisma/client';
 import { TakeTestButton } from '../test/TakeTestButton';
 
 export type ApplicationWithDetails = JobApplication & {
-  jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote'> & { 
+  jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote' | 'preSelectionTestId'> & { 
     province?: { name: string } | null;
     city?: { name: string } | null;
     company: Pick<Company, 'id' | 'name' | 'logo'>;
@@ -124,7 +124,7 @@ export default function ApplicationCard({ application, onViewDetails }: Applicat
     .slice(0, 2);
 
   const handleTakeTest = () => {
-    window.location.href = `/jobs/${jobPosting.id}/test/${application.testId}`;
+    window.location.href = `/jobs/${jobPosting.id}/test/${jobPosting.preSelectionTestId}/take-test`;
   };
 
   return (
@@ -165,16 +165,17 @@ export default function ApplicationCard({ application, onViewDetails }: Applicat
             </div>
           </div>
         </div>
-      </CardContent>
-      
+      </CardContent>    
       <CardFooter className="px-6 py-4 bg-muted/20 border-t border-border/50">
-        <div className="flex justify-between items-center w-full">
-          <TakeTestButton
-            applicationId={application.id}
-            status={status}
-            testCompleted={application.testCompletedAt !== null}
-            onTakeTest={handleTakeTest}
-          />
+        <div className="flex justify-end items-center w-full gap-208">
+          {status === ApplicationStatus.TEST_REQUIRED && !application.testCompletedAt && (
+            <TakeTestButton
+              applicationId={application.id}
+              status={status}
+              testCompleted={application.testCompletedAt !== null}
+              onTakeTest={handleTakeTest}
+            />
+          )}
           <Button
             variant="ghost"
             size="sm"

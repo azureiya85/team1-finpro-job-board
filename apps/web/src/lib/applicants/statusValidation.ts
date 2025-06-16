@@ -9,17 +9,23 @@ export function validateStatusTransition(
     [ApplicationStatus.PENDING]: [
       ApplicationStatus.REVIEWED,
       ApplicationStatus.REJECTED,
-      ApplicationStatus.INTERVIEW_SCHEDULED,
     ],
     [ApplicationStatus.REVIEWED]: [
+      ApplicationStatus.TEST_REQUIRED,
       ApplicationStatus.INTERVIEW_SCHEDULED,
       ApplicationStatus.REJECTED,
-      ApplicationStatus.ACCEPTED,
+    ],
+    [ApplicationStatus.TEST_REQUIRED]: [
+      ApplicationStatus.TEST_COMPLETED,
+      ApplicationStatus.REJECTED
+    ],
+    [ApplicationStatus.TEST_COMPLETED]: [
+      ApplicationStatus.INTERVIEW_SCHEDULED,
+      ApplicationStatus.REJECTED
     ],
     [ApplicationStatus.INTERVIEW_SCHEDULED]: [
       ApplicationStatus.INTERVIEW_COMPLETED,
       ApplicationStatus.REJECTED,
-      ApplicationStatus.ACCEPTED, 
     ],
     [ApplicationStatus.INTERVIEW_COMPLETED]: [
       ApplicationStatus.ACCEPTED,
@@ -62,14 +68,21 @@ export function getAvailableStatuses(
       ApplicationStatus.INTERVIEW_SCHEDULED,
     ],
     [ApplicationStatus.REVIEWED]: [
+      ApplicationStatus.TEST_REQUIRED,
       ApplicationStatus.INTERVIEW_SCHEDULED,
       ApplicationStatus.REJECTED,
-      ApplicationStatus.ACCEPTED,
+    ],
+    [ApplicationStatus.TEST_REQUIRED]: [
+      ApplicationStatus.TEST_COMPLETED,
+      ApplicationStatus.REJECTED,
+    ],
+    [ApplicationStatus.TEST_COMPLETED]: [
+      ApplicationStatus.INTERVIEW_SCHEDULED,
+      ApplicationStatus.REJECTED,
     ],
     [ApplicationStatus.INTERVIEW_SCHEDULED]: [
       ApplicationStatus.INTERVIEW_COMPLETED,
       ApplicationStatus.REJECTED,
-      ApplicationStatus.ACCEPTED,
     ],
     [ApplicationStatus.INTERVIEW_COMPLETED]: [
       ApplicationStatus.ACCEPTED,
@@ -96,6 +109,18 @@ export function getStatusDisplay(status: ApplicationStatus): StatusDisplayInfo {
       color: 'text-blue-700',
       bgColor: 'bg-blue-100',
       description: 'Application is being reviewed',
+    },
+    [ApplicationStatus.TEST_REQUIRED]: {
+      label: 'Test Required',
+      color: 'text-orange-700',
+      bgColor: 'bg-orange-100',
+      description: 'Test is required for this application',
+    },
+    [ApplicationStatus.TEST_COMPLETED]: {
+      label: 'Test Completed',
+      color: 'text-pink-700',
+      bgColor: 'bg-pink-100',
+      description: 'Test has been completed',
     },
     [ApplicationStatus.INTERVIEW_SCHEDULED]: {
       label: 'Interview Scheduled',

@@ -28,8 +28,14 @@ export async function GET(
           select: {
             id: true,
             title: true,
-            isRemote: true, // Include if the job is remote
-            // Select province and city names
+            isRemote: true,
+            preSelectionTestId: true,      // tambahkan ini
+            preSelectionTest: {            // tambahkan ini
+              select: {
+                id: true,
+                title: true
+              }
+            },
             province: {
               select: {
                 name: true,
@@ -40,7 +46,6 @@ export async function GET(
                 name: true,
               },
             },
-            // country: true, // You can also select country if needed
             company: {
               select: {
                 id: true,
