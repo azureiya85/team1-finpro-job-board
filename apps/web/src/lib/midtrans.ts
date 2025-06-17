@@ -30,7 +30,7 @@ export function verifyMidtransSignature(
   serverKey: string,
   signatureKeyFromMidtrans?: string
 ): boolean {
-  if (!signatureKeyFromMidtrans) return false; // Or handle as per your security policy
+  if (!signatureKeyFromMidtrans) return false; 
   const dataString = orderId + statusCode + grossAmount + serverKey;
   const generatedSignature = crypto.createHash('sha512').update(dataString).digest('hex');
   return generatedSignature === signatureKeyFromMidtrans;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { SubscriptionStatus } from '@prisma/client';
+// import { SubscriptionStatus } from '@prisma/client';
 
 interface Params {
-  params: { assessmentId: string };
+  params: Promise<{ id: string }>; 
 }
 
 // Fetch questions, no answer
@@ -15,15 +15,22 @@ export async function POST(request: Request, { params }: Params) {
   }
 
   try {
+    // Await params to get the actual parameters
+    const { id } = await params;
+
+    // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
+    /*
     const activeSubscription = await prisma.subscription.findFirst({
       where: { userId: session.user.id, status: SubscriptionStatus.ACTIVE, endDate: { gt: new Date() } },
     });
     if (!activeSubscription) {
       return NextResponse.json({ error: 'Active subscription required.' }, { status: 403 });
     }
+    */
+    // --- END OF TEMPORARY COMMENT ---
 
     const assessment = await prisma.skillAssessment.findUnique({
-      where: { id: params.assessmentId, isActive: true },
+      where: { id, isActive: true }, // Use the awaited id
       include: {
         questions: {
           select: { 
@@ -47,7 +54,6 @@ export async function POST(request: Request, { params }: Params) {
         console.warn(`Assessment ${assessment.id} does not have exactly 25 questions. It has ${assessment.questions.length}.`);
         return NextResponse.json({ error: 'Assessment configuration error: not 25 questions.' }, { status: 500 });
     }
-
 
     // Start the timer
     return NextResponse.json({

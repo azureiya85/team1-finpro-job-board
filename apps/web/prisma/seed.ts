@@ -9,14 +9,14 @@ import {
   JobCategory,
   EmploymentType,
   ExperienceLevel,
-  ApplicationStatus, // Added
-  InterviewStatus,   // Added
-  InterviewType,     // Added
+  ApplicationStatus, 
+  InterviewStatus,   
+  InterviewType,     
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { indonesianLocations } from '../src/components/data/cities';
 import { userSubscriptionPlans } from '../src/components/data/subscriptions';
-import { skillCategories, sampleAssessments } from '../src/components/data/assessments';
+import { skillCategories, englishQuestions, mathematicsQuestions } from '../src/components/data/assessments';
 import { getInitialAnalyticsData } from '../src/components/data/analytics';
 import { users as mockUsers } from '../src/components/data/users'; 
 import { companies as mockCompanies } from '../src/components/data/companies'; 
@@ -466,8 +466,11 @@ async function seedInterviewSchedules() { // Added function
 
 async function seedSkillAssessments() {
   console.log('🎯 Seeding skill categories and assessments...');
-  for (const categoryData of skillCategories) {
-    await prisma.skillCategory.upsert({
+
+  // 1. Seed Skill Categories 
+  const categoryNameToIdMap = new Map<string, string>();
+  for (const categoryData of skillCategories) { 
+    const category = await prisma.skillCategory.upsert({
       where: { name: categoryData.name },
       update: {
         description: categoryData.description,
@@ -479,30 +482,73 @@ async function seedSkillAssessments() {
         icon: categoryData.icon,
       },
     });
+    categoryNameToIdMap.set(category.name, category.id);
+    console.log(`  📚 Created/Updated skill category: ${category.name}`); // Less verbose
   }
-  console.log(`  ✅ Seeded ${skillCategories.length} skill categories.`); // Verbose
+  console.log(`  ✅ Seeded ${skillCategories.length} skill categories.`);
 
-  for (const assessmentItem of sampleAssessments) {
-    const category = await prisma.skillCategory.findUnique({
-      where: { name: assessmentItem.categoryName },
-    });
+  // 2. Define assessments to create, ensuring 25 questions each and 30 min time limit
+  const assessmentsToCreate = [
+    {
+      categoryName: "English Comprehension", 
+      assessment: {
+        title: "Comprehensive English Assessment", 
+        description: "Assesses comprehensive English grammar, vocabulary, and reading comprehension. Contains 25 questions.", 
+        passingScore: 75, 
+        timeLimit: 30,    // Standardized time limit
+        isActive: true,
+        questions: englishQuestions.slice(0, 25).map(q => ({ ...q })),
+      }
+    },
+    {
+      categoryName: "Mathematics",
+      assessment: {
+        title: "Comprehensive Mathematics Assessment",
+        description: "Covers a comprehensive range of arithmetic, algebra, geometry, and problem-solving skills. Contains 25 questions.", 
+        passingScore: 75,
+        timeLimit: 30,    // Standardized time limit
+        isActive: true,
+        questions: mathematicsQuestions.slice(0, 25).map(q => ({ ...q })),
+      }
+    }
+  ];
 
-    if (category) {
+  // Verify if question arrays have enough questions
+  if (englishQuestions.length < 25) {
+    console.warn(`  ⚠️ English questions array has only ${englishQuestions.length} questions. The English assessment will have fewer than 25 questions.`);
+  }
+  if (mathematicsQuestions.length < 25) {
+    console.warn(`  ⚠️ Mathematics questions array has only ${mathematicsQuestions.length} questions. The Math assessment will have fewer than 25 questions.`);
+  }
+
+
+  let createdAssessmentsCount = 0;
+  // 3. Seed Skill Assessments and their Questions
+  for (const assessmentItem of assessmentsToCreate) {
+    const categoryId = categoryNameToIdMap.get(assessmentItem.categoryName);
+
+    if (categoryId) {
+      // Check if an assessment with this exact title and category already exists
       const existingAssessment = await prisma.skillAssessment.findFirst({
         where: {
           title: assessmentItem.assessment.title,
-          categoryId: category.id,
+          categoryId: categoryId,
         },
       });
 
       if (!existingAssessment) {
+        if (assessmentItem.assessment.questions.length === 0) {
+            console.warn(`  ⚠️ Skipping assessment "${assessmentItem.assessment.title}" for category "${assessmentItem.categoryName}" as it has 0 questions after slicing. Check your question data arrays.`);
+            continue;
+        }
         await prisma.skillAssessment.create({
           data: {
             title: assessmentItem.assessment.title,
             description: assessmentItem.assessment.description,
             passingScore: assessmentItem.assessment.passingScore,
             timeLimit: assessmentItem.assessment.timeLimit,
-            categoryId: category.id,
+            isActive: assessmentItem.assessment.isActive,
+            categoryId: categoryId,
             questions: {
               create: assessmentItem.assessment.questions.map(q => ({
                 question: q.question,
@@ -516,15 +562,17 @@ async function seedSkillAssessments() {
             },
           },
         });
-        console.log(`  📊 Created assessment: ${assessmentItem.assessment.title}`); // Verbose
+        createdAssessmentsCount++;
+        console.log(`  📊 Created assessment: ${assessmentItem.assessment.title} in category ${assessmentItem.categoryName} with ${assessmentItem.assessment.questions.length} questions.`); // Less verbose
       } else {
-        console.log(`  📊 Assessment "${assessmentItem.assessment.title}" already exists. Skipping.`); // Verbose
+        console.log(`  📊 Assessment "${assessmentItem.assessment.title}" in category ${assessmentItem.categoryName} already exists. Skipping.`); // Less verbose
       }
     } else {
       console.warn(`  ⚠️ Skill category "${assessmentItem.categoryName}" not found for assessment "${assessmentItem.assessment.title}". Skipping.`);
     }
   }
-  console.log('🎯 Skill assessments seeding completed.');
+  console.log(`  📊 Created ${createdAssessmentsCount} new skill assessments.`);
+  console.log('🎯 Skill assessments and questions seeding completed.');
 }
 
 async function seedAnalytics() {
@@ -542,36 +590,34 @@ async function clearExistingData() {
   console.log('🧹 Cleaning existing data (order matters due to foreign keys)...');
 
   await prisma.notification.deleteMany();
-  await prisma.interviewSchedule.deleteMany();     // Depends on JobApplication, JobPosting, User
-  await prisma.jobApplication.deleteMany();       // Depends on User, JobPosting
+  await prisma.interviewSchedule.deleteMany();
+  await prisma.jobApplication.deleteMany();
   await prisma.savedJob.deleteMany();
 
   await prisma.preSelectionQuestion.deleteMany();
   
-  await prisma.jobPosting.deleteMany();           // Depends on Company, Province, City, (Opt: PreSelectionTest)
-  await prisma.preSelectionTest.deleteMany();     // Depends on Company
+  await prisma.jobPosting.deleteMany();
+  await prisma.preSelectionTest.deleteMany();
 
   await prisma.companyReview.deleteMany();
 
   await prisma.certificate.deleteMany();
   await prisma.userSkillAssessment.deleteMany();
 
-  await prisma.skillAssessmentQuestion.deleteMany(); // Covered by SkillAssessment delete if cascade
-  await prisma.skillAssessment.deleteMany();
+  await prisma.skillAssessment.deleteMany(); 
   await prisma.skillCategory.deleteMany();
 
   await prisma.subscription.deleteMany();
   await prisma.subscriptionPlan.deleteMany();
   
-  // NextAuth specific tables
   await prisma.authenticator.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.verificationToken.deleteMany();
 
 
-  await prisma.company.deleteMany();              // Depends on User, Province, City
-  await prisma.user.deleteMany();                 // Depends on Province, City
+  await prisma.company.deleteMany();
+  await prisma.user.deleteMany();
 
   await prisma.city.deleteMany();
   await prisma.province.deleteMany();
@@ -587,36 +633,35 @@ async function main() {
 
   try {
     await clearExistingData();
-
-    // Seed in order of dependency
     await seedLocations();
-    await seedUserSubscriptionPlans();
-    await seedSkillAssessments();
-
+    await seedUserSubscriptionPlans();    
+    await seedSkillAssessments();  
+    const definedAssessmentsCount = 4;
     await seedUsers();
     await seedCompanies();
     await seedJobPostings();
-
-    // New seeding functions
     await seedJobApplications();
     await seedInterviewSchedules();
-
     await seedAnalytics();
 
     console.log('✨ Database seeding completed successfully!');
     console.log(`  🏛️ Provinces: ${provinceCodeToIdMap.size}, Cities: ${cityKeyToIdMap.size}`);
-    console.log(`  💳 User Subscription Plans: ${userSubscriptionPlans.length}`); // Or count from DB
-    console.log(`  🎯 Skill Categories: ${skillCategories.length}, Sample Assessments processed.`); // Or count from DB
+    console.log(`  💳 User Subscription Plans: ${userSubscriptionPlans.length}`);
+    console.log(`  🎯 Skill Categories: ${skillCategories.length}, Assessments defined for creation: ${definedAssessmentsCount}`);
     console.log(`  👤 Users: ${userMockIdToActualIdMap.size}`);
     console.log(`  🏢 Companies: ${companyMockIdToActualIdMap.size}`);
     console.log(`  📄 Job Postings: ${jobPostingMockIdToActualIdMap.size}`);
     console.log(`  📝 Job Applications: ${jobApplicationMockIdToActualIdMap.size}`);
-    console.log(`  🗓️ Interview Schedules: ${mockInterviewSchedules.filter(is => jobApplicationMockIdToActualIdMap.has(is.jobApplicationId)).length}`); // Count successfully processed
+    const successfulInterviews = mockInterviewSchedules.filter(is => 
+        jobApplicationMockIdToActualIdMap.has(is.jobApplicationId) &&
+        jobPostingMockIdToActualIdMap.has(is.jobPostingId) &&
+        userMockIdToActualIdMap.has(is.candidateId)
+    ).length;
+    console.log(`  🗓️ Interview Schedules: ${successfulInterviews}`);
     console.log('  📈 Analytics Initialized.');
 
   } catch (error) {
     console.error('❌ Error during seeding:', error);
-    // process.exit(1); // Exiting here might prevent finally from running fully in some cases
   }
 }
 

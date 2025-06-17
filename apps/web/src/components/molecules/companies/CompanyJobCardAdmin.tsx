@@ -4,7 +4,7 @@ import type { JobPostingInStore } from '@/types';
 import { useCompanyProfileStore } from '@/stores/companyProfileStores'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Briefcase, Calendar, Users, Edit, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { Briefcase, Calendar, Users, Edit, Trash2, Eye, AlertTriangle, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { employmentTypeLabels } from '@/lib/jobConstants';
 import { useRouter } from 'next/navigation';
@@ -43,6 +43,10 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
 
   const handleEditJob = () => {
     router.push(`/jobs/create-jobs/edit-jobs/${job.id}`);
+  };
+
+  const handleCreateTest = () => {
+    router.push(`/jobs/${job.id}/create-test`);
   };
 
   const handleDeleteJob = async () => {
@@ -104,6 +108,14 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
         </div>
       </CardContent>
       <CardFooter className="flex flex-wrap justify-end space-x-2"> 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCreateTest}
+          disabled={!job.isActive}
+        >
+          <Plus className="w-4 h-4 mr-1" /> Create Test
+        </Button>
         <Button
           variant="outline"
           size="sm"

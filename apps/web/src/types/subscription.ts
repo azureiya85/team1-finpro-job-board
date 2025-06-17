@@ -66,3 +66,33 @@ export interface SubscriptionUpdateData {
   autoRenew?: boolean;
   paymentStatus?: PaymentStatus;
 }
+
+export interface MidtransItemDetails {
+  id: string;
+  price: number;
+  quantity: number;
+  name: string;
+  brand?: string;
+  category?: string;
+  merchant_name?: string;
+}
+
+export interface MidtransTransactionParameters {
+  transaction_details: {
+    order_id: string;
+    gross_amount: number;
+  };
+  customer_details: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  item_details?: MidtransItemDetails[];
+  callbacks: {
+    finish: string;
+    error: string;
+    pending: string;
+  };
+  // For specifying payment channels like 'bca_va', 'gopay', etc.
+  enabled_payments?: string[];
+}

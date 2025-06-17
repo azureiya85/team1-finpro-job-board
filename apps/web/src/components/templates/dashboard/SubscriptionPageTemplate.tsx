@@ -1,10 +1,17 @@
 "use client";
 
 import React, { useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter, 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle, Info, Ban } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { subscriptionApi } from '@/services/subscription.service';
 import { getSubscriptionStatusBadge } from '@/lib/statusConfig';
@@ -63,6 +70,30 @@ export default function SubscriptionPageTemplate() {
     
     loadData();
   }, [fetchPlans, fetchSubscription, setLoading, setError]);
+
+   const handleCancelSubscription = async () => {
+    if (!subscription) return;
+
+    const isConfirmed = window.confirm(
+      "Are you sure you want to cancel this pending subscription?"
+    );
+
+    if (!isConfirmed) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      await subscriptionApi.cancelSubscription(subscription.id);
+      // Refresh subscription data to update the UI
+      await fetchSubscription();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during cancellation.';
+      setError(errorMessage);
+      console.error("Cancellation failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Render status badge helper
   const renderStatusBadge = (status: string) => {
@@ -137,6 +168,28 @@ export default function SubscriptionPageTemplate() {
               </div>
             </div>
           </CardContent>
+            {subscription.status === 'PENDING' && (
+            <CardFooter className="border-t pt-4 mt-4">
+              <div className="w-full">
+                <div className="flex items-start space-x-3">
+                  <Ban className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-semibold">Cancel Pending Order</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      This subscription is awaiting payment or confirmation. If you&apos;ve changed your mind, you can cancel it now.
+                    </p>
+                    <Button
+                      variant="destructive"
+                      onClick={handleCancelSubscription}
+                      disabled={loading}
+                    >
+                      {loading ? 'Cancelling...' : 'Cancel Subscription'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardFooter>
+          )}
         </Card>
       ) : (
         <Alert>

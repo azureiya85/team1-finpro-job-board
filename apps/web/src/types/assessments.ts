@@ -87,7 +87,46 @@ export interface UserSkillAssessmentWithRelations extends UserSkillAssessment {
   certificate?: Certificate;
 }
 
-// Request/Response interfaces
+// For AssessmentsPage component
+export interface AssessmentCategory {
+  name: string;
+  icon: string | null;
+}
+
+export interface ListedAssessment {
+  id: string;
+  title: string;
+  description: string | null;
+  timeLimit: number;
+  category: AssessmentCategory;
+  _count: {
+    questions: number;
+  };
+  userAssessment?: {
+    isPassed: boolean;
+    certificate?: {
+      certificateUrl: string | null;
+    }
+  };
+}
+
+// For TakeAssessmentPage component
+export interface AssessmentQuestion {
+  id: string;
+  question: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+}
+
+export interface AssessmentData {
+  assessmentId: string;
+  title: string;
+  timeLimit: number; // minutes
+  questions: AssessmentQuestion[];
+}
+
 export interface AssessmentAnswer {
   questionId: string;
   selectedOption: 'A' | 'B' | 'C' | 'D';
@@ -106,6 +145,26 @@ export interface AssessmentSubmissionResponse {
   certificate?: Certificate;
   badgeEarned: boolean;
 }
+
+// Certificate info for submission results
+export interface CertificateInfo {
+  id: string;
+  certificateCode: string;
+  certificateUrl: string | null;
+  issueDate: string;
+}
+
+export interface SubmissionResult {
+  score: number;
+  isPassed: boolean;
+  passingScore: number;
+  userAssessmentId: string;
+  certificate: CertificateInfo | null;
+  badgeEarned: boolean;
+}
+
+// Assessment stages for UI state management
+export type AssessmentStage = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
 
 // Error interfaces
 export interface PrismaError {
