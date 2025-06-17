@@ -23,9 +23,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { testId } = await params;
+
     const testResult = await prisma.testResult.findFirst({
       where: {
-        testId: params.testId,
+        testId: testId,
         userId: session.user.id
       },
       include: {
@@ -59,16 +61,26 @@ export async function GET(
 
     const formattedResult = {
       id: testResult.id,
-      testTitle: testResult.test.title,
+      testId: testResult.testId,
+      userId: testResult.userId,
       score: testResult.score,
-      timeSpent: testResult.timeSpent,
-      passed: testResult.passed,
+      totalQuestions: testResult.test.questions.length,
+      correctAnswers: testResult.test.questions.filter(
+        (q: QuestionResult) => 
+        (testResult.answers as Record<string, string>)[q.id] === q.correctAnswer
+      ).length,
+      timeTaken: testResult.timeSpent,
       passingScore: testResult.test.passingScore,
-      questions: testResult.test.questions.map((question: QuestionResult) => ({
-        ...question,
-        selectedAnswer: (testResult.answers as Record<string, string>)[question.id] || null,
-        isCorrect: (testResult.answers as Record<string, string>)[question.id] === question.correctAnswer
-      }))
+      isPassed: testResult.passed,
+      answers: Object.entries(testResult.answers as Record<string, string>).map(([questionId, selectedAnswer]) => ({
+        questionId,
+        selectedAnswer
+      })),
+      createdAt: testResult.createdAt,
+      test: {
+        title: testResult.test.title,
+        questions: testResult.test.questions
+      }
     };
 
     return NextResponse.json(formattedResult);

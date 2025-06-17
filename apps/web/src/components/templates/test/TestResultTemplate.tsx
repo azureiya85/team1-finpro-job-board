@@ -1,6 +1,7 @@
 import { TestResults } from '@/components/organisms/test/TestResults';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 interface TestResultTemplateProps {
   testTitle: string;
@@ -18,8 +19,6 @@ interface TestResultTemplateProps {
   }[];
   timeSpent: number;
   passingScore: number;
-  onRetake?: () => void;
-  onBack: () => void;
 }
 
 export function TestResultTemplate({
@@ -30,14 +29,19 @@ export function TestResultTemplate({
   questions,
   timeSpent,
   passingScore,
-  onRetake,
-  onBack
 }: TestResultTemplateProps) {
+
+  const router = useRouter();
+
+  const handleBack = () => {
+    router.push('/');
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6 mt-16 max-w-3xl">
       <Card className="p-6">
-        <h1 className="text-2xl font-bold mb-2">{testTitle} - Results</h1>
-        <p className="text-gray-500">
+        <h1 className="text-xl font-bold mb-2">{testTitle} - Results</h1>
+        <p className="text-gray-500 text-sm">
           Review your test results and check the correct answers below.
         </p>
       </Card>
@@ -51,15 +55,10 @@ export function TestResultTemplate({
         passingScore={passingScore}
       />
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
+      <div className="flex justify-center">
+        <Button variant="outline" onClick={handleBack}>
           Back to Dashboard
         </Button>
-        {onRetake && (
-          <Button onClick={onRetake}>
-            Retake Test
-          </Button>
-        )}
       </div>
     </div>
   );

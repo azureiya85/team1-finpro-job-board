@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter} from 'next/navigation';
 import { TestResultTemplate } from '@/components/templates/test/TestResultTemplate';
-import { TestResult } from '@/types/testTypes';
+import { TestResult, TestAnswer } from '@/types/testTypes';
 
 export default function TestResultPage() {
   const [result, setResult] = useState<TestResult | null>(null);
@@ -32,13 +32,16 @@ export default function TestResultPage() {
 
   if (loading) return <div>Loading...</div>;
   if (!result) return <div>Result not found</div>;
+  if (!result.test) return <div>Test data not found</div>;
+  
+  console.log(result.test)
 
   return (
-    <TestResultTemplate
+      <TestResultTemplate
       testTitle={result.test.title}
       score={result.score}
       totalQuestions={result.totalQuestions}
-      answers={result.answers.reduce((acc, curr) => ({
+      answers={result.answers.reduce((acc: Record<string, string>, curr: TestAnswer) => ({
         ...acc,
         [curr.questionId]: curr.selectedAnswer
       }), {})}

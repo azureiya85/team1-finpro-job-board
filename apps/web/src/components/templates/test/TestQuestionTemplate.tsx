@@ -124,7 +124,10 @@ export function TestQuestionTemplate() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ answers: submittedAnswers }),
+        body: JSON.stringify({ 
+          answers, // Kirim answers langsung karena sudah dalam format yang benar
+          timeSpent: Math.floor((test.timeLimit * 60) - timeLeft) // Tambahkan timeSpent dalam detik
+        }),
       });
 
       if (!response.ok) {
