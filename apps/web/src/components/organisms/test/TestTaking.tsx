@@ -9,47 +9,73 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Question } from '@/types/testTypes';
 import { validateQuestion } from '@/lib/actions/testActions';
+import { useTestTimer } from '@/hooks/useTestTimer'
 
 interface TestFormProps {
   questions: Question[];
   timeLimit: number;
-  passingScore?: number; // buat menjadi opsional
+  passingScore?: number;
+  testId: string; // Tambahkan testId sebagai prop
   onSubmit: (answers: Record<string, string>) => void;
 }
 
-export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState(timeLimit * 60);
+export function TestTaking({ questions, timeLimit, testId, onSubmit }: TestFormProps) {
+  // Gunakan testId dari props untuk konsistensi
+  const answersKey = `test_answers_${testId}`;
+  
+  const [answers, setAnswers] = useState<Record<string, string>>(() => {
+    if (typeof window === 'undefined') return {};
+    try {
+      const saved = localStorage.getItem(answersKey);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleAnswerSelect = (questionId: string, value: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+  const handleTimeUp = () => {
+    handleSubmit(true);
   };
 
-  const handleSubmit = async () => {
+  // Gunakan testId yang sama untuk timer
+  const timeLeft = useTestTimer(testId, timeLimit, handleTimeUp);
+
+  // Simpan jawaban ke localStorage setiap kali berubah
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(answersKey, JSON.stringify(answers));
+  }, [answers, answersKey]);
+
+  const handleAnswerSelect = (questionId: string, value: string) => {
+    setAnswers(prev => {
+      const updated = { ...prev, [questionId]: value };
+      return updated;
+    });
+  };
+
+  const handleSubmit = async (force: boolean = false) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
+
     try {
-      const isValid = questions.every(q => validateQuestion(q));
-      if (!isValid) {
-        throw new Error('Invalid question format');
+      if (!force && timeLeft > 0) {
+        if (!window.confirm('Are you sure you want to submit the test?')) {
+          setIsSubmitting(false);
+          return;
+        }
       }
+
       await onSubmit(answers);
+
+      // Bersihkan localStorage
+      localStorage.removeItem(`test_timer_${testId}`);
+      localStorage.removeItem(answersKey);
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      alert('Failed to submit test. Please try again.');
     } finally {
       setIsSubmitting(false);
       setShowConfirmDialog(false);
@@ -67,7 +93,7 @@ export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
             <TestTimer 
               timeLeft={timeLeft} 
               isWarning={timeLeft < 300}
-              onTimeUp={handleSubmit}
+              onTimeUp={handleTimeUp}
             />
             <div className="text-sm text-gray-500">
               {answeredCount}/{questions.length} questions answered
@@ -97,9 +123,9 @@ export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
 
       <div className="sticky bottom-0 bg-white p-4 border-t">
         <div className="flex justify-end max-w-3xl mx-auto">
-        <Button
+          <Button
             onClick={() => setShowConfirmDialog(true)}
-            disabled={answeredCount !== questions.length || isSubmitting}
+            disabled={isSubmitting}
           >
             {isSubmitting ? "Submitting..." : "Finish & Submit"}
           </Button>
@@ -109,13 +135,13 @@ export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>
-          <DialogTitle>Confirm Submission</DialogTitle>
+            <DialogTitle>Confirm Submission</DialogTitle>
           </DialogHeader>
           <p className="text-gray-500">
             Are you sure you want to submit your answers? You cannot change your answers after submission.
           </p>
           <DialogFooter>
-          <Button
+            <Button
               variant="outline"
               onClick={() => setShowConfirmDialog(false)}
               disabled={isSubmitting}
@@ -123,7 +149,7 @@ export function TestTaking({ questions, timeLimit, onSubmit }: TestFormProps) {
               Back
             </Button>
             <Button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit(false)}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : "Yes, Submit"}

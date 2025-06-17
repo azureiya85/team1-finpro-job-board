@@ -17,6 +17,7 @@ export type ApplicationWithDetails = JobApplication & {
     company: Pick<Company, 'id' | 'name' | 'logo'>;
   };
   interviewSchedules: (Pick<InterviewSchedule, 'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'>)[];
+  testResult?: { id: string } | null; // Tambahkan ini untuk mengecek apakah test sudah selesai
 };
 
 interface ApplicationCardProps {
@@ -168,13 +169,13 @@ export default function ApplicationCard({ application, onViewDetails }: Applicat
       </CardContent>    
       <CardFooter className="px-6 py-4 bg-muted/20 border-t border-border/50">
         <div className="flex justify-end items-center w-full gap-208">
-          {status === ApplicationStatus.TEST_REQUIRED && !application.testCompletedAt && (
-            <TakeTestButton
-              applicationId={application.id}
-              status={status}
-              testCompleted={application.testCompletedAt !== null}
-              onTakeTest={handleTakeTest}
-            />
+        {status === ApplicationStatus.TEST_REQUIRED && !application.testResult && jobPosting.preSelectionTestId && (
+              <TakeTestButton
+                applicationId={application.id}
+                status={status}
+                testCompleted={false}
+                onTakeTest={handleTakeTest}
+              />
           )}
           <Button
             variant="ghost"

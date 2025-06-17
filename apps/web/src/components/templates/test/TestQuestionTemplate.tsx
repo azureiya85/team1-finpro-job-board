@@ -5,48 +5,52 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Test, Question } from '@/types/testTypes';
-import { TestTimer } from '@/components/atoms/test/TestTimer';
+import { useTestTimer } from '@/hooks/useTestTimer';
 
 export function TestQuestionTemplate() {
-  const [test, setTest] = useState<Test | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const params = useParams();
   const router = useRouter();
+  
+  const [test, setTest] = useState<Test | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Inisialisasi answers dari localStorage
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  // Load answers dari localStorage saat komponen mount
+  useEffect(() => {
+    if (typeof window === 'undefined' || !params.testId) return;
+    
+    const savedAnswers = localStorage.getItem(`test_answers_${params.testId}`);
+    if (savedAnswers) {
+      try {
+        setAnswers(JSON.parse(savedAnswers));
+      } catch (error) {
+        console.error('Error loading answers:', error);
+      }
+    }
+  }, [params.testId]);
+
+  const handleTimeUp = () => {
+    handleSubmitTest(true);
+  };
+
+  const timeLeft = useTestTimer(
+    params.testId as string,
+    test?.timeLimit,
+    handleTimeUp
+  );
 
   useEffect(() => {
     fetchTestAndQuestion();
   }, [params.questionId]);
 
-  useEffect(() => {
-    if (test?.timeLimit) {
-      setTimeLeft(test.timeLimit * 60);
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 0) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [test]);
-
-  useEffect(() => {
-    if (timeLeft === 0) {
-      handleSubmitTest(true);
-    }
-  }, [timeLeft]);
-
   const fetchTestAndQuestion = async () => {
     try {
       const response = await fetch(`/api/jobs/${params.id}/test/${params.testId}`);
+      if (!response.ok) throw new Error('Failed to fetch test data');
+      
       const testData = await response.json();
       setTest(testData);
 
@@ -54,6 +58,7 @@ export function TestQuestionTemplate() {
       setCurrentQuestion(question);
     } catch (error) {
       console.error('Error fetching test data:', error);
+      alert('Gagal mengambil data test. Silakan refresh halaman.');
     }
   };
 
@@ -73,7 +78,6 @@ export function TestQuestionTemplate() {
       const nextQuestion = test.questions[currentIndex + 1];
       router.push(`/jobs/${params.id}/test/${params.testId}/take-test/${nextQuestion.id}`);
     } else {
-      // Konfirmasi sebelum submit di soal terakhir
       if (window.confirm('Apakah Anda yakin ingin menyelesaikan test ini?')) {
         handleSubmitTest(false);
       }
@@ -81,34 +85,41 @@ export function TestQuestionTemplate() {
   };
 
   const handleSelectAnswer = (answer: string) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || !params.testId) return;
     
-    setSelectedAnswer(answer);
-    setAnswers(prev => ({
-      ...prev,
+    const newAnswers = {
+      ...answers,
       [currentQuestion.id]: answer
-    }));
+    };
+    
+    // Update state
+    setAnswers(newAnswers);
+    
+    // Simpan ke localStorage
+    try {
+      localStorage.setItem(`test_answers_${params.testId}`, JSON.stringify(newAnswers));
+    } catch (error) {
+      console.error('Error saving answer:', error);
+    }
   };
 
   const handleSubmitTest = async (isTimeUp: boolean = false) => {
-    if (isSubmitting || !test) return;
+    if (isSubmitting || !test || !params.testId) return;
     
     try {
       setIsSubmitting(true);
       
-      // Konfirmasi hanya jika bukan karena waktu habis
       if (!isTimeUp && !window.confirm('Apakah Anda yakin ingin menyelesaikan test ini?')) {
+        setIsSubmitting(false);
         return;
       }
 
-      // Kumpulkan semua jawaban
       const submittedAnswers = test.questions.map(q => ({
         questionId: q.id,
         answer: answers[q.id] || ''
       }));
 
-      // Kirim jawaban ke API
-      const response = await fetch(`/api/jobs/${params.id}/test/${params.testId}/submit`, {
+      const response = await fetch(`/api/jobs/${params.id}/test/${params.testId}/take-test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +131,10 @@ export function TestQuestionTemplate() {
         throw new Error('Failed to submit test');
       }
 
-      // Redirect ke halaman result
+      // Bersihkan localStorage setelah submit berhasil
+      localStorage.removeItem(`test_timer_${params.testId}`);
+      localStorage.removeItem(`test_answers_${params.testId}`);
+
       router.push(`/jobs/${params.id}/test/${params.testId}/result`);
     } catch (error) {
       console.error('Error submitting test:', error);
@@ -141,11 +155,9 @@ export function TestQuestionTemplate() {
           <h2 className="text-xl font-semibold">Exam Title: {test.title}</h2>
           <p className="text-gray-600">Exam Date: {new Date().toLocaleDateString()}</p>
         </div>
-        <TestTimer
-    timeLeft={timeLeft}
-    isWarning={timeLeft < 300}
-    onTimeUp={() => {}}
-  />
+        <div className="text-xl font-bold">
+          Time Left: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+        </div>
       </div>
 
       <Card className="p-6 mb-6">
@@ -164,7 +176,7 @@ export function TestQuestionTemplate() {
           ].map(([key, value]) => (
             <div
               key={key}
-              className={`p-4 rounded-lg border cursor-pointer transition-colors ${selectedAnswer === key ? 'bg-emerald-100 border-emerald-500' : 'hover:bg-gray-50'}`}
+              className={`p-4 rounded-lg border cursor-pointer transition-colors ${answers[currentQuestion.id] === key ? 'bg-emerald-100 border-emerald-500' : 'hover:bg-gray-50'}`}
               onClick={() => handleSelectAnswer(key)}
             >
               {value}
