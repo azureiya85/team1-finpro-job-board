@@ -220,17 +220,16 @@ model JobApplication {
   rejectionReason String? // Reason for rejection
   adminNotes      String? // Internal notes from company admin
 
-  testId          String?
-  testScore       Int? // Score out of 100
-  testCompletedAt DateTime?
-
-  userId          String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testResultId String? @unique 
+  testResult   TestResult? @relation(fields: [testResultId], references: [id])
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobPostingId String
-  jobPosting   JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  reviewedAt   DateTime? // When admin reviewed the application
+  jobPosting   JobPosting  @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  reviewedAt DateTime?
 
   interviewSchedules InterviewSchedule[]
 
@@ -368,17 +367,18 @@ model PreSelectionQuestion {
 }
 
 model TestResult {
-  id        String           @id @default(cuid())
-  test      PreSelectionTest @relation(fields: [testId], references: [id], onDelete: Cascade)
-  testId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  score     Float
-  timeSpent Int // dalam detik
-  passed    Boolean
-  answers   Json // menyimpan jawaban dalam format { questionId: selectedAnswer }
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  test           PreSelectionTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+  testId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  score          Float
+  timeSpent      Int // dalam detik
+  passed         Boolean
+  answers        Json // menyimpan jawaban dalam format { questionId: selectedAnswer }
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  JobApplication JobApplication?
 
   @@index([testId])
   @@index([userId])

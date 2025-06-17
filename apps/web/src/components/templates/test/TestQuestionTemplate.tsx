@@ -11,7 +11,9 @@ export function TestQuestionTemplate() {
   const [test, setTest] = useState<Test | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const params = useParams();
   const router = useRouter();
 
@@ -24,9 +26,8 @@ export function TestQuestionTemplate() {
       setTimeLeft(test.timeLimit * 60);
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev <= 1) {
+          if (prev <= 0) {
             clearInterval(timer);
-            handleSubmitTest();
             return 0;
           }
           return prev - 1;
@@ -36,6 +37,12 @@ export function TestQuestionTemplate() {
       return () => clearInterval(timer);
     }
   }, [test]);
+
+  useEffect(() => {
+    if (timeLeft === 0) {
+      handleSubmitTest(true);
+    }
+  }, [timeLeft]);
 
   const fetchTestAndQuestion = async () => {
     try {
@@ -60,22 +67,67 @@ export function TestQuestionTemplate() {
   };
 
   const handleNext = () => {
-    if (!test) return;
+    if (!test || !currentQuestion) return;
     const currentIndex = test.questions.findIndex((q: Question) => q.id === params.questionId);
     if (currentIndex < test.questions.length - 1) {
       const nextQuestion = test.questions[currentIndex + 1];
       router.push(`/jobs/${params.id}/test/${params.testId}/take-test/${nextQuestion.id}`);
     } else {
-      handleSubmitTest();
+      // Konfirmasi sebelum submit di soal terakhir
+      if (window.confirm('Apakah Anda yakin ingin menyelesaikan test ini?')) {
+        handleSubmitTest(false);
+      }
     }
   };
 
   const handleSelectAnswer = (answer: string) => {
+    if (!currentQuestion) return;
+    
     setSelectedAnswer(answer);
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: answer
+    }));
   };
 
-  const handleSubmitTest = async () => {
-    router.push(`/jobs/${params.id}/test/${params.testId}/result`);
+  const handleSubmitTest = async (isTimeUp: boolean = false) => {
+    if (isSubmitting || !test) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Konfirmasi hanya jika bukan karena waktu habis
+      if (!isTimeUp && !window.confirm('Apakah Anda yakin ingin menyelesaikan test ini?')) {
+        return;
+      }
+
+      // Kumpulkan semua jawaban
+      const submittedAnswers = test.questions.map(q => ({
+        questionId: q.id,
+        answer: answers[q.id] || ''
+      }));
+
+      // Kirim jawaban ke API
+      const response = await fetch(`/api/jobs/${params.id}/test/${params.testId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers: submittedAnswers }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit test');
+      }
+
+      // Redirect ke halaman result
+      router.push(`/jobs/${params.id}/test/${params.testId}/result`);
+    } catch (error) {
+      console.error('Error submitting test:', error);
+      alert('Gagal mengirim jawaban test. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!test || !currentQuestion) return <div>Loading...</div>;
@@ -83,17 +135,17 @@ export function TestQuestionTemplate() {
   const currentQuestionNumber = test.questions.findIndex((q: Question) => q.id === params.questionId) + 1;
 
   return (
-     <div className="container mx-auto p-4 max-w-4xl mt-16">
+    <div className="container mx-auto p-4 max-w-4xl mt-16">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-xl font-semibold">Exam Title: {test.title}</h2>
           <p className="text-gray-600">Exam Date: {new Date().toLocaleDateString()}</p>
         </div>
         <TestTimer
-          timeLeft={timeLeft}
-          isWarning={timeLeft < 300}
-          onTimeUp={handleSubmitTest}
-        />
+    timeLeft={timeLeft}
+    isWarning={timeLeft < 300}
+    onTimeUp={() => {}}
+  />
       </div>
 
       <Card className="p-6 mb-6">
@@ -131,6 +183,7 @@ export function TestQuestionTemplate() {
         </Button>
         <Button
           onClick={handleNext}
+          disabled={isSubmitting}
         >
           {currentQuestionNumber === test.questions.length ? 'Finish & Submit' : 'Next'}
         </Button>

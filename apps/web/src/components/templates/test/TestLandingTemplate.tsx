@@ -21,7 +21,7 @@ export function TestLandingTemplate({
   onStartTest
 }: TestLandingTemplateProps) {
   return (
-    <div className="container mx-auto py-6 min-h-[80vh] flex items-center justify-center">
+    <div className="container mx-auto py-6 min-h-[80vh] flex items-center justify-center mt-16">
       <div className="max-w-2xl w-full space-y-6">
         <Card className="p-8">
           <div className="text-center space-y-4">
