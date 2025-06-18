@@ -39,6 +39,7 @@ export async function GET(
         requirements: true,
         benefits: true,
         applicationDeadline: true,
+        preSelectionTestId: true,
         company: {
           select: {
             id: true,

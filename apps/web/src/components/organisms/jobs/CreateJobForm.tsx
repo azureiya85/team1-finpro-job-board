@@ -123,7 +123,7 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
       }
 
       toast.success(isEditing ? 'Job updated successfully' : 'Job created successfully');
-      router.push('/dashboard/jobs');
+      router.push(`/companies/${companyId}`);
       
     } catch (error) {
       console.error('Error saving job:', error);
@@ -134,7 +134,7 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
   };
 
   const handleCancel = () => {
-    router.push('/dashboard/jobs');
+    router.push(`/companies/${companyId}`);
   };
 
   return (

@@ -92,6 +92,12 @@ export async function GET(
             salaryMax: true,
           },
         },
+        testResult: {
+          select: {
+            score: true,
+            passed: true
+          }
+        },
         interviewSchedules: {
           select: {
             id: true,
@@ -122,8 +128,6 @@ export async function GET(
         expectedSalary: app.expectedSalary,
         coverLetter: app.coverLetter,
         cvUrl: app.cvUrl,
-        testScore: app.testScore,
-        testCompletedAt: app.testCompletedAt,
         rejectionReason: app.rejectionReason,
         adminNotes: app.adminNotes,
         createdAt: app.createdAt,
@@ -131,6 +135,10 @@ export async function GET(
         reviewedAt: app.reviewedAt,
         jobPosting: app.jobPosting,
         latestInterview: app.interviewSchedules.length > 0 ? app.interviewSchedules[0] : null,
+        testResult: app.testResult ? {
+          score: Math.round(app.testResult.score),
+          passed: app.testResult.passed
+        } : null,
         applicant: {
           id: user.id,
           name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),

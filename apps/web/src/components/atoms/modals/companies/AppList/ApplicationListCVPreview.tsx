@@ -22,13 +22,13 @@ export default function ApplicationListCVPreview({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[85vh] p-0">
-        <DialogHeader className="p-4 border-b bg-gray-50/50">
+        <DialogHeader className="p-2 border-b bg-gray-50/50">
           <DialogTitle className="flex items-center">
             <FileText className="w-5 h-5 mr-2" />
             CV Preview
           </DialogTitle>
         </DialogHeader>
-        <div className="h-full flex-grow overflow-hidden">
+        <div className="h-[calc(85vh-2.5rem)] flex-grow overflow-hidden">
           {isPdfFile ? (
             <iframe 
               src={cvUrl} 
@@ -36,6 +36,7 @@ export default function ApplicationListCVPreview({
               height="100%" 
               title="CV Preview"
               className="border-0"
+              style={{ marginTop: '1px' }}
             />
           ) : (
             <div className="p-8 text-center h-full flex flex-col justify-center">

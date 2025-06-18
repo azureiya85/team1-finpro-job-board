@@ -28,18 +28,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ApplicationDetailsTimeline from './AppDetails/ApplicationDetailsTimeline';
 import ApplicationDetailsInterview from './AppDetails/ApplicationDetailsInterview';
-import { statusConfig } from '@/lib/statusConfig';
+import { statusConfig } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
+import { PreSelectionTest } from '@prisma/client';
+import { cn } from '@/lib/utils';
 
 export type ApplicationWithDetails = JobApplication & {
   jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote'> & {
     province?: { name: string } | null;
     city?: { name: string } | null;
     company: Pick<Company, 'id' | 'name' | 'logo'>;
+    preSelectionTest?: PreSelectionTest | null;
   };
   interviewSchedules: (Pick<
     InterviewSchedule,
     'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'
   >)[];
+  testResult?: {
+    score: number;
+    passed: boolean;
+  } | null;
 };
 
 interface ApplicationDetailModalProps {
@@ -105,6 +112,32 @@ export default function ApplicationDetailModal({ application, isOpen, onClose }:
               status={status}
               interviewSchedules={interviewSchedules}
             />
+
+            {/* Pre-Selection Test Information */}
+            {jobPosting.preSelectionTest && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Pre-Selection Test</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <span className="font-medium">Test Score:</span>{' '}
+                      {application.testResult ? (
+                        <span className={cn(
+                          "text-lg font-bold",
+                          application.testResult.passed ? 'text-green-600' : 'text-red-600'
+                        )}>
+                          {application.testResult.score}%
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">Not taken</span>
+                      )}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Rejection Information */}
             {status === ApplicationStatus.REJECTED && (

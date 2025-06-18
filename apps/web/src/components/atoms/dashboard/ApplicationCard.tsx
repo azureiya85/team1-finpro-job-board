@@ -1,6 +1,5 @@
 'use client';
 
-// import Image from 'next/image';
 import { JobApplication, JobPosting, Company, InterviewSchedule } from '@prisma/client';
 import { MapPin, CalendarDays, Briefcase, ChevronRight, CheckCircle, Clock, XCircle, CalendarCheck, MessageSquare, UserCheck, AlertTriangle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -9,14 +8,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ApplicationStatus } from '@prisma/client';
+import { TakeTestButton } from '../test/TakeTestButton';
 
 export type ApplicationWithDetails = JobApplication & {
-  jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote'> & { 
+  jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote' | 'preSelectionTestId'> & { 
     province?: { name: string } | null;
     city?: { name: string } | null;
     company: Pick<Company, 'id' | 'name' | 'logo'>;
   };
   interviewSchedules: (Pick<InterviewSchedule, 'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'>)[];
+  testResult?: {
+    id: string;
+    score: number;
+    passed: boolean;
+  } | null;
 };
 
 interface ApplicationCardProps {
@@ -41,6 +46,18 @@ const statusConfig: Record<ApplicationStatus, {
     className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100', 
     icon: MessageSquare, 
     text: 'Reviewed' 
+  },
+  TEST_REQUIRED: { 
+    variant: 'secondary', 
+    className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100', 
+    icon: AlertTriangle, 
+    text: 'Test Required' 
+  },
+  TEST_COMPLETED: {
+    variant:'secondary',
+    className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+    icon: CheckCircle,
+    text: 'Test Completed'
   },
   INTERVIEW_SCHEDULED: { 
     variant: 'secondary', 
@@ -111,6 +128,10 @@ export default function ApplicationCard({ application, onViewDetails }: Applicat
     .toUpperCase()
     .slice(0, 2);
 
+  const handleTakeTest = () => {
+    window.location.href = `/jobs/${jobPosting.id}/test/${jobPosting.preSelectionTestId}/take-test`;
+  };
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-200 border-border/50 hover:border-border">
       <CardContent className="p-6">
@@ -149,10 +170,17 @@ export default function ApplicationCard({ application, onViewDetails }: Applicat
             </div>
           </div>
         </div>
-      </CardContent>
-      
+      </CardContent>    
       <CardFooter className="px-6 py-4 bg-muted/20 border-t border-border/50">
-        <div className="flex justify-end w-full">
+        <div className="flex justify-end items-center w-full gap-208">
+        {status === ApplicationStatus.TEST_REQUIRED && !application.testResult && jobPosting.preSelectionTestId && (
+              <TakeTestButton
+                applicationId={application.id}
+                status={status}
+                testCompleted={false}
+                onTakeTest={handleTakeTest}
+              />
+          )}
           <Button
             variant="ghost"
             size="sm"

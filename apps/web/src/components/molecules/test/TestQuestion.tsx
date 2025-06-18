@@ -2,14 +2,15 @@
 
 import { TestOption } from '@/components/atoms/test/TestOption';
 import { Card, CardContent } from '@/components/ui/card';
+import { Question } from '@/types/testTypes';
 
 interface TestQuestionProps {
   questionNumber: number;
   question: string;
-  options: {
-    value: 'A' | 'B' | 'C' | 'D';
+  options: Array<{
+    value: keyof Pick<Question, 'optionA' | 'optionB' | 'optionC' | 'optionD'>;
     text: string;
-  }[];
+  }>;
   selectedAnswer?: string;
   onAnswerSelect: (value: string) => void;
   disabled?: boolean;

@@ -4,7 +4,7 @@ import type { JobPostingInStore } from '@/types';
 import { useCompanyProfileStore } from '@/stores/companyProfileStores'; 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Briefcase, Calendar, Users, Edit, Trash2, Eye, AlertTriangle, Plus } from 'lucide-react';
+import { Briefcase, Calendar, Users, Edit, Trash2, Eye, AlertTriangle, BookOpen } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { employmentTypeLabels } from '@/lib/jobConstants';
 import { useRouter } from 'next/navigation';
@@ -45,8 +45,8 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
     router.push(`/jobs/create-jobs/edit-jobs/${job.id}`);
   };
 
-  const handleCreateTest = () => {
-    router.push(`/jobs/${job.id}/create-test`);
+  const handleTestManagement = () => {
+    router.push(`/jobs/${job.id}/test`);
   };
 
   const handleDeleteJob = async () => {
@@ -89,6 +89,7 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
           Posted {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}
         </CardDescription>
       </CardHeader>
+
       <CardContent className="flex-grow space-y-2"> 
         <div className="text-sm text-gray-600">
           <div className="flex items-center">
@@ -99,57 +100,78 @@ export default function CompanyJobCardAdmin({ job, companyId }: CompanyJobCardAd
             <Users className="w-4 h-4 mr-2 text-gray-400" />
             <span>{applicantCount} Applicant{applicantCount !== 1 ? 's' : ''}</span>
           </div>
-          {job.applicationDeadline && (
-            <div className="flex items-center">
-              <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-              <span>Deadline: {new Date(job.applicationDeadline).toLocaleDateString('en-CA')}</span> 
-            </div>
-          )}
+          <div className="flex items-center">
+            <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+            <span>Deadline: {job.applicationDeadline ? new Date(job.applicationDeadline).toLocaleDateString() : 'No deadline set'}</span>
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-wrap justify-end space-x-2"> 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleCreateTest}
-          disabled={!job.isActive}
-        >
-          <Plus className="w-4 h-4 mr-1" /> Create Test
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleViewApplicants}
-          disabled={!job.isActive && applicantCount === 0}
-        >
-          <Eye className="w-4 h-4 mr-1" /> Applicants
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleEditJob}
-          disabled={!job.isActive}
-        >
-          <Edit className="w-4 h-4 mr-1" /> Edit
-        </Button>
+
+      <CardFooter className="flex flex-col gap-2">
+        <div className="flex gap-2 w-full">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={() => router.push(`/jobs/${job.id}`)}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleEditJob}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit
+          </Button>
+        </div>
+
+        <div className="flex gap-2 w-full">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleTestManagement}
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Tests
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleViewApplicants}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Applicants ({applicantCount})
+          </Button>
+        </div>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive" size="sm">
-              <Trash2 className="w-4 h-4 mr-1" /> Delete
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full mt-2"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action will {job._count && job._count.applications > 0 ? "mark the job as inactive." : "permanently delete the job posting."} This cannot be undone.
+                This action cannot be undone. This will permanently delete the job posting
+                and remove all associated data.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteJob} className="bg-destructive hover:bg-destructive/90">
-                Confirm Delete
-              </AlertDialogAction>
+              <AlertDialogAction onClick={handleDeleteJob}>Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

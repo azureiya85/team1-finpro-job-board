@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  const { id: userId } = await params; // Await params before destructuring
+  const { id: userId } = await params;
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,13 +23,35 @@ export async function GET(
       where: {
         userId: userId,
       },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        rejectionReason: true,
+        adminNotes: true,
+        testResultId: true,  // Tambahkan ini
+        testResult: {  // Ubah relasi ini
+          select: {
+            id: true,    // Tambahkan ini
+            score: true,
+            passed: true
+          }
+        },
         jobPosting: {
           select: {
             id: true,
             title: true,
-            isRemote: true, // Include if the job is remote
-            // Select province and city names
+            isRemote: true,
+            preSelectionTestId: true,
+            preSelectionTest: {
+              select: {
+                id: true,
+                title: true,
+                passingScore: true,
+                timeLimit: true
+              }
+            },
             province: {
               select: {
                 name: true,
@@ -40,7 +62,6 @@ export async function GET(
                 name: true,
               },
             },
-            // country: true, // You can also select country if needed
             company: {
               select: {
                 id: true,
@@ -55,7 +76,7 @@ export async function GET(
             id: true,
             scheduledAt: true,
             duration: true,
-            location: true, // This 'location' is for the interview itself (e.g., office address or meeting link)
+            location: true,
             interviewType: true,
             notes: true,
             status: true,

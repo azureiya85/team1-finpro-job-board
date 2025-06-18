@@ -41,6 +41,11 @@ export default function ApplicationDetailsTimeline({
       date: status !== ApplicationStatus.PENDING ? updatedAt : null, 
     },
     {
+      name: 'Test Stage',
+      status: ApplicationStatus.TEST_REQUIRED,
+      date: status === ApplicationStatus.TEST_REQUIRED || status === ApplicationStatus.TEST_COMPLETED ? updatedAt : null,
+    },
+    {
       name: 'Interview Stage',
       status: ApplicationStatus.INTERVIEW_SCHEDULED, // Represents the start of interview process
       date: interviewSchedules.length > 0 ? interviewSchedules[0].scheduledAt : null,
@@ -54,6 +59,15 @@ export default function ApplicationDetailsTimeline({
 
   // Filter out Interview Stage if no interviews and status is PENDING/REVIEWED
   const filteredTimelineSteps = timelineSteps.filter(step => {
+
+    if (step.name === 'Test Stage') {
+      return status === ApplicationStatus.TEST_REQUIRED || 
+             status === ApplicationStatus.TEST_COMPLETED || 
+             status === ApplicationStatus.INTERVIEW_SCHEDULED || 
+             status === ApplicationStatus.INTERVIEW_COMPLETED || 
+             status === ApplicationStatus.ACCEPTED;
+    }
+
     if (step.name === 'Interview Stage') {
       return interviewSchedules.length > 0 || 
            (status === ApplicationStatus.INTERVIEW_SCHEDULED || status === ApplicationStatus.INTERVIEW_COMPLETED || status === ApplicationStatus.ACCEPTED)
@@ -107,6 +121,20 @@ export default function ApplicationDetailsTimeline({
         if (stepTargetStatus && stepTargetStatusIndex < statusOrder.indexOf(ApplicationStatus.INTERVIEW_SCHEDULED)) return 'completed';
         return 'upcoming';
     }
+
+    // Case untuk TEST_COMPLETED
+    if (currentAppStatus === ApplicationStatus.TEST_COMPLETED) {
+      if (stepTargetStatus === ApplicationStatus.TEST_COMPLETED) return 'current';
+      if (stepTargetStatus && stepTargetStatusIndex < statusOrder.indexOf(ApplicationStatus.TEST_COMPLETED)) return 'completed';
+      return 'upcoming';
+  }
+
+  // Case untuk TEST_REQUIRED
+  if (currentAppStatus === ApplicationStatus.TEST_REQUIRED) {
+      if (stepTargetStatus === ApplicationStatus.TEST_REQUIRED) return 'current';
+      if (stepTargetStatus && stepTargetStatusIndex < statusOrder.indexOf(ApplicationStatus.TEST_REQUIRED)) return 'completed';
+      return 'upcoming';
+  }
     
     // Case 5: Application is REVIEWED
     if (currentAppStatus === ApplicationStatus.REVIEWED) {

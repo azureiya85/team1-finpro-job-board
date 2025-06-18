@@ -2,17 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-interface Question {
-  id: string;
-  question: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctAnswer: string;
-  explanation: string;
-}
+import { Question } from '@/types/testTypes';
 
 interface TestQuestionListProps {
   questions: Question[];
@@ -59,7 +49,7 @@ export function TestQuestionList({ questions, onEdit, onDelete }: TestQuestionLi
                   className={`p-3 rounded-md ${option === question.correctAnswer ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}
                 >
                   <span className="font-medium">Option {option}:</span>
-                  <span className="ml-2">{question[`option${option}` as keyof Question]}</span>
+                  <span className="ml-2">{String(question[`option${option}` as keyof Question])}</span>
                   {option === question.correctAnswer && (
                     <span className="ml-2 text-green-600">(Correct Answer)</span>
                   )}

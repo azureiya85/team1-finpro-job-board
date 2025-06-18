@@ -34,13 +34,14 @@ export default function ApplicantListContent({
     <div className="w-full">
       <Table className="w-full">
         <TableHeader>
-          <TableRow className="bg-gray-50/50">
+        <TableRow className="bg-gray-50/50">
             <TableHead className="w-16 pl-6">Photo</TableHead>
             <TableHead className="w-48 font-semibold">Applicant Info</TableHead>
             <TableHead className="w-32 font-semibold">Details</TableHead>
             <TableHead className="w-36 font-semibold">Salary Expectation</TableHead>
             <TableHead className="w-32 font-semibold">Applied Date</TableHead>
             <TableHead className="w-24 font-semibold text-center">CV</TableHead>
+            <TableHead className="w-24 font-semibold text-center">Test Score</TableHead>
             <TableHead className="w-32 font-semibold">Status</TableHead>
             <TableHead className="w-28 font-semibold text-center">Actions</TableHead>
           </TableRow>
@@ -122,6 +123,19 @@ export default function ApplicantListContent({
                   ) : (
                     <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
                       No CV
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* Test Score Cell */}
+                <TableCell className="text-center">
+                  {app.testResult ? (
+                    <span className={`text-sm font-medium ${app.testResult.passed ? 'text-green-600' : 'text-red-600'}`}>
+                      {app.testResult.score}%
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                      Not taken
                     </span>
                   )}
                 </TableCell>
