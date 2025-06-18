@@ -56,9 +56,15 @@ export async function GET() {
   }
 
   try {
-    const plans = await prisma.subscriptionPlan.findMany({
+    const plansFromDb = await prisma.subscriptionPlan.findMany({
       orderBy: { createdAt: 'desc' },
     });
+    
+    const plans = plansFromDb.map(plan => ({
+      ...plan,
+      features: Array.isArray(plan.features) ? plan.features : [],
+    }));
+
     return NextResponse.json(plans);
   } catch (error) {
     console.error('Error fetching subscription plans for admin:', error);

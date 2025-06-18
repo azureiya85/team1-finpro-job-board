@@ -18,10 +18,16 @@ export async function GET(request: Request, { params }: RouteContext) {
   }
   const { planId } = params;
   try {
-    const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
-    if (!plan) {
+    const planFromDb = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+    if (!planFromDb) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
     }
+
+    const plan = {
+      ...planFromDb,
+      features: Array.isArray(planFromDb.features) ? planFromDb.features : [],
+    };
+
     return NextResponse.json(plan);
   } catch (error) {
     console.error(`Error fetching plan ${planId}:`, error);
