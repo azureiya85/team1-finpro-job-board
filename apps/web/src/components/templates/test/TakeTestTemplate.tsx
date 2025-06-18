@@ -9,7 +9,8 @@ interface TakeTestTemplateProps {
   testDescription: string | null;
   questions: TakeQuestionData[];
   timeLimit: number;
-  passingScore: number; // tambahkan ini
+  passingScore: number
+  testId: string;
   onSubmit: (answers: Record<string, string>) => Promise<void>;
 }
 
@@ -19,6 +20,7 @@ export function TakeTestTemplate({
   questions,
   timeLimit,
   passingScore,
+  testId,
   onSubmit
 }: TakeTestTemplateProps) {
   return (
@@ -37,7 +39,8 @@ export function TakeTestTemplate({
       <TestTaking
         questions={questions as unknown as Question[]}
         timeLimit={timeLimit}
-        passingScore={passingScore} // tambahkan ini
+        passingScore={passingScore}
+        testId={testId}
         onSubmit={onSubmit}
       />
     </div>

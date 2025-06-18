@@ -90,8 +90,6 @@ export async function GET(
       expectedSalary: application.expectedSalary,
       coverLetter: application.coverLetter,
       cvUrl: application.cvUrl,
-      testScore: application.testScore,
-      testCompletedAt: application.testCompletedAt,
       rejectionReason: application.rejectionReason,
       adminNotes: application.adminNotes,
       createdAt: application.createdAt,
