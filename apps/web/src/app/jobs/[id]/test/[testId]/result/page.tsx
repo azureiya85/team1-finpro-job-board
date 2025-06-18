@@ -17,6 +17,19 @@ export default function TestResultPage() {
     fetchTestResult();
   }, [testId, jobId]);
 
+  useEffect(() => {
+    window.history.pushState(null, '', window.location.href);
+    window.onpopstate = () => {
+      router.push('/dashboard');
+    };
+
+    fetchTestResult();
+
+    return () => {
+      window.onpopstate = null;
+    };
+  }, [testId, jobId]);
+
   const fetchTestResult = async () => {
     try {
       const response = await fetch(`/api/jobs/${jobId}/test/${testId}/result`);
@@ -48,8 +61,6 @@ export default function TestResultPage() {
       questions={result.test.questions}
       timeSpent={result.timeTaken}
       passingScore={result.passingScore}
-      onBack={() => router.push(`/jobs/${jobId}`)}
-      onRetake={() => router.push(`/jobs/${jobId}/test/${testId}/take-test`)}
     />
   );
 }

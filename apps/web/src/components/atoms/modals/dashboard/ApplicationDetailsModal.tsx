@@ -30,6 +30,7 @@ import ApplicationDetailsTimeline from './AppDetails/ApplicationDetailsTimeline'
 import ApplicationDetailsInterview from './AppDetails/ApplicationDetailsInterview';
 import { statusConfig } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 import { PreSelectionTest } from '@prisma/client';
+import { cn } from '@/lib/utils';
 
 export type ApplicationWithDetails = JobApplication & {
   jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote'> & {
@@ -123,18 +124,15 @@ export default function ApplicationDetailModal({ application, isOpen, onClose }:
                     <p className="text-sm">
                       <span className="font-medium">Test Score:</span>{' '}
                       {application.testResult ? (
-                        <span className={application.testResult.passed ? 'text-green-600' : 'text-red-600'}>
+                        <span className={cn(
+                          "text-lg font-bold",
+                          application.testResult.passed ? 'text-green-600' : 'text-red-600'
+                        )}>
                           {application.testResult.score}%
                         </span>
-                      ) : 'Not taken'}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">Passing Score:</span>{' '}
-                      {jobPosting.preSelectionTest.passingScore}%
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">Time Limit:</span>{' '}
-                      {jobPosting.preSelectionTest.timeLimit} minutes
+                      ) : (
+                        <span className="text-gray-500">Not taken</span>
+                      )}
                     </p>
                   </div>
                 </CardContent>

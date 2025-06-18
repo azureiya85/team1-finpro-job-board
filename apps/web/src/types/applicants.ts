@@ -44,6 +44,10 @@ export interface JobApplicationDetails {
     salaryMin?: number | null;
     salaryMax?: number | null;
   } | null; 
+  testResult?: {
+    score: number;
+    passed: boolean;
+  } | null;
   latestInterview?: {
     id: string;
     scheduledAt: Date;

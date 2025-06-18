@@ -20,10 +20,6 @@ export default function MyApplicationsPage() {
         setError(null);
         try {
           const response = await fetch(`/api/users/${user.id}/applications`, {
-            // Tambahkan cache untuk mempercepat loading berikutnya
-            cache: 'force-cache',
-            // Batasi jumlah data yang diambil
-            next: { revalidate: 60 } // Revalidasi setiap 60 detik
           });
           if (!response.ok) {
             throw new Error(`Failed to fetch applications: ${response.statusText}`);

@@ -30,8 +30,10 @@ export async function GET(
         updatedAt: true,
         rejectionReason: true,
         adminNotes: true,
-        testResult: {
+        testResultId: true,  // Tambahkan ini
+        testResult: {  // Ubah relasi ini
           select: {
+            id: true,    // Tambahkan ini
             score: true,
             passed: true
           }

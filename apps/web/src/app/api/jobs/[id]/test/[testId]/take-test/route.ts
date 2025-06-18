@@ -143,7 +143,8 @@ export async function POST(
         await prisma.jobApplication.update({
           where: { id: application.id },
           data: {
-            status: passed ? 'TEST_COMPLETED' : 'REJECTED'
+            status: passed ? 'TEST_COMPLETED' : 'REJECTED',
+            testResultId: testResult.id 
           }
         });
       }
