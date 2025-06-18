@@ -36,13 +36,16 @@ export type ApplicationWithDetails = JobApplication & {
     province?: { name: string } | null;
     city?: { name: string } | null;
     company: Pick<Company, 'id' | 'name' | 'logo'>;
-    preSelectionTest?: PreSelectionTest | null; // tambahkan ini
+    preSelectionTest?: PreSelectionTest | null;
   };
   interviewSchedules: (Pick<
     InterviewSchedule,
     'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'
   >)[];
-  testScore?: number | null; // tambahkan ini
+  testResult?: {
+    score: number;
+    passed: boolean;
+  } | null;
 };
 
 interface ApplicationDetailModalProps {
@@ -119,7 +122,11 @@ export default function ApplicationDetailModal({ application, isOpen, onClose }:
                   <div className="space-y-2">
                     <p className="text-sm">
                       <span className="font-medium">Test Score:</span>{' '}
-                      {application.testScore !== null ? `${application.testScore}%` : 'Not taken'}
+                      {application.testResult ? (
+                        <span className={application.testResult.passed ? 'text-green-600' : 'text-red-600'}>
+                          {application.testResult.score}%
+                        </span>
+                      ) : 'Not taken'}
                     </p>
                     <p className="text-sm">
                       <span className="font-medium">Passing Score:</span>{' '}

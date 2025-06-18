@@ -86,6 +86,11 @@ export async function POST(
             id: true,
             correctAnswer: true
           }
+        },
+        jobPostings: {
+          select: {
+            id: true
+          }
         }
       }
     });
@@ -99,7 +104,11 @@ export async function POST(
     const totalQuestions = test.questions.length;
 
     test.questions.forEach(question => {
-      if (answers[question.id] === question.correctAnswer) {
+      // Ubah format jawaban menjadi huruf saja (A, B, C, D)
+      const userAnswer = answers[question.id]?.replace('option', '');
+      const correctAnswer = question.correctAnswer?.replace('option', '');
+      
+      if (userAnswer === correctAnswer) {
         correctAnswers++;
       }
     });
@@ -109,15 +118,36 @@ export async function POST(
 
     // Simpan hasil test
     const testResult = await prisma.testResult.create({
-        data: {
-          testId: params.testId,
+      data: {
+        testId: params.testId,
+        userId: session.user.id,
+        score,
+        timeSpent,
+        passed,
+        answers: answers
+      }
+    });
+
+    // Update status aplikasi berdasarkan hasil test
+    const jobId = test.jobPostings[0]?.id;
+    if (jobId) {
+      const application = await prisma.jobApplication.findFirst({
+        where: {
           userId: session.user.id,
-          score,
-          timeSpent,
-          passed,
-          answers: answers
+          jobPostingId: jobId,
+          status: 'TEST_REQUIRED'
         }
       });
+
+      if (application) {
+        await prisma.jobApplication.update({
+          where: { id: application.id },
+          data: {
+            status: passed ? 'TEST_COMPLETED' : 'REJECTED'
+          }
+        });
+      }
+    }
 
     return NextResponse.json({
       id: testResult.id,

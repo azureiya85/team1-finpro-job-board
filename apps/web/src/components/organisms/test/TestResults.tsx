@@ -15,7 +15,7 @@ interface TestResultsProps {
     optionD: string;
     correctAnswer: string;
   }[];
-  timeSpent: number; // dalam detik
+  timeSpent: number;
   passingScore: number;
 }
 
@@ -27,8 +27,7 @@ export function TestResults({
   timeSpent,
   passingScore
 }: TestResultsProps) {
-  const percentage = (score / totalQuestions) * 100;
-  const isPassed = percentage >= passingScore;
+  const isPassed = score >= (passingScore / 100 * totalQuestions);
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -40,13 +39,10 @@ export function TestResults({
       <Card className="p-6">
         <div className="text-center space-y-4">
           <div className={`text-4xl font-bold ${isPassed ? 'text-green-600' : 'text-red-600'}`}>
-            {percentage.toFixed(1)}%
+            {score}
           </div>
           <div className="text-xl font-medium">
             {isPassed ? 'Congratulations! You Passed' : 'Sorry, You Did Not Pass'}
-          </div>
-          <div className="text-gray-500">
-            Score: {score}/{totalQuestions} correct questions
           </div>
           <div className="text-gray-500">
             Time taken: {formatTime(timeSpent)}
@@ -64,9 +60,7 @@ export function TestResults({
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <h3 className="font-medium">Question {index + 1}</h3>
-                  <div className={`px-3 py-1 rounded-full text-sm ${
-                    isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
+                  <div className={`px-3 py-1 rounded-full text-sm ${isCorrect ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {isCorrect ? 'Correct' : 'Incorrect'}
                   </div>
                 </div>
@@ -74,27 +68,21 @@ export function TestResults({
                 <p className="text-gray-700">{question.question}</p>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {['A', 'B', 'C', 'D'].map((option) => (
-                    <div
-                      key={option}
-                      className={`p-3 rounded-md ${
-                        option === question.correctAnswer
-                          ? 'bg-green-50 border-green-200'
-                          : option === userAnswer && option !== question.correctAnswer
-                          ? 'bg-red-50 border-red-200'
-                          : 'bg-gray-50'
-                      }`}
-                    >
-                      <span className="font-medium">Option {option}:</span>
-                      <span className="ml-2">{question[`option${option}` as keyof typeof question]}</span>
-                      {option === question.correctAnswer && (
-                        <span className="ml-2 text-green-600">(Correct Answer)</span>
-                      )}
-                      {option === userAnswer && option !== question.correctAnswer && (
-                        <span className="ml-2 text-red-600">(Your Answer)</span>
-                      )}
-                    </div>
-                  ))}
+                  {['A', 'B', 'C', 'D'].map((option) => {
+                    const optionValue = `option${option}`;
+                    const isUserAnswer = userAnswer === optionValue;
+                    const isCorrectAnswer = question.correctAnswer === optionValue;
+
+                    return (
+                      <div
+                        key={option}
+                        className={`p-3 rounded-md ${isCorrectAnswer ? 'bg-green-50 border border-green-200' : isUserAnswer && !isCorrectAnswer ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}
+                      >
+                        <span className="font-medium">Option {option}:</span>
+                        <span className="ml-2">{question[optionValue as keyof typeof question]}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </Card>

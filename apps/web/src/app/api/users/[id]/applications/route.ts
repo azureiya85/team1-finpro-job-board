@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  const { id: userId } = await params; // Await params before destructuring
+  const { id: userId } = await params;
 
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -23,17 +23,31 @@ export async function GET(
       where: {
         userId: userId,
       },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        rejectionReason: true,
+        adminNotes: true,
+        testResult: {
+          select: {
+            score: true,
+            passed: true
+          }
+        },
         jobPosting: {
           select: {
             id: true,
             title: true,
             isRemote: true,
-            preSelectionTestId: true,      // tambahkan ini
-            preSelectionTest: {            // tambahkan ini
+            preSelectionTestId: true,
+            preSelectionTest: {
               select: {
                 id: true,
-                title: true
+                title: true,
+                passingScore: true,
+                timeLimit: true
               }
             },
             province: {
@@ -60,7 +74,7 @@ export async function GET(
             id: true,
             scheduledAt: true,
             duration: true,
-            location: true, // This 'location' is for the interview itself (e.g., office address or meeting link)
+            location: true,
             interviewType: true,
             notes: true,
             status: true,

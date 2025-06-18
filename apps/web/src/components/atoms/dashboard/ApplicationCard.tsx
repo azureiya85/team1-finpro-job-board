@@ -17,7 +17,11 @@ export type ApplicationWithDetails = JobApplication & {
     company: Pick<Company, 'id' | 'name' | 'logo'>;
   };
   interviewSchedules: (Pick<InterviewSchedule, 'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'>)[];
-  testResult?: { id: string } | null; // Tambahkan ini untuk mengecek apakah test sudah selesai
+  testResult?: {
+    id: string;
+    score: number;
+    passed: boolean;
+  } | null;
 };
 
 interface ApplicationCardProps {

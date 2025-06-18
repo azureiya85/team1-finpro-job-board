@@ -59,27 +59,38 @@ export async function GET(
       );
     }
 
+    // Hitung jumlah jawaban yang benar
+    const correctAnswers = testResult.test.questions.filter(
+      (q: QuestionResult) => {
+        const userAnswer = (testResult.answers as Record<string, string>)[q.id];
+        // Pastikan format jawaban sama (dengan 'option')
+        const correctAnswer = `option${q.correctAnswer}`;
+        return userAnswer === correctAnswer;
+      }
+    ).length;
+
     const formattedResult = {
       id: testResult.id,
-      testId: testResult.testId,
-      userId: testResult.userId,
-      score: testResult.score,
+      testTitle: testResult.test.title,
+      score: correctAnswers / testResult.test.questions.length * 100,
+      correctAnswers: correctAnswers, 
       totalQuestions: testResult.test.questions.length,
-      correctAnswers: testResult.test.questions.filter(
-        (q: QuestionResult) => 
-        (testResult.answers as Record<string, string>)[q.id] === q.correctAnswer
-      ).length,
       timeTaken: testResult.timeSpent,
       passingScore: testResult.test.passingScore,
-      isPassed: testResult.passed,
+      passed: correctAnswers >= (testResult.test.passingScore / 100 * testResult.test.questions.length),
       answers: Object.entries(testResult.answers as Record<string, string>).map(([questionId, selectedAnswer]) => ({
         questionId,
         selectedAnswer
       })),
-      createdAt: testResult.createdAt,
       test: {
         title: testResult.test.title,
-        questions: testResult.test.questions
+        questions: testResult.test.questions.map(q => ({
+          ...q,
+          userAnswer: (testResult.answers as Record<string, string>)[q.id],
+          // Pastikan format jawaban sama saat membandingkan
+          correctAnswer: `option${q.correctAnswer}`,
+          isCorrect: (testResult.answers as Record<string, string>)[q.id] === `option${q.correctAnswer}`
+        }))
       }
     };
 
