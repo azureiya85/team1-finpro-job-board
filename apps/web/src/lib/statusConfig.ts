@@ -14,7 +14,8 @@ import {
   CreditCard,
   Smartphone,
   Building,
-  QrCode
+  QrCode,
+  FileText
 } from 'lucide-react';
 import { SubscriptionStatus, PaymentMethod } from '@/types/subscription';
 
