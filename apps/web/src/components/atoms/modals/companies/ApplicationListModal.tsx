@@ -16,8 +16,7 @@ import ApplicantListContent from './AppList/ApplicationListContent';
 import RejectionReasonDialog from './AppList/RejectionReasonDialog';
 
 export default function ApplicantListModal() {
-  const {
-    isApplicantModalOpen,
+  const {isApplicantModalOpen,
     setIsApplicantModalOpen,
     selectedJobForApplicants,
     applicants,
@@ -137,6 +136,10 @@ export default function ApplicantListModal() {
     await updateApplicationStatus(applicationId, newStatus);
   };
 
+  const handleCvPreview = (cvUrl: string | null) => {
+    setShowFullCvPreview(cvUrl);
+  };
+
   const updateApplicationStatus = async (applicationId: string, newStatus: ApplicationStatus, rejectionReason?: string) => {
     if (!selectedJobForApplicants || !companyId) return;
     
@@ -169,13 +172,48 @@ export default function ApplicantListModal() {
     return null;
   }
 
+  const handleScheduleInterview = async (applicationId: string, scheduleData: {
+    scheduledAt: Date; // Ubah dari date
+    duration: number;
+    interviewType: 'ONLINE' | 'ONSITE'; // Ubah dari type dan nilai OFFLINE
+    location?: string; // Ubah menjadi opsional
+    notes?: string; // Tambahkan field notes
+  }) => {
+    try {
+      if (!selectedJobForApplicants?.id) return; // Tambahkan pengecekan
+      const jobsId = selectedJobForApplicants.id;
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobsId}/applicants/${applicationId}/interview`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scheduleData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to schedule interview');
+      }
+
+      const result = await response.json();
+      
+      // Update applicant status
+      await handleStatusChange(applicationId, ApplicationStatus.INTERVIEW_SCHEDULED);
+    
+    toast.success('Interview berhasil dijadwalkan');
+  } catch (error) {
+    console.error('Error scheduling interview:', error);
+    toast.error('Gagal menjadwalkan interview');
+    throw error; // Re-throw error untuk ditangkap di komponen child
+  }
+};
+
   return (
     <>
       <Dialog open={isApplicantModalOpen} onOpenChange={(open) => {
         setIsApplicantModalOpen(open);
         if (!open) setShowFullCvPreview(null);
       }}>
-        <DialogContent className="!w-[88vw] !max-w-none h-[95vh] flex flex-col p-0">
+      <DialogContent className="!w-[88vw] !max-w-none h-[95vh] flex flex-col p-0">
           <DialogHeader className="p-6 border-b bg-gray-50/50">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Applicants for: {selectedJobForApplicants.title}
@@ -222,11 +260,12 @@ export default function ApplicantListModal() {
               )}
 
               {!isLoadingApplicants && !applicantsError && applicants.length > 0 && (
-                <ApplicantListContent
-                  applicants={applicants}
-                  onStatusChange={handleStatusChange}
-                  onCvPreview={(cvUrl) => setShowFullCvPreview(cvUrl)}
-                />
+              <ApplicantListContent
+                applicants={applicants}
+                onStatusChange={handleStatusChange}
+                onCvPreview={handleCvPreview}
+                onScheduleInterview={handleScheduleInterview}
+              />
               )}
             </ScrollArea>
           </div>
@@ -246,6 +285,13 @@ export default function ApplicantListModal() {
         cvUrl={showFullCvPreview}
         isOpen={!!showFullCvPreview}
         onClose={() => setShowFullCvPreview(null)}
+      />
+
+      <ApplicantListContent
+        applicants={applicants}
+        onStatusChange={handleStatusChange}
+        onCvPreview={handleCvPreview}
+        onScheduleInterview={handleScheduleInterview}
       />
 
       {/* Rejection Reason Dialog */}

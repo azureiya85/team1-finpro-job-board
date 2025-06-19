@@ -55,7 +55,6 @@ export const emailService = {
   ) => {
     const verificationUrl = `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${verificationToken}`;
     
-    // Await the render function since it returns a Promise<string>
     const emailHtml = await render(VerificationEmail({
       firstName,
       verificationUrl,
@@ -76,7 +75,6 @@ export const emailService = {
   ) => {
     const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`;
     
-    // Await the render function since it returns a Promise<string>
     const emailHtml = await render(PasswordResetEmail({
       firstName,
       resetUrl,
@@ -108,7 +106,6 @@ export const emailService = {
     });
   },
 
-  // Additional email methods for your job board system
   sendJobApplicationConfirmation: async (
     email: string,
     firstName: string,
@@ -200,30 +197,50 @@ export const emailService = {
     });
   },
 
-  sendSubscriptionExpiring: async (
+  sendInterviewReminder: async (
     email: string,
     firstName: string,
-    planName: string,
-    expiryDate: Date
+    jobTitle: string,
+    companyName: string,
+    interviewDate: Date,
+    location: string,
+    interviewType: string,
+    minutesUntilInterview: number
   ) => {
-    const formattedDate = expiryDate.toLocaleDateString('id-ID');
+    const formattedDate = interviewDate.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const timeUntil = minutesUntilInterview >= 60 
+      ? `${Math.floor(minutesUntilInterview / 60)} jam ${minutesUntilInterview % 60} menit`
+      : `${minutesUntilInterview} menit`;
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Subscription Expiring Soon</h2>
+        <h2 style="color: #333;">Interview Reminder</h2>
         <p>Hi ${firstName},</p>
-        <p>Your <strong>${planName}</strong> subscription is expiring on <strong>${formattedDate}</strong>.</p>
-        <p>To continue enjoying premium features, please renew your subscription.</p>
-        <p><a href="${process.env.NEXTAUTH_URL}/dashboard/subscription" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Renew Subscription</a></p>
+        <p>This is a reminder that your interview for the position of <strong>${jobTitle}</strong> at <strong>${companyName}</strong> is scheduled in <strong>${timeUntil}</strong>.</p>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <h3>Interview Details:</h3>
+          <p><strong>Date & Time:</strong> ${formattedDate}</p>
+          <p><strong>Type:</strong> ${interviewType}</p>
+          <p><strong>Location:</strong> ${location}</p>
+        </div>
+        <p>Please ensure you are prepared and ready for the interview. Good luck!</p>
         <p>Best regards,<br>The Job Board Team</p>
       </div>
     `;
 
     return sendEmail({
       to: email,
-      subject: 'Subscription Expiring Soon',
+      subject: `Reminder: Interview for ${jobTitle} in ${timeUntil}`,
       html,
-      text: `Hi ${firstName}, your ${planName} subscription is expiring on ${formattedDate}. Please renew to continue enjoying premium features.`,
+      text: `Hi ${firstName}, reminder: your interview for ${jobTitle} at ${companyName} is scheduled in ${timeUntil} (${formattedDate}, ${interviewType}) at ${location}.`,
     });
-  },
+  }
 };

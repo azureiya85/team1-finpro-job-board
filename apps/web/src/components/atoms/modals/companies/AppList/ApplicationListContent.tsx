@@ -8,33 +8,56 @@ import { ApplicationStatus } from '@prisma/client';
 import { getStatusDisplay } from '@/lib/applicants/statusValidation'; 
 import { getStatusAction } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 import { FileText, MoreHorizontal } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import { formatEducationLevelDisplay } from '@/lib/utils';
 import type { JobApplicationDetails } from '@/types/applicants';
+import { InterviewScheduleForm } from '@/components/molecules/interview/InterviewScheduleForm';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface ApplicantListContentProps {
   applicants: JobApplicationDetails[];
   onStatusChange: (applicationId: string, newStatus: ApplicationStatus) => void;
   onCvPreview: (cvUrl: string | null) => void;
+  onScheduleInterview: (applicationId: string, scheduleData: {
+    scheduledAt: Date;
+    duration: number;
+    interviewType: 'ONLINE' | 'ONSITE';
+    location?: string;
+    notes?: string;
+  }) => void;
 }
 
 export default function ApplicantListContent({ 
   applicants, 
   onStatusChange, 
-  onCvPreview 
+  onCvPreview,
+  onScheduleInterview
 }: ApplicantListContentProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleInterviewSubmit = async (applicationId: string, data: any) => {
+    try {
+      setIsSubmitting(true);
+      await onScheduleInterview(applicationId, data);
+      toast.success('Interview scheduled successfully');
+    } catch (error) {
+      toast.error('Failed to schedule interview');
+      console.error('Error scheduling interview:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
   return (
     <div className="w-full">
       <Table className="w-full">
         <TableHeader>
-        <TableRow className="bg-gray-50/50">
+          <TableRow className="bg-gray-50/50">
             <TableHead className="w-16 pl-6">Photo</TableHead>
             <TableHead className="w-48 font-semibold">Applicant Info</TableHead>
             <TableHead className="w-32 font-semibold">Details</TableHead>
@@ -42,6 +65,7 @@ export default function ApplicantListContent({
             <TableHead className="w-32 font-semibold">Applied Date</TableHead>
             <TableHead className="w-24 font-semibold text-center">CV</TableHead>
             <TableHead className="w-24 font-semibold text-center">Test Score</TableHead>
+            <TableHead className="w-32 font-semibold text-center">Interview</TableHead>
             <TableHead className="w-32 font-semibold">Status</TableHead>
             <TableHead className="w-28 font-semibold text-center">Actions</TableHead>
           </TableRow>
@@ -51,7 +75,6 @@ export default function ApplicantListContent({
             const statusInfo = getStatusDisplay(app.status);
             return (
               <TableRow key={app.id} className="hover:bg-gray-50/50 transition-colors">
-                {/* Photo Cell */}
                 <TableCell className="pl-6">
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={app.applicant.profileImage || undefined} alt={app.applicant.name} />
@@ -61,7 +84,6 @@ export default function ApplicantListContent({
                   </Avatar>
                 </TableCell>
                 
-                {/* Applicant Info Cell */}
                 <TableCell>
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-900 truncate">{app.applicant.name}</p>
@@ -69,7 +91,6 @@ export default function ApplicantListContent({
                   </div>
                 </TableCell>
                 
-                {/* Details Cell (Age & Education) */}
                 <TableCell>
                   <div className="space-y-1">
                     <p className="text-sm">
@@ -85,7 +106,6 @@ export default function ApplicantListContent({
                   </div>
                 </TableCell>
                 
-                {/* Salary Expectation Cell */}
                 <TableCell>
                   <div className="text-sm">
                     {app.expectedSalary ? (
@@ -98,7 +118,6 @@ export default function ApplicantListContent({
                   </div>
                 </TableCell>
                 
-                {/* Applied Date Cell */}
                 <TableCell>
                   <div className="text-sm text-gray-600">
                     {new Date(app.createdAt).toLocaleDateString('id-ID', { 
@@ -109,7 +128,6 @@ export default function ApplicantListContent({
                   </div>
                 </TableCell>
                 
-                {/* CV Cell */}
                 <TableCell className="text-center">
                   {app.cvUrl ? (
                     <Button 
@@ -127,7 +145,6 @@ export default function ApplicantListContent({
                   )}
                 </TableCell>
 
-                {/* Test Score Cell */}
                 <TableCell className="text-center">
                   {app.testResult ? (
                     <span className={`text-sm font-medium ${app.testResult.passed ? 'text-green-600' : 'text-red-600'}`}>
@@ -139,8 +156,41 @@ export default function ApplicantListContent({
                     </span>
                   )}
                 </TableCell>
+
+                <TableCell className="text-center">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={app.latestInterview ? 'text-primary' : ''}
+                      >
+                        {app.latestInterview ? (
+                          format(new Date(app.latestInterview.scheduledAt), 'PPP', { locale: id })
+                        ) : (
+                          'Schedule Interview'
+                        )}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <InterviewScheduleForm
+                        applicationId={app.id}
+                        jobId={app.jobPosting?.id || ''}
+                        candidateId={app.applicant.id}
+                        defaultValues={app.latestInterview ? {
+                          scheduledAt: new Date(app.latestInterview.scheduledAt),
+                          duration: app.latestInterview.duration,
+                          interviewType: app.latestInterview.interviewType,
+                          location: app.latestInterview.location || undefined,
+                          notes: app.latestInterview.notes || undefined
+                        } : undefined}
+                        onSubmit={(data) => handleInterviewSubmit(app.id, data)}
+                        isSubmitting={isSubmitting}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </TableCell>
                 
-                {/* Status Cell */}
                 <TableCell>
                   <Badge 
                     className={`${statusInfo.bgColor} ${statusInfo.color} hover:${statusInfo.bgColor} px-2 py-1 text-xs whitespace-nowrap`}
@@ -149,7 +199,6 @@ export default function ApplicantListContent({
                   </Badge>
                 </TableCell>
                 
-                {/* Actions Cell */}
                 <TableCell className="text-center">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -166,16 +215,13 @@ export default function ApplicantListContent({
                         const Icon = actionConfig.icon;
                         return (
                           <DropdownMenuItem 
-                            key={status} 
+                            key={status}
                             onClick={() => onStatusChange(app.id, status)}
-                            disabled={status === app.status}
-                            className={`${status === app.status ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                            disabled={app.status === status}
+                            className={app.status === status ? 'bg-muted cursor-not-allowed' : ''}
                           >
-                            <Icon className={`w-4 h-4 mr-2 ${actionConfig.color}`} />
-                            {actionConfig.label}
-                            {status === app.status && (
-                              <span className="ml-auto text-xs text-gray-400">(Current)</span>
-                            )}
+                            <Icon className="mr-2 h-4 w-4" />
+                            <span>{actionConfig.label}</span>
                           </DropdownMenuItem>
                         );
                       })}

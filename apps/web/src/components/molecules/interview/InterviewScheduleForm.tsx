@@ -4,14 +4,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { TimePicker } from '@/components/ui/time-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { formatDateTime } from '@/lib/dateTimeUtils';
+import { addDays } from 'date-fns';
 
 const interviewFormSchema = z.object({
   scheduledAt: z.date(),
@@ -67,8 +71,10 @@ interface InterviewSubmitData extends InterviewFormData {
     });
   
     return (
-      <Form {...form}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <>
+        <DialogTitle>Schedule Interview</DialogTitle>
+        <Form {...form}>
+          <form onSubmit={handleSubmit} className="space-y-4">
           <FormField
             control={form.control}
             name="scheduledAt"
@@ -94,7 +100,18 @@ interface InterviewSubmitData extends InterviewFormData {
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  // ... existing code ...
+                  <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date() || date > addDays(new Date(), 30) }
+                      className="rounded-t-md"
+                      />
+                      <div className="p-3 border-t border-border">
+                        <TimePicker date={field.value} setDate={field.onChange} />
+                      </div>
+                  </PopoverContent>
                 </Popover>
                 <FormMessage />
               </FormItem>
@@ -171,5 +188,6 @@ interface InterviewSubmitData extends InterviewFormData {
         </Button>
       </form>
     </Form>
+  </>
   );
 }
