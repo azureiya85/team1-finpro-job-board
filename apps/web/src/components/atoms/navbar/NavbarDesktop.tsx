@@ -64,17 +64,19 @@ export function NavbarDesktop() {
   };
 
   // Helper function to get profile link based on user role
-  const getProfileLink = () => {
-    if (!user) return '/dashboard';
+const getProfileLink = () => {
+    if (!user) return '/dashboard'; 
     
     switch (user.role) {
+      case 'ADMIN':
+      case 'Developer': 
+        return '/dashboard/developer';
       case 'COMPANY_ADMIN':
         return user.companyId ? `/companies/${user.companyId}` : '/dashboard/company-redirect';
-      case 'ADMIN':
       case 'USER':
-      case 'Developer':
+        return '/dashboard'; 
       default:
-        return '/dashboard';
+        return '/dashboard'; 
     }
   };
 

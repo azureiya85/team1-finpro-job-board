@@ -28,7 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ApplicationDetailsTimeline from './AppDetails/ApplicationDetailsTimeline';
 import ApplicationDetailsInterview from './AppDetails/ApplicationDetailsInterview';
-import { statusConfig } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
+import { statusConfig } from '@/lib/statusConfig';
 import { PreSelectionTest } from '@prisma/client';
 import { cn } from '@/lib/utils';
 
