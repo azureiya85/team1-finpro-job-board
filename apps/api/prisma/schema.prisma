@@ -713,8 +713,7 @@ enum ApplicationStatus {
 
 enum InterviewType {
   ONLINE
-  PHONE
-  IN_PERSON
+  ONSITE
 }
 
 enum InterviewStatus {
