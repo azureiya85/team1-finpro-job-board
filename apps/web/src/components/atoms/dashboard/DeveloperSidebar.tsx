@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { 
   User, 
   LogOut, 
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { logoutAction } from '@/lib/actions/authActions';
 import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStores';
 
 const developerNavItems = [
   {
@@ -53,27 +54,32 @@ const developerNavItems = [
 
 export default function DeveloperSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { data: session } = useSession();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      const result = await logoutAction();
-      
-      if (result.success) {
-        router.push('/auth/login');
-      } else {
-        router.push('/auth/login');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      router.push('/auth/login');
-    } finally {
-      setIsLoggingOut(false);
+  if (isLoggingOut) return; // Prevent multiple clicks
+  
+  try {
+    setIsLoggingOut(true);
+    const { logout: clearAuthStore } = useAuthStore.getState();
+    clearAuthStore();    
+    const result = await logoutAction();
+    
+    if (result.success) {
+      window.location.href = '/auth/login';
+    } else {
+      window.location.href = '/auth/login';
     }
-  };
+  } catch (error) {
+    console.error('Logout error:', error);
+    const { logout: clearAuthStore } = useAuthStore.getState();
+    clearAuthStore();
+    window.location.href = '/auth/login';
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'DV';

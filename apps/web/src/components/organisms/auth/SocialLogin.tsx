@@ -7,10 +7,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { 
   Chrome, 
-  Facebook, 
-  Twitter 
+  Loader2 
 } from 'lucide-react';
-import { Loader2 } from 'lucide-react';
 
 interface SocialProvider {
   id: string;
@@ -32,22 +30,6 @@ export function SocialLogin() {
       bgColor: 'bg-white dark:bg-gray-800',
       hoverColor: 'cursor-pointer hover:bg-orange-500 dark:hover:bg-orange-700',
       textColor: 'text-gray-900 dark:text-gray-100',
-    },
-    {
-      id: 'facebook',
-      name: 'Facebook',
-      icon: Facebook,
-      bgColor: 'bg-[#1877F2]',
-      hoverColor: 'cursor-pointer hover:bg-[#166FE5]',
-      textColor: 'text-white',
-    },
-    {
-      id: 'twitter',
-      name: 'Twitter',
-      icon: Twitter,
-      bgColor: 'bg-[#1DA1F2]',
-      hoverColor: 'cursor-pointer hover:bg-[#0C8CE6]',
-      textColor: 'text-white',
     },
   ];
 
@@ -87,11 +69,11 @@ export function SocialLogin() {
       {/* Header */}
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          Continue with your social account
+          Continue with your Google account
         </p>
       </div>
 
-      {/* Social provider buttons */}
+      {/* Social provider button */}
       <div className="space-y-3">
         {socialProviders.map((provider, index) => {
           const Icon = provider.icon;

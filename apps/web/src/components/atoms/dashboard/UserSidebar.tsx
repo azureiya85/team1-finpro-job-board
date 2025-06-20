@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Cog, User, LogOut, Settings, Home, ChevronRight, FileText, Award, ShoppingCart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { useUserBadges } from '@/hooks/useUserBadges';
 import { logoutAction } from '@/lib/actions/authActions';
 import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStores';
 
 const navItems = [
   {
@@ -47,27 +48,32 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { badges, isLoading: badgesLoading, error: badgesError } = useUserBadges();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      const result = await logoutAction();
-      
-      if (result.success) {
-        router.push('/auth/login');
-      } else {
-        router.push('/auth/login');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      router.push('/auth/login');
-    } finally {
-      setIsLoggingOut(false);
+ const handleLogout = async () => {
+  if (isLoggingOut) return; // Prevent multiple clicks
+  
+  try {
+    setIsLoggingOut(true);
+    const { logout: clearAuthStore } = useAuthStore.getState();
+    clearAuthStore();    
+    const result = await logoutAction();
+    
+    if (result.success) {
+      window.location.href = '/auth/login';
+    } else {
+      window.location.href = '/auth/login';
     }
-  };
+  } catch (error) {
+    console.error('Logout error:', error);
+    const { logout: clearAuthStore } = useAuthStore.getState();
+    clearAuthStore();
+    window.location.href = '/auth/login';
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
 
   return (
     <div className="w-64 bg-card border-r border-border min-h-screen flex flex-col fixed shadow-sm">
