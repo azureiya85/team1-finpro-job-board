@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   User, 
   LogOut, 
@@ -9,14 +9,17 @@ import {
   FileText, 
   ShoppingCart, 
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { logoutAction } from '@/lib/actions/authActions';
+import { useState } from 'react';
 
 const developerNavItems = [
   {
@@ -31,7 +34,6 @@ const developerNavItems = [
     icon: User,
     description: 'Manage your developer profile',
     comingSoon: true
-
   },
   {
     name: 'Assessments Mgt.',
@@ -51,10 +53,26 @@ const developerNavItems = [
 
 export default function DeveloperSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/auth/login' });
+    try {
+      setIsLoggingOut(true);
+      const result = await logoutAction();
+      
+      if (result.success) {
+        router.push('/auth/login');
+      } else {
+        router.push('/auth/login');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.push('/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const getInitials = (name?: string | null) => {
@@ -90,13 +108,15 @@ export default function DeveloperSidebar() {
             return (
               <div key={item.name} className="relative">
                 <Link
-                  href={item.href}
+                  href={item.comingSoon ? '#' : item.href}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-foreground hover:bg-accent hover:text-accent-foreground",
+                    item.comingSoon && "cursor-not-allowed opacity-60"
                   )}
+                  onClick={item.comingSoon ? (e) => e.preventDefault() : undefined}
                 >
                   <IconComponent className={cn(
                     "w-4 h-4 shrink-0",
@@ -132,10 +152,15 @@ export default function DeveloperSidebar() {
           variant="ghost"
           size="sm"
           onClick={handleLogout}
+          disabled={isLoggingOut}
           className="w-full justify-start gap-3 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out</span>
+          {isLoggingOut ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <LogOut className="w-4 h-4" />
+          )}
+          <span>{isLoggingOut ? 'Signing Out...' : 'Sign Out'}</span>
         </Button>
 
         <div className="mt-4 p-3 bg-muted/50 rounded-lg">

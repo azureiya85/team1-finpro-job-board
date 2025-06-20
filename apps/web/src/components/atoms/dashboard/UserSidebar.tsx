@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Cog, User, LogOut, Settings, Home, ChevronRight, FileText, Award, ShoppingCart, Loader2 } from 'lucide-react'; // Added Loader2
-import { signOut } from 'next-auth/react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Cog, User, LogOut, Settings, Home, ChevronRight, FileText, Award, ShoppingCart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useUserBadges } from '@/hooks/useUserBadges';
+import { logoutAction } from '@/lib/actions/authActions';
+import { useState } from 'react';
 
 const navItems = [
   {
@@ -46,10 +47,26 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { badges, isLoading: badgesLoading, error: badgesError } = useUserBadges();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/auth/login' });
+    try {
+      setIsLoggingOut(true);
+      const result = await logoutAction();
+      
+      if (result.success) {
+        router.push('/auth/login');
+      } else {
+        router.push('/auth/login');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.push('/auth/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -154,7 +171,6 @@ export default function Sidebar() {
         )}
       </div>
 
-
       {/* Footer */}
       <div className="p-4 border-t border-border/50 mt-auto">
         <div className="space-y-2">
@@ -163,10 +179,15 @@ export default function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
+            disabled={isLoggingOut}
             className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            {isLoggingOut ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )}
+            <span>{isLoggingOut ? 'Signing Out...' : 'Sign Out'}</span>
           </Button>
         </div>
 
