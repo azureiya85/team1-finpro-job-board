@@ -7,8 +7,22 @@ import { InterviewActionButton } from '@/components/atoms/buttons/InterviewActio
 import { InterviewSchedule, InterviewStatus } from '@prisma/client';
 import { toast } from 'sonner';
 
+interface InterviewData extends Pick<InterviewSchedule, 
+  'id' | 
+  'scheduledAt' | 
+  'duration' | 
+  'location' | 
+  'status' | 
+  'interviewType' | 
+  'notes'
+> {
+  jobApplicationId: string;
+  jobPostingId: string;
+  candidateId: string;
+}
+
 interface ApplicationDetailsInterviewProps {
-  interview: InterviewSchedule;
+  interview: InterviewData;
   onStatusChange?: (status: InterviewStatus) => void;
   onReschedule?: () => void;
 }

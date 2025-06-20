@@ -56,6 +56,8 @@ interface InterviewSubmitData extends InterviewFormData {
         scheduledAt: new Date(),
         duration: 60,
         interviewType: 'ONLINE',
+        location: '',
+        notes: '',
         ...defaultValues
       }
     });
@@ -132,22 +134,24 @@ interface InterviewSubmitData extends InterviewFormData {
           )}
         />
 
-        <FormField
+      <FormField
           control={form.control}
           name="interviewType"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Interview Type</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select 
+                value={field.value} 
+                onValueChange={field.onChange}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select interview type" />
+                    <SelectValue />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="ONLINE">Online</SelectItem>
-                  <SelectItem value="PHONE">Phone</SelectItem>
-                  <SelectItem value="IN_PERSON">In Person</SelectItem>
+                  <SelectItem value="ONSITE">Onsite</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

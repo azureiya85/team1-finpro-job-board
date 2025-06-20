@@ -199,7 +199,7 @@ export default function ApplicantListModal() {
       // Update applicant status
       await handleStatusChange(applicationId, ApplicationStatus.INTERVIEW_SCHEDULED);
     
-    toast.success('Interview berhasil dijadwalkan');
+    toast.success('Interview success');
   } catch (error) {
     console.error('Error scheduling interview:', error);
     toast.error('Gagal menjadwalkan interview');

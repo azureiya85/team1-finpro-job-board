@@ -27,7 +27,7 @@ export function TestResults({
   timeSpent,
   passingScore
 }: TestResultsProps) {
-  const isPassed = score >= (passingScore / 100 * totalQuestions);
+  const isPassed = score >= passingScore;
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;

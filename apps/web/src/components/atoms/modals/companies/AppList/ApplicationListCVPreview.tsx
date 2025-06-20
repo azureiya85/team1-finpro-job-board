@@ -22,7 +22,7 @@ export default function ApplicationListCVPreview({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl h-[85vh] p-0">
-        <DialogHeader className="p-2 border-b bg-gray-50/50">
+        <DialogHeader className="p-2 border-b bg-gray-50/50 mt-2">
           <DialogTitle className="flex items-center">
             <FileText className="w-5 h-5 mr-2" />
             CV Preview

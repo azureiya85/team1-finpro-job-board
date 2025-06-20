@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import cn from 'classnames';
 
 interface ApplicantListContentProps {
   applicants: JobApplicationDetails[];
@@ -158,18 +159,18 @@ export default function ApplicantListContent({
                 </TableCell>
 
                 <TableCell className="text-center">
+                {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? (
+                  <span className="text-sm text-primary">
+                    {format(new Date(app.latestInterview?.scheduledAt || ''), 'PPP', { locale: id })}
+                  </span>
+                ) : app.status === ApplicationStatus.TEST_COMPLETED ? (
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className={app.latestInterview ? 'text-primary' : ''}
                       >
-                        {app.latestInterview ? (
-                          format(new Date(app.latestInterview.scheduledAt), 'PPP', { locale: id })
-                        ) : (
-                          'Schedule Interview'
-                        )}
+                        Schedule Interview
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -177,19 +178,17 @@ export default function ApplicantListContent({
                         applicationId={app.id}
                         jobId={app.jobPosting?.id || ''}
                         candidateId={app.applicant.id}
-                        defaultValues={app.latestInterview ? {
-                          scheduledAt: new Date(app.latestInterview.scheduledAt),
-                          duration: app.latestInterview.duration,
-                          interviewType: app.latestInterview.interviewType,
-                          location: app.latestInterview.location || undefined,
-                          notes: app.latestInterview.notes || undefined
-                        } : undefined}
                         onSubmit={(data) => handleInterviewSubmit(app.id, data)}
                         isSubmitting={isSubmitting}
                       />
                     </DialogContent>
                   </Dialog>
-                </TableCell>
+                ) : (
+                  <span className="text-xs text-gray-400">
+                    Not available
+                  </span>
+                )}
+              </TableCell>
                 
                 <TableCell>
                   <Badge 
@@ -214,13 +213,13 @@ export default function ApplicantListContent({
                         const actionConfig = getStatusAction(status);
                         const Icon = actionConfig.icon;
                         return (
-                          <DropdownMenuItem 
+                         <DropdownMenuItem 
                             key={status}
                             onClick={() => onStatusChange(app.id, status)}
                             disabled={app.status === status}
                             className={app.status === status ? 'bg-muted cursor-not-allowed' : ''}
                           >
-                            <Icon className="mr-2 h-4 w-4" />
+                            <Icon className={cn("mr-2 h-4 w-4", actionConfig.color)} />
                             <span>{actionConfig.label}</span>
                           </DropdownMenuItem>
                         );
