@@ -173,38 +173,44 @@ export default function ApplicantListModal() {
   }
 
   const handleScheduleInterview = async (applicationId: string, scheduleData: {
-    scheduledAt: Date; // Ubah dari date
+    scheduledAt: Date;
     duration: number;
-    interviewType: 'ONLINE' | 'ONSITE'; // Ubah dari type dan nilai OFFLINE
-    location?: string; // Ubah menjadi opsional
-    notes?: string; // Tambahkan field notes
-  }) => {
+    interviewType: 'ONLINE' | 'ONSITE';
+    location?: string;
+    notes?: string;
+}) => {
     try {
-      if (!selectedJobForApplicants?.id) return; // Tambahkan pengecekan
-      const jobsId = selectedJobForApplicants.id;
-      const response = await fetch(`/api/companies/${companyId}/jobs/${jobsId}/applicants/${applicationId}/interview`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(scheduleData),
-      });
+        if (!companyId || !selectedJobForApplicants?.id) {
+            throw new Error('Missing required company or job information');
+        }
 
-      if (!response.ok) {
-        throw new Error('Failed to schedule interview');
-      }
+        const formattedData = {
+            ...scheduleData,
+            scheduledAt: scheduleData.scheduledAt.toISOString(), // Format tanggal ke ISO string
+            jobApplicationId: applicationId,
+            jobPostingId: selectedJobForApplicants.id
+        };
 
-      const result = await response.json();
-      
-      // Update applicant status
-      await handleStatusChange(applicationId, ApplicationStatus.INTERVIEW_SCHEDULED);
-    
-    toast.success('Interview success');
-  } catch (error) {
-    console.error('Error scheduling interview:', error);
-    toast.error('Gagal menjadwalkan interview');
-    throw error; // Re-throw error untuk ditangkap di komponen child
-  }
+        const response = await fetch(`/api/companies/${companyId}/jobs/${selectedJobForApplicants.id}/applicants/${applicationId}/interview`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formattedData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(errorData || 'Failed to schedule interview');
+        }
+
+        const result = await response.json();
+        await handleStatusChange(applicationId, ApplicationStatus.INTERVIEW_SCHEDULED);
+        return result;
+    } catch (error) {
+        console.error('Schedule interview error:', error);
+        throw error;
+    }
 };
 
   return (

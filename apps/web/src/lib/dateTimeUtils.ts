@@ -1,9 +1,8 @@
 import { format, formatDistanceToNow, isAfter, isBefore, addMinutes, addHours } from 'date-fns';
-import { id } from 'date-fns/locale';
 
 // Format tanggal dan waktu untuk ditampilkan
 export function formatDateTime(date: Date): string {
-  return format(date, 'EEEE, d MMMM yyyy HH:mm', { locale: id });
+  return format(date, 'EEEE, d MMMM yyyy HH:mm');
 }
 
 export function formatDateTimeForAPI(date: Date): string {
@@ -54,5 +53,5 @@ export function isInterviewUpcoming(scheduledAt: Date): boolean {
 
 // Format waktu relatif (misal: "2 hari yang lalu", "dalam 3 jam")
 export function formatRelativeTime(date: Date): string {
-  return formatDistanceToNow(date, { addSuffix: true, locale: id });
+  return formatDistanceToNow(date, { addSuffix: true });
 }

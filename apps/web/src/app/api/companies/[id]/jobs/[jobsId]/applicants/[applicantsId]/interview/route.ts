@@ -41,6 +41,59 @@ export async function GET(
   }
 }
 
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string; jobsId: string; applicantsId: string } }
+) {
+  try {
+    const data = await req.json();
+    const { scheduledAt, duration, location, interviewType, notes } = data;
+
+    // Validasi waktu interview
+    const timeValidation = validateInterviewTime(new Date(scheduledAt));
+    if (!timeValidation.isValid) {
+      return NextResponse.json({ error: timeValidation.error }, { status: 400 });
+    }
+
+    // Dapatkan data job application untuk mendapatkan candidateId
+    const jobApplication = await prisma.jobApplication.findUnique({
+      where: { id: params.applicantsId },
+      select: {
+        userId: true
+      }
+    });
+
+    if (!jobApplication) {
+      return NextResponse.json(
+        { error: 'Job application not found' },
+        { status: 404 }
+      );
+    }
+
+    const interview = await prisma.interviewSchedule.create({
+      data: {
+        scheduledAt: new Date(scheduledAt),
+        duration,
+        location,
+        interviewType,
+        notes,
+        jobApplicationId: params.applicantsId,
+        jobPostingId: params.jobsId,
+        candidateId: jobApplication.userId,
+        status: InterviewStatus.SCHEDULED
+      }
+    });
+
+    return NextResponse.json(interview);
+  } catch (error) {
+    console.error('Error creating interview schedule:', error);
+    return NextResponse.json(
+      { error: 'Failed to create interview schedule' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }

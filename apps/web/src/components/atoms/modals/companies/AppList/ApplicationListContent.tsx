@@ -13,8 +13,7 @@ import { formatEducationLevelDisplay } from '@/lib/utils';
 import type { JobApplicationDetails } from '@/types/applicants';
 import { InterviewScheduleForm } from '@/components/molecules/interview/InterviewScheduleForm';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { formatDateTime } from '@/lib/dateTimeUtils';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import cn from 'classnames';
@@ -40,19 +39,25 @@ export default function ApplicantListContent({
 }: ApplicantListContentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInterviewSubmit = async (applicationId: string, data: any) => {
+  const handleInterviewSubmit = async (applicationId: string, data: {
+    scheduledAt: Date;
+    duration: number;
+    interviewType: 'ONLINE' | 'ONSITE';
+    location?: string;
+    notes?: string;
+  }) => {
     try {
       setIsSubmitting(true);
       await onScheduleInterview(applicationId, data);
       toast.success('Interview scheduled successfully');
     } catch (error) {
-      toast.error('Failed to schedule interview');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to schedule interview';
+      toast.error(errorMessage);
       console.error('Error scheduling interview:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-
 
   return (
     <div className="w-full">
@@ -161,7 +166,7 @@ export default function ApplicantListContent({
                 <TableCell className="text-center">
                 {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? (
                   <span className="text-sm text-primary">
-                    {format(new Date(app.latestInterview?.scheduledAt || ''), 'PPP', { locale: id })}
+                    {formatDateTime(new Date(app.latestInterview?.scheduledAt || ''))}   
                   </span>
                 ) : app.status === ApplicationStatus.TEST_COMPLETED ? (
                   <Dialog>
