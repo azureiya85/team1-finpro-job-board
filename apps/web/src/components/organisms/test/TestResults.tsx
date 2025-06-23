@@ -21,7 +21,6 @@ interface TestResultsProps {
 
 export function TestResults({
   score,
-  totalQuestions,
   answers,
   questions,
   timeSpent,

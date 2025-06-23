@@ -85,6 +85,7 @@ export function InterviewScheduleModal({
         } : undefined}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
+        mode={interview ? 'edit' : 'create'}
         />
       </DialogContent>
     </Dialog>

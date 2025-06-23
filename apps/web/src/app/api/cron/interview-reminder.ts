@@ -60,13 +60,13 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil mengirim ${upcomingInterviews.length} reminder interview`
+      message: `Interview Reminder ${upcomingInterviews.length} successfully sent`
     });
 
   } catch (error) {
     console.error('Error sending interview reminders:', error);
     return NextResponse.json(
-      { success: false, message: 'Gagal mengirim reminder interview' },
+      { success: false, message: 'Failed sending interview reminders' },
       { status: 500 }
     );
   }

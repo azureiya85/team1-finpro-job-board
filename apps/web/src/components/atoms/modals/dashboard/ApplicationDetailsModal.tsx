@@ -4,14 +4,11 @@ import { ApplicationStatus, JobApplication,JobPosting, Company, InterviewSchedul
 import { XCircle, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ApplicationDetailsTimeline from './AppDetails/ApplicationDetailsTimeline';
-import { statusConfig } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
+import { ApplicationDetailsInterview } from './AppDetails/ApplicationDetailsInterview';
 import { PreSelectionTest } from '@prisma/client';
-import { Calendar, FileText } from 'lucide-react';
 
 export type ApplicationWithDetails = JobApplication & {
   jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote'> & {
@@ -29,24 +26,13 @@ export type ApplicationWithDetails = JobApplication & {
     score: number;
     passed: boolean;
   } | null;
+  candidateId: string;
 };
 
 interface ApplicationDetailModalProps {
   application: ApplicationWithDetails | null;
   isOpen: boolean;
   onClose: () => void;
-}
-
-function ModalStatusBadge({ status }: { status: ApplicationStatus }) {
-  const config = statusConfig[status] || statusConfig.PENDING;
-  const IconComponent = config.icon;
-
-  return (
-    <Badge variant={config.variant} className={`${config.className} gap-1.5 font-medium py-1 px-2.5 text-xs`}>
-      <IconComponent className="h-3.5 w-3.5" />
-      {config.text}
-    </Badge>
-  );
 }
 
 export default function ApplicationDetailModal({ application, isOpen, onClose }: ApplicationDetailModalProps) {
@@ -75,33 +61,34 @@ export default function ApplicationDetailModal({ application, isOpen, onClose }:
               interviewSchedules={interviewSchedules}
             />
 
-            {/* Interview Information Button */}
-            {interviewSchedules[0] && (
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={() => window.location.href = `/interviews/${interviewSchedules[0].id}`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  View Interview Details
-                </Button>
-              </div>
-            )}
-
-           {/* Pre-Selection Test Button */}
-           {jobPosting?.preSelectionTest && application?.testResult && (
-              <div className="flex justify-end mb-4">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={() => window.location.href = `/jobs/${jobPosting.id}/test/${jobPosting.preSelectionTest?.id}/result-for-admin`}
-                >
-                  <FileText className="w-4 h-4" />
-                  View Test Results
-                </Button>
-              </div>
-            )}
+             {/* Interview Information */}
+             {interviewSchedules && interviewSchedules.length > 0 && (
+            <ApplicationDetailsInterview
+              interview={{
+                ...interviewSchedules[0],
+                jobApplicationId: application.id,
+                jobPostingId: jobPosting.id,
+                candidateId: application.candidateId
+              }}
+              onStatusChange={async (newStatus) => {
+                try {
+                  const response = await fetch(`/api/interviews/${interviewSchedules[0].id}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                  });
+                  
+                  if (!response.ok) throw new Error('Failed to update status');
+                  window.location.reload();
+                } catch (error) {
+                  console.error('Error updating interview status:', error);
+                }
+              }}
+              onReschedule={() => {
+                window.location.href = `/interviews/${interviewSchedules[0].id}/reschedule`;
+              }}
+            />
+          )}
 
             {/* Rejection Information */}
             {status === ApplicationStatus.REJECTED && (

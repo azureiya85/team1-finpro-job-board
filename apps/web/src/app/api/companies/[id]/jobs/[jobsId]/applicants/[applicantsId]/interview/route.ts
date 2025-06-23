@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient, InterviewStatus } from '@prisma/client';
 import { validateInterviewTime } from '@/lib/dateTimeUtils';
+import { interviewEmailService } from '@/services/emails/interview-email';
 
 const prisma = new PrismaClient();
 
@@ -55,11 +56,16 @@ export async function POST(
       return NextResponse.json({ error: timeValidation.error }, { status: 400 });
     }
 
-    // Dapatkan data job application untuk mendapatkan candidateId
+    // Dapatkan data job application dengan informasi user dan job posting
     const jobApplication = await prisma.jobApplication.findUnique({
       where: { id: params.applicantsId },
-      select: {
-        userId: true
+      include: {
+        user: true,
+        jobPosting: {
+          include: {
+            company: true
+          }
+        }
       }
     });
 
@@ -70,6 +76,7 @@ export async function POST(
       );
     }
 
+    // Buat jadwal interview
     const interview = await prisma.interviewSchedule.create({
       data: {
         scheduledAt: new Date(scheduledAt),
@@ -79,10 +86,21 @@ export async function POST(
         notes,
         jobApplicationId: params.applicantsId,
         jobPostingId: params.jobsId,
-        candidateId: jobApplication.userId,
+        candidateId: jobApplication.user.id,
         status: InterviewStatus.SCHEDULED
       }
     });
+
+    // Kirim email notifikasi jadwal interview
+    await interviewEmailService.sendInterviewScheduled(
+      jobApplication.user.email,
+      jobApplication.user.firstName || jobApplication.user.name || 'Candidate',
+      jobApplication.jobPosting.title,
+      jobApplication.jobPosting.company.name,
+      new Date(scheduledAt),
+      location,
+      interviewType
+    );
 
     return NextResponse.json(interview);
   } catch (error) {

@@ -33,50 +33,54 @@ interface InterviewSubmitData extends InterviewFormData {
   candidateId: string;
 }
   
-  interface InterviewScheduleFormProps {
-    applicationId: string;
-    jobId: string;
-    candidateId: string;
-    defaultValues?: Partial<InterviewFormData>;
-    onSubmit: (data: InterviewSubmitData) => void;
-    isSubmitting?: boolean;
-  }
+interface InterviewScheduleFormProps {
+  applicationId: string;
+  jobId: string;
+  candidateId: string;
+  defaultValues?: Partial<InterviewFormData>;
+  onSubmit: (data: InterviewSubmitData) => void;
+  isSubmitting?: boolean;
+  mode: 'create' | 'edit';
+}
 
-  export function InterviewScheduleForm({
-    applicationId,
-    jobId,
-    candidateId,
-    defaultValues,
-    onSubmit,
-    isSubmitting
-  }: InterviewScheduleFormProps) {
-    const form = useForm<InterviewFormData>({
-      resolver: zodResolver(interviewFormSchema),
-      defaultValues: {
-        scheduledAt: new Date(),
-        duration: 60,
-        interviewType: 'ONLINE',
-        location: '',
-        notes: '',
-        ...defaultValues
-      }
-    });
+export function InterviewScheduleForm({
+  applicationId,
+  jobId,
+  candidateId,
+  defaultValues,
+  onSubmit,
+  isSubmitting,
+  mode
+}: InterviewScheduleFormProps) {
+  const form = useForm<InterviewFormData>({
+    resolver: zodResolver(interviewFormSchema),
+    defaultValues: {
+      scheduledAt: new Date(),
+      duration: 60,
+      interviewType: 'ONLINE',
+      location: '',
+      notes: '',
+      ...defaultValues
+    }
+  });
 
-    const handleSubmit = form.handleSubmit((formData: InterviewFormData) => {
-      const submitData: InterviewSubmitData = {
-        ...formData,
-        jobApplicationId: applicationId,
-        jobPostingId: jobId,
-        candidateId: candidateId
-      };
-      onSubmit(submitData);
-    });
-  
-    return (
-      <>
-        <DialogTitle>Schedule Interview</DialogTitle>
-        <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-4">
+  const handleSubmit = form.handleSubmit((formData: InterviewFormData) => {
+    const submitData: InterviewSubmitData = {
+      ...formData,
+      jobApplicationId: applicationId,
+      jobPostingId: jobId,
+      candidateId: candidateId
+    };
+    onSubmit(submitData);
+  });
+
+  return (
+    <>
+      <DialogTitle>
+        {mode === 'create' ? 'Schedule Interview' : 'Reschedule Interview'}
+      </DialogTitle>
+      <Form {...form}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <FormField
             control={form.control}
             name="scheduledAt"
@@ -103,16 +107,16 @@ interface InterviewSubmitData extends InterviewFormData {
                     </FormControl>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
+                    <Calendar
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date() || date > addDays(new Date(), 30) }
+                      disabled={(date) => date < new Date() || date > addDays(new Date(), 30)}
                       className="rounded-t-md"
-                      />
-                      <div className="p-3 border-t border-border">
-                        <TimePicker date={field.value} setDate={field.onChange} />
-                      </div>
+                    />
+                    <div className="p-3 border-t border-border">
+                      <TimePicker date={field.value} setDate={field.onChange} />
+                    </div>
                   </PopoverContent>
                 </Popover>
                 <FormMessage />
@@ -120,78 +124,81 @@ interface InterviewSubmitData extends InterviewFormData {
             )}
           />
 
-        <FormField
-          control={form.control}
-          name="duration"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Duration (minutes)</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-      <FormField
-          control={form.control}
-          name="interviewType"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Interview Type</FormLabel>
-              <Select 
-                value={field.value} 
-                onValueChange={field.onChange}
-              >
+          <FormField
+            control={form.control}
+            name="duration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (minutes)</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
                 </FormControl>
-                <SelectContent>
-                  <SelectItem value="ONLINE">Online</SelectItem>
-                  <SelectItem value="ONSITE">Onsite</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="Meeting link or physical location" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="interviewType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Interview Type</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="ONLINE">Online</SelectItem>
+                    <SelectItem value="ONSITE">Onsite</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Notes</FormLabel>
-              <FormControl>
-                <Textarea {...field} placeholder="Additional notes or instructions" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Meeting link or physical location" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Scheduling..." : "Schedule Interview"}
-        </Button>
-      </form>
-    </Form>
-  </>
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="Additional notes or instructions" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting 
+              ? (mode === 'create' ? "Scheduling..." : "Rescheduling...") 
+              : (mode === 'create' ? "Schedule Interview" : "Reschedule Interview")
+            }
+          </Button>
+        </form>
+      </Form>
+    </>
   );
 }

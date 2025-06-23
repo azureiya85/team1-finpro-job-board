@@ -28,7 +28,7 @@ interface ApplicantListContentProps {
     interviewType: 'ONLINE' | 'ONSITE';
     location?: string;
     notes?: string;
-  }) => void;
+  }, isRescheduling: boolean) => void;
 }
 
 export default function ApplicantListContent({ 
@@ -39,16 +39,20 @@ export default function ApplicantListContent({
 }: ApplicantListContentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInterviewSubmit = async (applicationId: string, data: {
-    scheduledAt: Date;
-    duration: number;
-    interviewType: 'ONLINE' | 'ONSITE';
-    location?: string;
-    notes?: string;
-  }) => {
+  const handleInterviewSubmit = async (
+    applicationId: string, 
+    data: {
+      scheduledAt: Date;
+      duration: number;
+      interviewType: 'ONLINE' | 'ONSITE';
+      location?: string;
+      notes?: string;
+    },
+    isRescheduling: boolean = false
+  ) => {
     try {
       setIsSubmitting(true);
-      await onScheduleInterview(applicationId, data);
+      await onScheduleInterview(applicationId, data, isRescheduling);
       toast.success('Interview scheduled successfully');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to schedule interview';
@@ -165,9 +169,40 @@ export default function ApplicantListContent({
 
                 <TableCell className="text-center">
                 {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? (
-                  <span className="text-sm text-primary">
-                    {formatDateTime(new Date(app.latestInterview?.scheduledAt || ''))}   
-                  </span>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-sm hover:bg-gray-50 space-y-1 w-full h-auto py-2 px-3"
+                      >
+                        <div className="text-primary">
+                          {app.latestInterview ? formatDateTime(new Date(app.latestInterview.scheduledAt)) : 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {app.latestInterview?.location ? `📍 ${app.latestInterview.location}` : ''}
+                        </div>
+                        <div className="text-xs text-gray-500 italic">
+                          {app.latestInterview?.notes ? `📝 ${app.latestInterview.notes}` : ''}
+                        </div>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <InterviewScheduleForm mode='edit'
+                        applicationId={app.id}
+                        jobId={app.jobPosting?.id || ''}
+                        candidateId={app.applicant.id}
+                        defaultValues={{
+                          scheduledAt: app.latestInterview ? new Date(app.latestInterview.scheduledAt) : new Date(),
+                          duration: app.latestInterview?.duration || 60,
+                          interviewType: app.latestInterview?.interviewType || 'ONLINE',
+                          location: app.latestInterview?.location || '',
+                          notes: app.latestInterview?.notes || ''
+                        }}
+                        onSubmit={(data) => handleInterviewSubmit(app.id, data, true)} 
+                        isSubmitting={isSubmitting}
+                      />
+                    </DialogContent>
+                  </Dialog>
                 ) : app.status === ApplicationStatus.TEST_COMPLETED ? (
                   <Dialog>
                     <DialogTrigger asChild>
@@ -179,11 +214,11 @@ export default function ApplicantListContent({
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
-                      <InterviewScheduleForm
+                      <InterviewScheduleForm mode='create'
                         applicationId={app.id}
                         jobId={app.jobPosting?.id || ''}
                         candidateId={app.applicant.id}
-                        onSubmit={(data) => handleInterviewSubmit(app.id, data)}
+                        onSubmit={(data) => handleInterviewSubmit(app.id, data, false)}
                         isSubmitting={isSubmitting}
                       />
                     </DialogContent>
@@ -193,7 +228,7 @@ export default function ApplicantListContent({
                     Not available
                   </span>
                 )}
-              </TableCell>
+                </TableCell>
                 
                 <TableCell>
                   <Badge 

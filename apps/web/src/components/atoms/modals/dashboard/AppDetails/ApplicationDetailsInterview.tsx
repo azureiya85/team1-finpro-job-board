@@ -68,15 +68,6 @@ export function ApplicationDetailsInterview({
             <span className="font-medium">{formatDateTime(interview.scheduledAt)}</span>
           </div>
           
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Duration</span>
-            <span className="font-medium">{formatDuration(interview.duration)}</span>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Type</span>
-            <span className="font-medium capitalize">{interview.interviewType.toLowerCase()}</span>
-          </div>
           
           {interview.location && (
             <div className="flex justify-between items-center">
@@ -84,11 +75,6 @@ export function ApplicationDetailsInterview({
               <span className="font-medium">{interview.location}</span>
             </div>
           )}
-          
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Time</span>
-            <span className="font-medium">{formatRelativeTime(interview.scheduledAt)}</span>
-          </div>
         </div>
 
         {interview.notes && (

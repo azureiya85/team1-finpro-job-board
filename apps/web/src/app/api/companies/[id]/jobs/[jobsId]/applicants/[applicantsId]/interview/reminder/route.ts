@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { emailService } from '@/services/email.service';
+import { interviewEmailService } from '@/services/emails/interview-email';
 
 const prisma = new PrismaClient();
 
@@ -56,7 +56,7 @@ export async function POST(
     );
 
     // Kirim email reminder
-    await emailService.sendInterviewReminder(
+    await interviewEmailService.sendInterviewReminder(
       user.email,
       user.firstName || user.name || 'Candidate',
       jobPosting.title,

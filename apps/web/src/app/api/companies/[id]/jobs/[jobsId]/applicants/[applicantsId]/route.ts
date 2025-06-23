@@ -3,14 +3,10 @@ import { PrismaClient, ApplicationStatus, NotificationType, InterviewType } from
 import { auth } from '@/auth';
 import { updateApplicationStatus } from '@/lib/applicants/applicationStatusHelper'; 
 import { calculateAge } from '@/lib/applicants/applicationStatsHelper'; 
-import type {
-  JobApplicationDetails, 
-  UpdateApplicationRequestBody,
-} from '@/types/applicants';
+import type { JobApplicationDetails, UpdateApplicationRequestBody } from '@/types/applicants';
 
 const prisma = new PrismaClient();
 
-// GET: Get details of a single applicant for a specific job
 export async function GET(
   request: NextRequest,
   context: { params: { id: string, jobsId: string, applicantsId: string } }
@@ -69,9 +65,12 @@ export async function GET(
             scheduledAt: true,
             status: true,
             interviewType: true,
+            duration: true,
+            location: true,
+            notes: true
           },
           orderBy: { scheduledAt: 'desc' },
-        }, // Get all interviews for detail view
+        },
       },
     });
 
