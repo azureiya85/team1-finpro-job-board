@@ -92,14 +92,14 @@ const SubscriptionTable: React.FC<SubscriptionTableProps> = ({ subscriptions }) 
                     <span className="text-xs text-gray-500 truncate max-w-[180px]" title={subscription.user.email}>{subscription.user.email}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-medium">{subscription.plan.name}</span>
-                    <span className="text-xs text-gray-500">
-                      {subscription.plan.duration} days
-                    </span>
-                  </div>
-                </TableCell>
+                  <TableCell>
+              <div className="flex flex-col">
+                <span className="font-medium">{subscription.plan?.name ?? 'N/A'}</span>
+                <span className="text-xs text-gray-500">
+                  {subscription.plan?.duration != null ? `${subscription.plan.duration} days` : 'N/A'}
+                </span>
+              </div>
+            </TableCell>
                 <TableCell>{getStatusBadge(subscription.status)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
@@ -119,10 +119,12 @@ const SubscriptionTable: React.FC<SubscriptionTableProps> = ({ subscriptions }) 
                   {getExpirationInfo(subscription)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <span className="font-medium text-sm">
-                    ${subscription.plan.price.toFixed(2)}
-                  </span>
-                </TableCell>
+              <span className="font-medium text-sm">
+                {typeof subscription.plan?.price === 'number'
+                  ? `$${subscription.plan.price.toFixed(2)}`
+                  : 'N/A'}
+              </span>
+            </TableCell>
               </TableRow>
             ))
           )}

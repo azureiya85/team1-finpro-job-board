@@ -6,7 +6,7 @@ import { addDays } from 'date-fns';
 
 interface RouteContext {
   params: {
-    subscriptionId: string;
+    id: string; 
   };
 }
 
@@ -16,7 +16,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
   }
 
-  const { subscriptionId } = params;
+  const { id: subscriptionId } = params; // Extract id and rename to subscriptionId
 
   try {
     const subscription = await prisma.subscription.findUnique({
@@ -28,16 +28,14 @@ export async function PUT(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
 
-    if (subscription.paymentMethod !== PaymentMethod.BANK_TRANSFER) {
-        return NextResponse.json({ error: 'This action is only for Bank Transfer payments.' }, { status: 400 });
-    }
     if (subscription.status === SubscriptionStatus.ACTIVE && subscription.paymentStatus === PaymentStatus.COMPLETED) {
         return NextResponse.json({ error: 'Subscription is already active and paid.' }, { status: 400 });
     }
-    if (!subscription.paymentProof) {
-        return NextResponse.json({ error: 'Payment proof has not been uploaded by the user.' }, { status: 400 });
-    }
 
+    // Check payment proof requirement based on payment method
+    if (subscription.paymentMethod === PaymentMethod.BANK_TRANSFER && !subscription.paymentProof) {
+        return NextResponse.json({ error: 'Payment proof is required for Bank Transfer payments.' }, { status: 400 });
+    }
 
     const now = new Date();
     const updatedSubscription = await prisma.subscription.update({
@@ -61,4 +59,3 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Failed to approve subscription' }, { status: 500 });
   }
 }
-

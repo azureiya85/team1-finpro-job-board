@@ -34,21 +34,21 @@ const developerNavItems = [
     href: '/dashboard/developer/profile',
     icon: User,
     description: 'Manage your developer profile',
-    comingSoon: true
+    comingSoon: false
   },
   {
     name: 'Assessments Mgt.',
     href: '/dashboard/developer/assessment',
     icon: FileText,
     description: 'Manage skill assessments',
-    comingSoon: true
+    comingSoon: false
   },
   {
     name: 'Subscriptions Mgt.',
     href: '/dashboard/developer/subscription',
     icon: ShoppingCart,
     description: 'Manage user subscriptions',
-    comingSoon: true
+    comingSoon: false
   },
 ];
 

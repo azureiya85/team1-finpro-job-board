@@ -68,7 +68,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
   );
 
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogContent className="max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
@@ -122,6 +122,29 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
                 </Badge>
               </div>
 
+              {/* Payment Method Specific Information */}
+              {subscription.paymentMethod === 'BANK_TRANSFER' ? (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-800">Bank Transfer Payment</p>
+                      <p className="text-blue-600">This payment requires manual verification of uploaded proof.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Check className="w-4 h-4 text-green-600 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-green-800">Midtrans Payment</p>
+                      <p className="text-green-600">This payment can be approved/rejected without requiring proof upload.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label className="text-sm font-medium">Current Status</Label>
                 <div className="flex gap-2 mt-1">
@@ -164,21 +187,89 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
               <CardTitle className="text-lg">Payment Proof</CardTitle>
             </CardHeader>
             <CardContent>
-              {subscription.paymentProof ? (
+              {/* Conditional rendering based on payment method */}
+              {subscription.paymentMethod === 'BANK_TRANSFER' ? (
+                // Bank Transfer - Show proof upload section
+                subscription.paymentProof ? (
+                  <div className="space-y-4">
+                    <div className="relative border rounded-lg h-80 sm:h-96">
+                      {imageError ? (
+                        <FallbackUI />
+                      ) : (
+                        <Image
+                          src={subscription.paymentProof}
+                          alt="Payment Proof"
+                          fill
+                          className="object-contain"
+                          onError={() => setImageError(true)}
+                          unoptimized 
+                        />
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        onClick={onApprove}
+                        disabled={approving || rejecting || showRejectForm}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        {approving ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                          <Check className="w-4 h-4 mr-2" />
+                        )}
+                        Approve Payment
+                      </Button>
+                      
+                      <Button
+                        onClick={() => setShowRejectForm(true)}
+                        disabled={approving || rejecting || showRejectForm}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Reject Payment
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        No payment proof has been uploaded by the user yet.
+                      </AlertDescription>
+                    </Alert>
+                    
+                    {/* Still allow rejection even without proof for bank transfers */}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        disabled
+                        className="flex-1 bg-gray-400"
+                      >
+                        <Check className="w-4 h-4 mr-2" />
+                        Approve Payment (Proof Required)
+                      </Button>
+                      
+                      <Button
+                        onClick={() => setShowRejectForm(true)}
+                        disabled={approving || rejecting || showRejectForm}
+                        variant="destructive"
+                        className="flex-1"
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Reject Payment
+                      </Button>
+                    </div>
+                  </div>
+                )
+              ) : (
+                // Midtrans Payment - No proof required
                 <div className="space-y-4">
-                  <div className="relative border rounded-lg h-80 sm:h-96">
-                    {imageError ? (
-                      <FallbackUI />
-                    ) : (
-                      <Image
-                        src={subscription.paymentProof}
-                        alt="Payment Proof"
-                        fill
-                        className="object-contain"
-                        onError={() => setImageError(true)}
-                        unoptimized // Add if image URLs are external and not configured in next.config.js
-                      />
-                    )}
+                  <div className="p-6 text-center border-2 border-dashed border-gray-300 rounded-lg">
+                    <CreditCard className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-600 font-medium">Midtrans Payment</p>
+                    <p className="text-sm text-gray-500 mt-1">No proof upload required for this payment method.</p>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-2">
@@ -206,13 +297,6 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
                     </Button>
                   </div>
                 </div>
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    No payment proof has been uploaded by the user yet.
-                  </AlertDescription>
-                </Alert>
               )}
             </CardContent>
           </Card>

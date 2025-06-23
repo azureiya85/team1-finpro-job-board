@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import  prisma  from '@/lib/prisma';
 import { auth } from '@/auth';
-import { UserRole, SubscriptionStatus, PaymentStatus, PaymentMethod } from '@prisma/client';
+import { UserRole, SubscriptionStatus, PaymentStatus } from '@prisma/client';
 
 interface RouteContext {
   params: {
-    subscriptionId: string;
+    id: string; 
   };
 }
 
@@ -15,17 +15,15 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
   }
 
-  const { subscriptionId } = params;
+  const { id: subscriptionId } = params; // Extract id and rename to subscriptionId
   let rejectionReason: string | undefined;
 
   try {
-    const body = await request.json().catch(() => ({})); // TODO: Optional body for rejection reason
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const body = await request.json().catch(() => ({})); // Optional body for rejection reason
     rejectionReason = body.reason;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
+  } catch {
+    // Ignore parsing errors
   }
-
 
   try {
     const subscription = await prisma.subscription.findUnique({
@@ -36,13 +34,10 @@ export async function PUT(request: Request, { params }: RouteContext) {
     if (!subscription) {
       return NextResponse.json({ error: 'Subscription not found' }, { status: 404 });
     }
-     if (subscription.paymentMethod !== PaymentMethod.BANK_TRANSFER) {
-        return NextResponse.json({ error: 'This action is only for Bank Transfer payments.' }, { status: 400 });
-    }
+
     if (subscription.status === SubscriptionStatus.ACTIVE && subscription.paymentStatus === PaymentStatus.COMPLETED) {
         return NextResponse.json({ error: 'Cannot reject an already active and paid subscription.' }, { status: 400 });
     }
-    // Allow rejecting even if no proof, or if proof is invalid.
 
     const updatedSubscription = await prisma.subscription.update({
       where: { id: subscriptionId },
@@ -55,7 +50,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
 
     // TODO: Send email notification to user about subscription rejection
     // e.g., sendSubscriptionRejectionEmail(subscription.user.email, rejectionReason);
-    console.log(`Subscription ${subscriptionId} for user ${subscription.user.email} rejected.`);
+    console.log(`Subscription ${subscriptionId} for user ${subscription.user.email} rejected.`, rejectionReason ? `Reason: ${rejectionReason}` : '');
 
     return NextResponse.json({ message: 'Subscription payment rejected successfully.', subscription: updatedSubscription });
   } catch (error) {

@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ShoppingCart, Users, CreditCard, Package, AlertCircle, Loader2 } from 'lucide-react';
 import SubscriptionManagementList from '@/components/organisms/dashboard/subscription/developer/SubscriptionManagementList';
-import SubscriptionManagementPayment from '@/components/organisms/dashboard/subscription/developer/SubscriptionManagementPayment.tsx';
+import SubscriptionManagementPayment from '@/components/organisms/dashboard/subscription/developer/SubscriptionManagementPayment';
 import SubscriptionManagementPlans from '@/components/organisms/dashboard/subscription/developer/SubscriptionManagementPlans';
 import { useSubscriptionManagementStore } from '@/stores/subscriptionMgtStores';
 
