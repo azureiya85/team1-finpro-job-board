@@ -268,6 +268,7 @@ export default function ApplicantListModal() {
           applicationId={selectedInterview.applicationId}
           jobId={selectedJobForApplicants.id}
           candidateId={selectedInterview.candidateId}
+          companyId={selectedJobForApplicants.companyId}
           interview={selectedInterview.interview}
         />
       )}

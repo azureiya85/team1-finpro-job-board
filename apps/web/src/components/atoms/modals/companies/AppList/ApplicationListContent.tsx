@@ -169,60 +169,41 @@ export default function ApplicantListContent({
 
                 <TableCell className="text-center">
                 {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="text-sm hover:bg-gray-50 space-y-1 w-full h-auto py-2 px-3"
-                      >
-                        <div className="text-primary">
-                          {app.latestInterview ? formatDateTime(new Date(app.latestInterview.scheduledAt)) : 'N/A'}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {app.latestInterview?.location ? `📍 ${app.latestInterview.location}` : ''}
-                        </div>
-                        <div className="text-xs text-gray-500 italic">
-                          {app.latestInterview?.notes ? `📝 ${app.latestInterview.notes}` : ''}
-                        </div>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <InterviewScheduleForm mode='edit'
-                        applicationId={app.id}
-                        jobId={app.jobPosting?.id || ''}
-                        candidateId={app.applicant.id}
-                        defaultValues={{
-                          scheduledAt: app.latestInterview ? new Date(app.latestInterview.scheduledAt) : new Date(),
-                          duration: app.latestInterview?.duration || 60,
-                          interviewType: app.latestInterview?.interviewType || 'ONLINE',
-                          location: app.latestInterview?.location || '',
-                          notes: app.latestInterview?.notes || ''
-                        }}
-                        onSubmit={(data) => handleInterviewSubmit(app.id, data, true)} 
-                        isSubmitting={isSubmitting}
-                      />
-                    </DialogContent>
-                  </Dialog>
+                  <Button
+                    variant="ghost"
+                    className="text-sm hover:bg-gray-50 space-y-1 w-full h-auto py-2 px-3"
+                    onClick={() => onScheduleInterview(app.id, {
+                      scheduledAt: app.latestInterview ? new Date(app.latestInterview.scheduledAt) : new Date(),
+                      duration: app.latestInterview?.duration || 60,
+                      interviewType: app.latestInterview?.interviewType || 'ONLINE',
+                      location: app.latestInterview?.location || '',
+                      notes: app.latestInterview?.notes || ''
+                    }, true)}
+                  >
+                    <div className="text-primary">
+                      {app.latestInterview ? formatDateTime(new Date(app.latestInterview.scheduledAt)) : 'N/A'}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {app.latestInterview?.location ? `📍 ${app.latestInterview.location}` : ''}
+                    </div>
+                    <div className="text-xs text-gray-500 italic">
+                      {app.latestInterview?.notes ? `📝 ${app.latestInterview.notes}` : ''}
+                    </div>
+                  </Button>
                 ) : app.status === ApplicationStatus.TEST_COMPLETED ? (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                      >
-                        Schedule Interview
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <InterviewScheduleForm mode='create'
-                        applicationId={app.id}
-                        jobId={app.jobPosting?.id || ''}
-                        candidateId={app.applicant.id}
-                        onSubmit={(data) => handleInterviewSubmit(app.id, data, false)}
-                        isSubmitting={isSubmitting}
-                      />
-                    </DialogContent>
-                  </Dialog>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onScheduleInterview(app.id, {
+                      scheduledAt: new Date(),
+                      duration: 60,
+                      interviewType: 'ONLINE',
+                      location: '',
+                      notes: ''
+                    }, false)}
+                  >
+                    Schedule Interview
+                  </Button>
                 ) : (
                   <span className="text-xs text-gray-400">
                     Not available

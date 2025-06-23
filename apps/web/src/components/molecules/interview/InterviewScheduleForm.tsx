@@ -39,6 +39,7 @@ interface InterviewScheduleFormProps {
   candidateId: string;
   defaultValues?: Partial<InterviewFormData>;
   onSubmit: (data: InterviewSubmitData) => void;
+  onDelete?: () => Promise<void>;
   isSubmitting?: boolean;
   mode: 'create' | 'edit';
 }
@@ -49,6 +50,7 @@ export function InterviewScheduleForm({
   candidateId,
   defaultValues,
   onSubmit,
+  onDelete,
   isSubmitting,
   mode
 }: InterviewScheduleFormProps) {
@@ -191,12 +193,24 @@ export function InterviewScheduleForm({
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting 
-              ? (mode === 'create' ? "Scheduling..." : "Rescheduling...") 
-              : (mode === 'create' ? "Schedule Interview" : "Reschedule Interview")
-            }
-          </Button>
+          <div className="flex gap-2 justify-end">
+            {mode === 'edit' && onDelete && (
+              <Button 
+                type="button" 
+                variant="destructive"
+                onClick={onDelete}
+                disabled={isSubmitting}
+              >
+                Delete Interview
+              </Button>
+            )}
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting 
+                ? (mode === 'create' ? "Scheduling..." : "Rescheduling...") 
+                : (mode === 'create' ? "Schedule Interview" : "Reschedule Interview")
+              }
+            </Button>
+          </div>
         </form>
       </Form>
     </>
