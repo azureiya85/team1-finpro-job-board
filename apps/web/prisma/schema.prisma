@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -62,6 +63,7 @@ model User {
   skillAssessments   UserSkillAssessment[]
   certificates       Certificate[]
   companyReviews     CompanyReview[]
+  workExperiences WorkExperience[] 
   interviewSchedules InterviewSchedule[]
   notifications      Notification[]
   TestResult         TestResult[]
@@ -158,6 +160,7 @@ model Company {
 
   jobPostings       JobPosting[]
   companyReviews    CompanyReview[]
+  employeeRecords WorkExperience[] 
   preSelectionTests PreSelectionTest[]
 
   @@map("companies")
@@ -558,6 +561,8 @@ model CompanyReview {
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  workExperienceId String?    @unique 
+  workExperience   WorkExperience? @relation(fields: [workExperienceId], references: [id], onDelete:SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -599,12 +604,43 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
   message   String
-  link      String? // Link to relevant page (e.g., job application, interview)
+  link      String? 
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
   @@map("notifications")
+}
+
+// ============================================
+// USER WORK HISTORY & VERIFICATION
+// ============================================
+
+model WorkExperience {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId          String
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  jobTitle           String    
+  employmentStatus   EmploymentStatus 
+  startDate          DateTime
+  endDate            DateTime? 
+
+  // --- Verification Fields ---
+  isVerified         Boolean   @default(false) 
+  verificationMethod VerificationMethod? 
+  verificationProof  String?   
+  verifiedAt         DateTime? 
+  rejectionReason    String?   
+  review CompanyReview?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, companyId])
+  @@map("work_experiences")
 }
 
 // ============================================
@@ -616,6 +652,13 @@ enum UserRole {
   COMPANY_ADMIN // Company administrator
   ADMIN // Site administrator
   Developer // Platform configuration admin
+}
+
+enum VerificationMethod {
+  PAYSLIP
+  CONTRACT
+  COMPANY_EMAIL
+  ADMIN_MANUAL
 }
 
 enum AuthProvider {
