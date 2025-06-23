@@ -144,16 +144,41 @@ export default function ApplicantListModal() {
   };
 
   const handleScheduleInterview = (applicationId: string, scheduleData: any, isRescheduling: boolean) => {
+    console.log('handleScheduleInterview - Input Data:', {
+      applicationId,
+      scheduleData,
+      isRescheduling
+    });
+
     const applicant = applicants.find(app => app.id === applicationId);
-    if (!applicant) return;
+    if (!applicant) {
+      console.error('Applicant not found:', applicationId);
+      return;
+    }
+
+    console.log('Found applicant:', applicant);
 
     setSelectedInterview({
       applicationId,
       candidateId: applicant.applicant.id,
-      interview: isRescheduling ? scheduleData : undefined
+      interview: isRescheduling ? {
+        id: scheduleData.id,
+        jobApplicationId: applicationId,
+        jobPostingId: selectedJobForApplicants?.id || '',
+        candidateId: applicant.applicant.id,
+        status: 'SCHEDULED',
+        scheduledAt: new Date(scheduleData.scheduledAt),
+        duration: Number(scheduleData.duration),
+        interviewType: scheduleData.interviewType,
+        location: scheduleData.location || '',
+        notes: scheduleData.notes || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        reminderSent: false // Menambahkan properti wajib yang sebelumnya hilang
+      } : undefined
     });
     setIsInterviewModalOpen(true);
-  };
+};
 
   const updateApplicationStatus = async (applicationId: string, newStatus: ApplicationStatus, rejectionReason?: string) => {
     if (!selectedJobForApplicants || !companyId) return;

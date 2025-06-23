@@ -22,13 +22,18 @@ interface ApplicantListContentProps {
   applicants: JobApplicationDetails[];
   onStatusChange: (applicationId: string, newStatus: ApplicationStatus) => void;
   onCvPreview: (cvUrl: string | null) => void;
-  onScheduleInterview: (applicationId: string, scheduleData: {
-    scheduledAt: Date;
-    duration: number;
-    interviewType: 'ONLINE' | 'ONSITE';
-    location?: string;
-    notes?: string;
-  }, isRescheduling: boolean) => void;
+  onScheduleInterview: (
+    applicationId: string,
+    scheduleData: {
+      id?: string;
+      scheduledAt: Date;
+      duration: number;
+      interviewType: 'ONLINE' | 'ONSITE';
+      location?: string;
+      notes?: string;
+    },
+    isRescheduling: boolean
+  ) => void;  
 }
 
 export default function ApplicantListContent({ 
@@ -173,6 +178,7 @@ export default function ApplicantListContent({
                     variant="ghost"
                     className="text-sm hover:bg-gray-50 space-y-1 w-full h-auto py-2 px-3"
                     onClick={() => onScheduleInterview(app.id, {
+                      id: app.latestInterview?.id, // ✅ wajib untuk PUT
                       scheduledAt: app.latestInterview ? new Date(app.latestInterview.scheduledAt) : new Date(),
                       duration: app.latestInterview?.duration || 60,
                       interviewType: app.latestInterview?.interviewType || 'ONLINE',

@@ -29,42 +29,59 @@ export function InterviewScheduleModal({
 }: InterviewScheduleModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log('InterviewScheduleModal - Props:', {
+    applicationId,
+    jobId,
+    candidateId,
+    companyId,
+    interview
+  });
+
   const handleSubmit = async (data: any) => {
     try {
+      console.log('handleSubmit - Input data:', data);
       setIsSubmitting(true);
       
+      if (!interview?.id) {
+        console.log('Creating new interview');
+      } else {
+        console.log('Updating interview with ID:', interview.id);
+      }
+
       const formattedData = {
         ...data,
-        scheduledAt: formatDateTimeForAPI(data.scheduledAt),
-        jobApplicationId: applicationId,
-        jobPostingId: jobId,
-        candidateId: candidateId
+        scheduledAt: formatDateTimeForAPI(data.scheduledAt)
       };
 
-      // Perbaiki endpoint sesuai struktur API
+      console.log('Formatted data for API:', formattedData);
+
       const endpoint = interview 
         ? `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
         : `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview`;
-      const method = interview ? 'PUT' : 'POST';
+      
+      console.log('Using endpoint:', endpoint);
+      console.log('Method:', interview ? 'PUT' : 'POST');
 
       const response = await fetch(endpoint, {
-        method,
+        method: interview ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formattedData),
       });
 
+      const responseData = await response.json();
+      console.log('API Response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to schedule interview');
+        throw new Error(responseData.error || 'Failed to schedule interview');
       }
 
       toast.success(interview ? 'Interview updated successfully' : 'Interview scheduled successfully');
       onClose();
     } catch (error) {
+      console.error('Error in handleSubmit:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to schedule interview');
-      console.error('Error scheduling interview:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -103,11 +120,11 @@ export function InterviewScheduleModal({
           jobId={jobId}
           candidateId={candidateId}
           defaultValues={interview ? {
-              scheduledAt: interview.scheduledAt,
-              duration: interview.duration,
-              location: interview.location || undefined,
-              interviewType: interview.interviewType as "ONLINE" | "ONSITE",
-              notes: interview.notes || undefined
+            scheduledAt: new Date(interview.scheduledAt), // Pastikan ini adalah objek Date
+            duration: interview.duration,
+            location: interview.location || '',
+            interviewType: interview.interviewType as "ONLINE" | "ONSITE",
+            notes: interview.notes || ''
           } : undefined}
           onSubmit={handleSubmit}
           onDelete={interview ? handleDelete : undefined}
