@@ -1,22 +1,29 @@
-'use client';
+"use client";
 
+import { useState } from 'react';
+import cn from 'classnames';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ApplicationStatus } from '@prisma/client';
-import { getStatusDisplay } from '@/lib/applicants/statusValidation'; 
-import { getStatusAction } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 import { FileText, MoreHorizontal } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
+import { getStatusDisplay } from '@/lib/applicants/statusValidation';
+import { getStatusAction } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 import { formatEducationLevelDisplay } from '@/lib/utils';
-import type { JobApplicationDetails } from '@/types/applicants';
-import { InterviewScheduleForm } from '@/components/molecules/interview/InterviewScheduleForm';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { formatDateTime } from '@/lib/dateTimeUtils';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import cn from 'classnames';
+import type { JobApplicationDetails } from '@/types/applicants';
+import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal'
+
+type InterviewFormCompatible = {
+  id?: string;
+  scheduledAt: Date;
+  duration: number;
+  interviewType: 'ONLINE' | 'ONSITE';
+  location?: string;
+  notes?: string;
+};
 
 interface ApplicantListContentProps {
   applicants: JobApplicationDetails[];
@@ -33,39 +40,40 @@ interface ApplicantListContentProps {
       notes?: string;
     },
     isRescheduling: boolean
-  ) => void;  
+  ) => void;
+  companyId: string;
 }
 
 export default function ApplicantListContent({ 
   applicants, 
   onStatusChange, 
   onCvPreview,
-  onScheduleInterview
+  onScheduleInterview,
+  companyId
 }: ApplicantListContentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleInterviewSubmit = async (
-    applicationId: string, 
-    data: {
+  const [selectedInterview, setSelectedInterview] = useState<{
+    applicationId: string;
+    jobId: string;
+    candidateId: string;
+    interview?: {
+      id?: string;
       scheduledAt: Date;
       duration: number;
       interviewType: 'ONLINE' | 'ONSITE';
-      location?: string;
-      notes?: string;
-    },
-    isRescheduling: boolean = false
+      location?: string | null;
+      notes?: string | null;
+    };
+  } | null>(null);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const handleOpenInterviewModal = (
+    applicationId: string,
+    jobId: string,
+    candidateId: string,
+    interview?: InterviewFormCompatible
   ) => {
-    try {
-      setIsSubmitting(true);
-      await onScheduleInterview(applicationId, data, isRescheduling);
-      toast.success('Interview scheduled successfully');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to schedule interview';
-      toast.error(errorMessage);
-      console.error('Error scheduling interview:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setSelectedInterview({ applicationId, jobId, candidateId, interview });
+    setModalOpen(true);
   };
 
   return (
@@ -98,14 +106,12 @@ export default function ApplicantListContent({
                     </AvatarFallback>
                   </Avatar>
                 </TableCell>
-                
                 <TableCell>
                   <div className="space-y-1">
                     <p className="font-semibold text-gray-900 truncate">{app.applicant.name}</p>
                     <p className="text-sm text-gray-600 truncate">{app.applicant.email}</p>
                   </div>
                 </TableCell>
-                
                 <TableCell>
                   <div className="space-y-1">
                     <p className="text-sm">
@@ -120,7 +126,6 @@ export default function ApplicantListContent({
                     </p>
                   </div>
                 </TableCell>
-                
                 <TableCell>
                   <div className="text-sm">
                     {app.expectedSalary ? (
@@ -132,17 +137,15 @@ export default function ApplicantListContent({
                     )}
                   </div>
                 </TableCell>
-                
                 <TableCell>
                   <div className="text-sm text-gray-600">
-                    {new Date(app.createdAt).toLocaleDateString('id-ID', { 
-                      day: '2-digit', 
-                      month: 'short', 
+                    {new Date(app.createdAt).toLocaleDateString('id-ID', {
+                      day: '2-digit',
+                      month: 'short',
                       year: '2-digit'
                     })}
                   </div>
                 </TableCell>
-                
                 <TableCell className="text-center">
                   {app.cvUrl ? (
                     <Button 
@@ -159,7 +162,6 @@ export default function ApplicantListContent({
                     </span>
                   )}
                 </TableCell>
-
                 <TableCell className="text-center">
                   {app.testResult ? (
                     <span className={`text-sm font-medium ${app.testResult.passed ? 'text-green-600' : 'text-red-600'}`}>
@@ -171,52 +173,41 @@ export default function ApplicantListContent({
                     </span>
                   )}
                 </TableCell>
-
                 <TableCell className="text-center">
-                {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? (
-                  <Button
-                    variant="ghost"
-                    className="text-sm hover:bg-gray-50 space-y-1 w-full h-auto py-2 px-3"
-                    onClick={() => onScheduleInterview(app.id, {
-                      id: app.latestInterview?.id, // ✅ wajib untuk PUT
-                      scheduledAt: app.latestInterview ? new Date(app.latestInterview.scheduledAt) : new Date(),
-                      duration: app.latestInterview?.duration || 60,
-                      interviewType: app.latestInterview?.interviewType || 'ONLINE',
-                      location: app.latestInterview?.location || '',
-                      notes: app.latestInterview?.notes || ''
-                    }, true)}
-                  >
-                    <div className="text-primary">
-                      {app.latestInterview ? formatDateTime(new Date(app.latestInterview.scheduledAt)) : 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {app.latestInterview?.location ? `📍 ${app.latestInterview.location}` : ''}
-                    </div>
-                    <div className="text-xs text-gray-500 italic">
-                      {app.latestInterview?.notes ? `📝 ${app.latestInterview.notes}` : ''}
-                    </div>
-                  </Button>
-                ) : app.status === ApplicationStatus.TEST_COMPLETED ? (
+                {app.status === ApplicationStatus.INTERVIEW_SCHEDULED || app.status === ApplicationStatus.TEST_COMPLETED ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onScheduleInterview(app.id, {
-                      scheduledAt: new Date(),
-                      duration: 60,
-                      interviewType: 'ONLINE',
-                      location: '',
-                      notes: ''
-                    }, false)}
+                    onClick={() => handleOpenInterviewModal(
+                      app.id,
+                      app.jobPosting?.id || '',
+                      app.applicant.id,
+                      app.latestInterview ? {
+                        id: app.latestInterview.id,
+                        scheduledAt: app.latestInterview.scheduledAt ? new Date(app.latestInterview.scheduledAt) : new Date(),
+                        duration: app.latestInterview.duration,
+                        interviewType: app.latestInterview.interviewType,
+                        location: app.latestInterview.location === null ? undefined : app.latestInterview.location,
+                        notes: app.latestInterview.notes === null ? undefined : app.latestInterview.notes
+                      } : {
+                        scheduledAt: new Date(),
+                        duration: 60,
+                        interviewType: 'ONLINE',
+                        location: undefined,
+                        notes: undefined
+                      }
+                    )}
                   >
-                    Schedule Interview
-                  </Button>
-                ) : (
-                  <span className="text-xs text-gray-400">
-                    Not available
-                  </span>
-                )}
+                      {app.latestInterview
+                        ? formatDateTime(new Date(app.latestInterview.scheduledAt))
+                        : 'Schedule Interview'}
+                    </Button>
+                  ) : (
+                    <span className="text-xs text-gray-400">
+                      Not available
+                    </span>
+                  )}
                 </TableCell>
-                
                 <TableCell>
                   <Badge 
                     className={`${statusInfo.bgColor} ${statusInfo.color} hover:${statusInfo.bgColor} px-2 py-1 text-xs whitespace-nowrap`}
@@ -224,7 +215,6 @@ export default function ApplicantListContent({
                     {statusInfo.label}
                   </Badge>
                 </TableCell>
-                
                 <TableCell className="text-center">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -240,7 +230,7 @@ export default function ApplicantListContent({
                         const actionConfig = getStatusAction(status);
                         const Icon = actionConfig.icon;
                         return (
-                         <DropdownMenuItem 
+                          <DropdownMenuItem 
                             key={status}
                             onClick={() => onStatusChange(app.id, status)}
                             disabled={app.status === status}
@@ -259,6 +249,17 @@ export default function ApplicantListContent({
           })}
         </TableBody>
       </Table>
+      {selectedInterview && (
+        <InterviewScheduleModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          applicationId={selectedInterview.applicationId}
+          jobId={selectedInterview.jobId}
+          candidateId={selectedInterview.candidateId}
+          companyId={companyId}
+          interview={selectedInterview.interview}
+        />
+      )}
     </div>
   );
 }

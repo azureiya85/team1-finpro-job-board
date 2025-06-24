@@ -133,7 +133,14 @@ export function InterviewScheduleForm({
               <FormItem>
                 <FormLabel>Duration (minutes)</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} onChange={e => field.onChange(+e.target.value)} />
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      field.onChange(isNaN(val) ? '' : val);
+                    }}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

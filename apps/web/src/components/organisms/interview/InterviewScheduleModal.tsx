@@ -1,12 +1,25 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { InterviewScheduleForm } from '@/components/molecules/interview/InterviewScheduleForm';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { formatDateTimeForAPI } from '@/lib/dateTimeUtils';
 import type { InterviewSchedule } from '@prisma/client';
 
+type InterviewFormData = {
+  scheduledAt: Date;
+  duration: number;
+  interviewType: 'ONLINE' | 'ONSITE';
+  location?: string;
+  notes?: string;
+};
+
+type InterviewSubmitData = InterviewFormData & {
+  jobApplicationId: string;
+  jobPostingId: string;
+  candidateId: string;
+};
 
 interface InterviewScheduleModalProps {
   isOpen: boolean;
@@ -15,7 +28,8 @@ interface InterviewScheduleModalProps {
   jobId: string;
   candidateId: string;
   companyId: string;
-  interview?: InterviewSchedule; // For editing mode
+  interview?: InterviewSchedule;
+  onInterviewUpdate?: (interview: InterviewSchedule) => void;
 }
 
 export function InterviewScheduleModal({
@@ -25,92 +39,77 @@ export function InterviewScheduleModal({
   jobId,
   candidateId,
   companyId,
-  interview
+  interview,
+  onInterviewUpdate
 }: InterviewScheduleModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentInterview, setCurrentInterview] = useState<InterviewSchedule | undefined>(interview);
 
-  console.log('InterviewScheduleModal - Props:', {
-    applicationId,
-    jobId,
-    candidateId,
-    companyId,
-    interview
-  });
-
-  const handleSubmit = async (data: any) => {
-    try {
-      console.log('handleSubmit - Input data:', data);
-      setIsSubmitting(true);
-      
-      if (!interview?.id) {
-        console.log('Creating new interview');
-      } else {
-        console.log('Updating interview with ID:', interview.id);
+  useEffect(() => {
+    const fetchInterviewData = async () => {
+      if (interview?.id && isOpen) {
+        const response = await fetch(
+          `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
+        );
+        const data = await response.json();
+        setCurrentInterview(data);
+        onInterviewUpdate?.(data);
       }
+    };
 
-      const formattedData = {
-        ...data,
-        scheduledAt: formatDateTimeForAPI(data.scheduledAt)
-      };
+    fetchInterviewData();
+  }, [isOpen, interview?.id, companyId, jobId, applicationId, onInterviewUpdate]);
 
-      console.log('Formatted data for API:', formattedData);
+  const handleSubmit = async (data: InterviewSubmitData) => {
+    setIsSubmitting(true);
+    
+    const formattedData = {
+      scheduledAt: formatDateTimeForAPI(data.scheduledAt),
+      duration: data.duration,
+      interviewType: data.interviewType,
+      location: data.location || null,
+      notes: data.notes || null
+    };
 
-      const endpoint = interview 
-        ? `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
-        : `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview`;
-      
-      console.log('Using endpoint:', endpoint);
-      console.log('Method:', interview ? 'PUT' : 'POST');
+    const endpoint = interview 
+      ? `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
+      : `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview`;
+    
+    const response = await fetch(endpoint, {
+      method: interview ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formattedData),
+    });
 
-      const response = await fetch(endpoint, {
-        method: interview ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formattedData),
-      });
-
-      const responseData = await response.json();
-      console.log('API Response:', responseData);
-
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to schedule interview');
-      }
-
-      toast.success(interview ? 'Interview updated successfully' : 'Interview scheduled successfully');
-      onClose();
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to schedule interview');
-    } finally {
-      setIsSubmitting(false);
-    }
+    const responseData = await response.json();
+    setCurrentInterview(responseData);
+    onInterviewUpdate?.(responseData);
+    onClose();
+    setIsSubmitting(false);
   };
 
   const handleDelete = async () => {
-    try {
-      setIsSubmitting(true);
-      
-      if (!interview) return;
+    setIsSubmitting(true);
+    
+    if (!interview) return;
 
-      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`, {
-        method: 'DELETE',
-      });
+    await fetch(`/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`, {
+      method: 'DELETE',
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete interview');
-      }
-
-      toast.success('Interview deleted successfully');
-      onClose();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete interview');
-      console.error('Error deleting interview:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    onClose();
+    setIsSubmitting(false);
   };
+
+  const formDefaultValues: Partial<InterviewFormData> | undefined = currentInterview ? {
+    scheduledAt: new Date(currentInterview.scheduledAt),
+    duration: currentInterview.duration,
+    interviewType: currentInterview.interviewType,
+    location: currentInterview.location || undefined,
+    notes: currentInterview.notes || undefined
+  } : undefined;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -119,17 +118,11 @@ export function InterviewScheduleModal({
           applicationId={applicationId}
           jobId={jobId}
           candidateId={candidateId}
-          defaultValues={interview ? {
-            scheduledAt: new Date(interview.scheduledAt), // Pastikan ini adalah objek Date
-            duration: interview.duration,
-            location: interview.location || '',
-            interviewType: interview.interviewType as "ONLINE" | "ONSITE",
-            notes: interview.notes || ''
-          } : undefined}
+          defaultValues={formDefaultValues}
           onSubmit={handleSubmit}
-          onDelete={interview ? handleDelete : undefined}
+          onDelete={currentInterview ? handleDelete : undefined}
           isSubmitting={isSubmitting}
-          mode={interview ? 'edit' : 'create'}
+          mode={currentInterview ? 'edit' : 'create'}
         />
       </DialogContent>
     </Dialog>
