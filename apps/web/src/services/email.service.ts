@@ -2,6 +2,8 @@ import nodemailer from 'nodemailer';
 import { render } from '@react-email/components';
 import { VerificationEmail } from '@/services/emails/verification-email';
 import { PasswordResetEmail } from '@/services/emails/password-reset';
+import { SubscriptionActivationEmail } from '@/services/emails/subscription-activation';
+import { SubscriptionRejectionEmail } from '@/services/emails/subscription-rejection';
 
 // Create transporter
 const createTransporter = () => {
@@ -105,6 +107,70 @@ export const emailService = {
       subject: 'Welcome to our platform!',
       html,
       text: `Welcome to our platform, ${firstName}! Thank you for joining us.`,
+    });
+  },
+
+  sendSubscriptionActivationEmail: async (
+    email: string,
+    firstName: string,
+    planName: string,
+    startDate: Date,
+    endDate: Date
+  ) => {
+    const dashboardUrl = `${process.env.NEXTAUTH_URL}/dashboard`;
+    
+    const formattedStartDate = startDate.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    const formattedEndDate = endDate.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const emailHtml = await render(SubscriptionActivationEmail({
+      firstName,
+      planName,
+      startDate: formattedStartDate,
+      endDate: formattedEndDate,
+      dashboardUrl,
+    }));
+
+    return sendEmail({
+      to: email,
+      subject: `🎉 Your ${planName} subscription is now active!`,
+      html: emailHtml,
+      text: `Hi ${firstName}, great news! Your ${planName} subscription has been activated and is valid from ${formattedStartDate} to ${formattedEndDate}. Visit your dashboard at ${dashboardUrl} to explore your new features.`,
+    });
+  },
+
+  sendSubscriptionRejectionEmail: async (
+    email: string,
+    firstName: string,
+    planName: string,
+    rejectionReason?: string
+  ) => {
+    const subscriptionUrl = `${process.env.NEXTAUTH_URL}/dashboard/subscription`;
+    const supportUrl = `${process.env.NEXTAUTH_URL}/support`;
+
+    const emailHtml = await render(SubscriptionRejectionEmail({
+      firstName,
+      planName,
+      rejectionReason,
+      supportUrl,
+      subscriptionUrl,
+    }));
+
+    return sendEmail({
+      to: email,
+      subject: `Subscription Payment Issue - ${planName}`,
+      html: emailHtml,
+      text: `Hi ${firstName}, there was an issue with your ${planName} subscription payment. ${rejectionReason ? `Reason: ${rejectionReason}` : ''} Please visit ${subscriptionUrl} to try again or contact support at ${supportUrl}.`,
     });
   },
 

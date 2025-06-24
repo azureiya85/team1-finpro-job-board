@@ -3,12 +3,26 @@ import  prisma  from '@/lib/prisma';
 import { auth } from '@/auth';
 import { UserRole, SubscriptionStatus, PaymentStatus, PaymentMethod } from '@prisma/client';
 import { addDays } from 'date-fns';
+import { emailService } from '@/services/email.service';
 
 interface RouteContext {
   params: {
     id: string; 
   };
 }
+
+// Helper function to safely send emails without breaking the main flow
+const sendEmailSafely = async (
+  emailPromise: Promise<{ success: boolean; messageId: string; }>, 
+  errorContext: string
+): Promise<void> => {
+  try {
+    const result = await emailPromise;
+    console.log(`${errorContext} sent successfully:`, result.messageId);
+  } catch (error) {
+    console.error(`Failed to send ${errorContext}:`, error);
+  }
+};
 
 export async function PUT(request: Request, { params }: RouteContext) {
   const session = await auth();
@@ -21,7 +35,16 @@ export async function PUT(request: Request, { params }: RouteContext) {
   try {
     const subscription = await prisma.subscription.findUnique({
       where: { id: subscriptionId },
-      include: { plan: true, user: { select: { email: true, name: true }} },
+      include: { 
+        plan: true, 
+        user: { 
+          select: { 
+            email: true, 
+            name: true, 
+            firstName: true 
+          } 
+        } 
+      },
     });
 
     if (!subscription) {
@@ -38,22 +61,38 @@ export async function PUT(request: Request, { params }: RouteContext) {
     }
 
     const now = new Date();
+    const endDate = addDays(now, subscription.plan.duration);
+    
     const updatedSubscription = await prisma.subscription.update({
       where: { id: subscriptionId },
       data: {
         status: SubscriptionStatus.ACTIVE,
         paymentStatus: PaymentStatus.COMPLETED,
         startDate: now, // Payment confirmed, subscription starts now
-        endDate: addDays(now, subscription.plan.duration),
+        endDate: endDate,
         updatedAt: now,
       },
     });
 
-    // TODO: Send email notification to user about subscription activation
-    // e.g., sendSubscriptionActivationEmail(subscription.user.email, subscription.plan.name);
+    // Send email notification to user about subscription activation
+    const firstName = subscription.user.firstName || subscription.user.name || 'User';
+    await sendEmailSafely(
+      emailService.sendSubscriptionActivationEmail(
+        subscription.user.email, 
+        firstName, 
+        subscription.plan.name,
+        now,
+        endDate
+      ),
+      'subscription activation email'
+    );
+
     console.log(`Subscription ${subscriptionId} for user ${subscription.user.email} approved and activated.`);
 
-    return NextResponse.json({ message: 'Subscription approved and activated successfully.', subscription: updatedSubscription });
+    return NextResponse.json({ 
+      message: 'Subscription approved and activated successfully.', 
+      subscription: updatedSubscription 
+    });
   } catch (error) {
     console.error(`Error approving subscription ${subscriptionId}:`, error);
     return NextResponse.json({ error: 'Failed to approve subscription' }, { status: 500 });
