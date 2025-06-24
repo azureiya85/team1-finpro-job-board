@@ -1,47 +1,144 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { auth } from '@/auth';
 import { z } from 'zod';
+import { auth } from '@/auth';
+import prisma from '@/lib/prisma';
+import { createReviewSchema } from '@/lib/validations/zodReviewValidation'; // Import the separated schema
 
-const ReviewSchema = z.object({
-  title: z.string().optional(),
-  review: z.string().min(10),
-  rating: z.number().min(1).max(5),
-  cultureRating: z.number().min(1).max(5).optional(),
-  workLifeBalance: z.number().min(1).max(5).optional(),
-  facilitiesRating: z.number().min(1).max(5).optional(),
-  careerRating: z.number().min(1).max(5).optional(),
-  jobPosition: z.string().min(2),
-  employmentStatus: z.enum(['CURRENT_EMPLOYEE','FORMER_EMPLOYEE','CONTRACTOR','INTERN']),
-  workDuration: z.string().optional(),
-  salaryEstimate: z.number().int().optional(),
-  isAnonymous: z.boolean().default(true),
-});
+interface RouteContext {
+  params: {
+    id: string; 
+  };
+}
 
-export async function POST(request: Request, { params }: { params: { companyId: string } }) {
+// GET: Fetches all public, anonymous reviews for a specific company.
+export async function GET(request: Request, { params }: RouteContext) {
+  const { id: companyId } = params; 
+
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '10');
+  const skip = (page - 1) * limit;
+
+  try {
+    const [reviews, totalReviews] = await prisma.$transaction([
+      prisma.companyReview.findMany({
+        where: {
+          companyId: companyId,
+          isVerified: true,
+        },
+        select: {
+          id: true,
+          title: true,
+          review: true,
+          rating: true,
+          cultureRating: true,
+          workLifeBalance: true,
+          facilitiesRating: true,
+          careerRating: true,
+          jobPosition: true,
+          employmentStatus: true,
+          workDuration: true,
+          salaryEstimate: true,
+          createdAt: true,
+          userId: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.companyReview.count({
+        where: {
+          companyId: companyId,
+          isVerified: true,
+        },
+      }),
+    ]);
+    
+    return NextResponse.json({
+      data: reviews,
+      pagination: {
+        total: totalReviews,
+        page,
+        limit,
+        totalPages: Math.ceil(totalReviews / limit),
+      },
+    });
+  } catch (error) {
+    console.error(`Error fetching reviews for company ${companyId}:`, error);
+    return NextResponse.json({ error: 'Failed to fetch company reviews' }, { status: 500 });
+  }
+}
+
+//POST: Creates a new company review.
+// Enforces that the user must have a verified work experience at the company.
+export async function POST(request: Request, { params }: RouteContext) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  // TODO: verify session.user.id actually works at companyId. Then:
-  const userIsEmployed = true; // implement your check
-  if (!userIsEmployed) {
-    return NextResponse.json({ error: 'Only verified employees can submit a review' }, { status: 403 });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized: You must be logged in to post a review.' }, { status: 401 });
   }
 
-  const parse = ReviewSchema.safeParse(await request.json());
-  if (!parse.success) {
-    return NextResponse.json({ error: 'Invalid input', details: parse.error.format() }, { status: 400 });
+  const { id: companyId } = params;
+  const userId = session.user.id;
+
+  try {
+    const workExperience = await prisma.workExperience.findFirst({
+      where: {
+        userId: userId,
+        companyId: companyId,
+        isVerified: true,
+      },
+    });
+
+    if (!workExperience) {
+      return NextResponse.json(
+        { error: "Forbidden: You must have a verified work experience at this company to post a review." },
+        { status: 403 }
+      );
+    }
+    
+    const existingReview = await prisma.companyReview.findUnique({
+      where: { workExperienceId: workExperience.id },
+    });
+
+    if (existingReview) {
+      return NextResponse.json(
+        { error: "Conflict: You have already submitted a review for this work experience." },
+        { status: 409 }
+      );
+    }
+
+    const body = await request.json();
+    const validation = createReviewSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Invalid input', details: validation.error.flatten() }, { status: 400 });
+    }
+    
+    const newReview = await prisma.companyReview.create({
+      data: {
+        ...validation.data,
+        jobPosition: workExperience.jobTitle,
+        employmentStatus: workExperience.employmentStatus,
+        isAnonymous: true,
+        isVerified: true,
+        user: { connect: { id: userId } },
+        company: { connect: { id: companyId } },
+        workExperience: { connect: { id: workExperience.id } },
+      },
+      select: {
+          id: true,
+          createdAt: true,
+      }
+    });
+
+    return NextResponse.json({ message: 'Review submitted successfully', review: newReview }, { status: 201 });
+  } catch (error) {
+    console.error(`Error creating review for company ${companyId}:`, error);
+    if (error instanceof z.ZodError) {
+        return NextResponse.json({ error: 'Invalid input', details: error.flatten() }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Failed to create company review' }, { status: 500 });
   }
-  const data = parse.data;
-
-  const review = await prisma.companyReview.create({
-    data: {
-      ...data,
-      userId: session.user.id,
-      companyId: params.companyId,
-      isVerified: true,
-    },
-  });
-
-  return NextResponse.json({ message: 'Review submitted', review }, { status: 201 });
 }

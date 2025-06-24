@@ -11,7 +11,9 @@ import {
   ExperienceLevel,
   ApplicationStatus, 
   InterviewStatus,   
-  InterviewType,     
+  InterviewType,    
+   // EmploymentStatus, 
+  // VerificationMethod, 
 } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { indonesianLocations } from '../src/components/data/cities';
@@ -23,16 +25,21 @@ import { companies as mockCompanies } from '../src/components/data/companies';
 import { jobPostings as mockJobPostings } from '../src/components/data/jobs'; 
 import { jobApplications as mockJobApplications } from '../src/components/data/jobApplication'; 
 import { interviewSchedules as mockInterviewSchedules } from '../src/components/data/jobInterview'; 
+import { workExperiences } from '../src/components/data/workExperiences';
+import { companyReviews } from '../src/components/data/companyReviews'; 
+
 
 const prisma = new PrismaClient();
 
 // Maps to store actual IDs against mock IDs/names for linking
 const provinceCodeToIdMap = new Map<string, string>();
-const cityKeyToIdMap = new Map<string, string>(); // Key: "provinceCode_cityName"
+const cityKeyToIdMap = new Map<string, string>();
 const userMockIdToActualIdMap = new Map<string, string>();
 const companyMockIdToActualIdMap = new Map<string, string>();
-const jobPostingMockIdToActualIdMap = new Map<string, string>(); // Added
-const jobApplicationMockIdToActualIdMap = new Map<string, string>(); // Added
+const jobPostingMockIdToActualIdMap = new Map<string, string>(); 
+const jobApplicationMockIdToActualIdMap = new Map<string, string>();
+const workExperienceMockIdToActualIdMap = new Map<string, string>();
+let definedAssessmentsCount = 0; // Add this line
 
 const SALT_ROUNDS = 10;
 
@@ -512,6 +519,8 @@ async function seedSkillAssessments() {
     }
   ];
 
+   definedAssessmentsCount = assessmentsToCreate.length;
+
   // Verify if question arrays have enough questions
   if (englishQuestions.length < 25) {
     console.warn(`  ⚠️ English questions array has only ${englishQuestions.length} questions. The English assessment will have fewer than 25 questions.`);
@@ -585,6 +594,85 @@ async function seedAnalytics() {
   console.log('📈 Analytics initialization completed.');
 }
 
+async function seedWorkExperiences() {
+  console.log('🤝 Seeding work experiences...');
+  for (const expData of workExperiences) {
+    const userActualId = userMockIdToActualIdMap.get(expData.userId);
+    const companyActualId = companyMockIdToActualIdMap.get(expData.companyId);
+
+    if (!userActualId || !companyActualId) {
+      console.warn(`  ⚠️ Skipping work experience ${expData.id} due to missing user or company mapping.`);
+      continue;
+    }
+    
+    try {
+      const experience = await prisma.workExperience.create({
+        data: {
+          userId: userActualId,
+          companyId: companyActualId,
+          jobTitle: expData.jobTitle,
+          employmentStatus: expData.employmentStatus,
+          startDate: expData.startDate,
+          endDate: expData.endDate,
+          isVerified: expData.isVerified,
+          verificationMethod: expData.verificationMethod,
+          verifiedAt: expData.verifiedAt,
+          createdAt: expData.createdAt,
+          updatedAt: expData.updatedAt,
+        },
+      });
+      workExperienceMockIdToActualIdMap.set(expData.id, experience.id);
+      console.log(`  🤝 Created work experience for user ${userActualId.slice(0,8)} at company ${companyActualId.slice(0,8)} (Mock ID: ${expData.id})`);
+    } catch (error) {
+       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+         console.warn(`  ⚠️ Work experience for user ${userActualId} at company ${companyActualId} already exists. Skipping.`);
+       } else {
+         console.error(`  ❌ Error creating work experience (Mock ID: ${expData.id}):`, error);
+       }
+    }
+  }
+  console.log('🤝 Work experiences seeding completed.');
+}
+
+async function seedCompanyReviews() {
+  console.log('🌟 Seeding company reviews...');
+  for (const reviewData of companyReviews) {
+    const userActualId = userMockIdToActualIdMap.get(reviewData.userId);
+    const companyActualId = companyMockIdToActualIdMap.get(reviewData.companyId);
+    const workExperienceActualId = workExperienceMockIdToActualIdMap.get(reviewData.workExperienceId);
+
+    if (!userActualId || !companyActualId || !workExperienceActualId) {
+      console.warn(`  ⚠️ Skipping review ${reviewData.id} due to missing user, company, or work experience mapping.`);
+      continue;
+    }
+
+    await prisma.companyReview.create({
+      data: {
+        title: reviewData.title,
+        review: reviewData.review,
+        rating: reviewData.rating,
+        cultureRating: reviewData.cultureRating,
+        workLifeBalance: reviewData.workLifeBalance,
+        facilitiesRating: reviewData.facilitiesRating,
+        careerRating: reviewData.careerRating,
+        jobPosition: reviewData.jobPosition,
+        employmentStatus: reviewData.employmentStatus,
+        workDuration: reviewData.workDuration,
+        salaryEstimate: reviewData.salaryEstimate,
+        isAnonymous: reviewData.isAnonymous,
+        isVerified: reviewData.isVerified,
+        userId: userActualId,
+        companyId: companyActualId,
+        workExperienceId: workExperienceActualId,
+        createdAt: reviewData.createdAt,
+        updatedAt: reviewData.updatedAt,
+      },
+    });
+    console.log(`  🌟 Created review "${reviewData.title}" (Mock ID: ${reviewData.id})`);
+  }
+  console.log('🌟 Company reviews seeding completed.');
+}
+
 async function clearExistingData() {
   console.log('🧹 Cleaning existing data (order matters due to foreign keys)...');
 
@@ -592,6 +680,9 @@ async function clearExistingData() {
   await prisma.interviewSchedule.deleteMany();
   await prisma.jobApplication.deleteMany();
   await prisma.savedJob.deleteMany();
+
+  await prisma.companyReview.deleteMany();
+  await prisma.workExperience.deleteMany();
 
   await prisma.preSelectionQuestion.deleteMany();
   
@@ -630,14 +721,16 @@ async function clearExistingData() {
 async function main() {
   console.log('🌱 Starting database seeding...');
 
+   
   try {
     await clearExistingData();
     await seedLocations();
     await seedUserSubscriptionPlans();    
     await seedSkillAssessments();  
-    const definedAssessmentsCount = 4;
-    await seedUsers();
+    await seedUsers(); 
     await seedCompanies();
+    await seedWorkExperiences();
+    await seedCompanyReviews();
     await seedJobPostings();
     await seedJobApplications();
     await seedInterviewSchedules();
@@ -658,6 +751,8 @@ async function main() {
     ).length;
     console.log(`  🗓️ Interview Schedules: ${successfulInterviews}`);
     console.log('  📈 Analytics Initialized.');
+    console.log(`  🌟 Company Reviews: ${companyReviews.length}`);
+    console.log(`  🤝 Work Experiences: ${workExperienceMockIdToActualIdMap.size}`);
 
   } catch (error) {
     console.error('❌ Error during seeding:', error);
