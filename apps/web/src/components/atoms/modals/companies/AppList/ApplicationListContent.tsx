@@ -176,33 +176,25 @@ export default function ApplicantListContent({
                 </TableCell>
                 <TableCell className="text-center">
                 {app.status === ApplicationStatus.INTERVIEW_SCHEDULED || app.status === ApplicationStatus.TEST_COMPLETED ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleOpenInterviewModal(
-                      app.id,
-                      app.jobPosting?.id || '',
-                      app.applicant.id,
-                      app.latestInterview ? {
-                        id: app.latestInterview.id,
-                        scheduledAt: app.latestInterview.scheduledAt ? new Date(app.latestInterview.scheduledAt) : new Date(),
-                        duration: app.latestInterview.duration,
-                        interviewType: app.latestInterview.interviewType,
-                        location: app.latestInterview.location === null ? undefined : app.latestInterview.location,
-                        notes: app.latestInterview.notes === null ? undefined : app.latestInterview.notes
-                      } : {
-                        scheduledAt: new Date(),
-                        duration: 60,
-                        interviewType: 'ONLINE',
-                        location: undefined,
-                        notes: undefined
-                      }
-                    )}
-                  >
-                      {app.latestInterview
-                        ? formatDateTime(new Date(app.latestInterview.scheduledAt))
-                        : 'Schedule Interview'}
-                    </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenInterviewModal(
+                    app.id,
+                    app.jobPosting?.id || '',
+                    app.applicant.id,
+                    app.status === ApplicationStatus.INTERVIEW_SCHEDULED && app.latestInterview ? {
+                      id: app.latestInterview.id,
+                      scheduledAt: app.latestInterview.scheduledAt ? new Date(app.latestInterview.scheduledAt) : new Date(),
+                      duration: app.latestInterview.duration,
+                      interviewType: app.latestInterview.interviewType,
+                      location: app.latestInterview.location === null ? undefined : app.latestInterview.location,
+                      notes: app.latestInterview.notes === null ? undefined : app.latestInterview.notes
+                    } : undefined
+                  )}
+                >
+                  {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? 'Reschedule Interview' : 'Schedule Interview'}
+                </Button>
                   ) : (
                     <span className="text-xs text-gray-400">
                       Not available
