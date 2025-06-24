@@ -12,6 +12,35 @@ export interface DemographicChartData {
     values: number[];
 }
 
+export interface SalaryTrendChartData {
+  labels: string[];
+  values: number[];
+}
+
+export interface InterestChartData {
+  label: string;
+  count: number;
+}
+
+export interface MapData {
+  city: string;
+  lat: number;
+  lng: number;
+  count: number;
+}
+
+export interface TrendChartData {
+  labels: string[];
+  values: number[];
+}
+
+export interface LocationData {
+  city: string;
+  lat: number;
+  lng: number;
+  count: number;
+}
+
 export interface StatCardItem {
   label: string;
   value: number | string;
@@ -20,7 +49,9 @@ export interface StatCardItem {
   icon?: React.ReactNode;
 }
 
-export interface TrendChartData {
-  labels: string[];
-  values: number[];
+export interface AnalyticsFilters {
+  startDate?: Date;
+  endDate?: Date;
+  companyId?: string;
+  period?: string;
 }
