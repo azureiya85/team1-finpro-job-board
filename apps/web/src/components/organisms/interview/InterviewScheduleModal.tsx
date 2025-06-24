@@ -28,7 +28,7 @@ interface InterviewScheduleModalProps {
   jobId: string;
   candidateId: string;
   companyId: string;
-  interview?: InterviewSchedule;
+  interview?: InterviewSchedule | null; // Ubah tipe di sini
   onInterviewUpdate?: (interview: InterviewSchedule) => void;
 }
 
@@ -43,7 +43,7 @@ export function InterviewScheduleModal({
   onInterviewUpdate
 }: InterviewScheduleModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentInterview, setCurrentInterview] = useState<InterviewSchedule | undefined>(interview);
+  const [currentInterview, setCurrentInterview] = useState<InterviewSchedule | null>(interview || null);
 
   useEffect(() => {
     const fetchInterviewData = async () => {
@@ -63,31 +63,41 @@ export function InterviewScheduleModal({
   const handleSubmit = async (data: InterviewSubmitData) => {
     setIsSubmitting(true);
     
-    const formattedData = {
-      scheduledAt: formatDateTimeForAPI(data.scheduledAt),
-      duration: data.duration,
-      interviewType: data.interviewType,
-      location: data.location || null,
-      notes: data.notes || null
-    };
+    try {
+      const formattedData = {
+        scheduledAt: formatDateTimeForAPI(data.scheduledAt),
+        duration: data.duration,
+        interviewType: data.interviewType,
+        location: data.location || null,
+        notes: data.notes || null
+      };
 
-    const endpoint = interview 
-      ? `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
-      : `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview`;
-    
-    const response = await fetch(endpoint, {
-      method: interview ? 'PUT' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formattedData),
-    });
+      const endpoint = interview 
+        ? `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
+        : `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview`;
+      
+      const response = await fetch(endpoint, {
+        method: interview ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formattedData),
+      });
 
-    const responseData = await response.json();
-    setCurrentInterview(responseData);
-    onInterviewUpdate?.(responseData);
-    onClose();
-    setIsSubmitting(false);
+      if (!response.ok) {
+        throw new Error('Failed to schedule interview');
+      }
+
+      const responseData = await response.json();
+      setCurrentInterview(responseData);
+      onInterviewUpdate?.(responseData);
+      toast.success(interview ? 'Interview rescheduled successfully' : 'Interview scheduled successfully');
+      onClose();
+    } catch (error) {
+      toast.error('Failed to schedule interview');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -95,20 +105,30 @@ export function InterviewScheduleModal({
     
     if (!interview) return;
 
-    await fetch(`/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await fetch(`/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`, {
+        method: 'DELETE',
+      });
 
-    onClose();
-    setIsSubmitting(false);
+      if (!response.ok) {
+        throw new Error('Failed to delete interview');
+      }
+
+      toast.success('Interview deleted successfully');
+      onClose();
+    } catch (error) {
+      toast.error('Failed to delete interview');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formDefaultValues: Partial<InterviewFormData> | undefined = currentInterview ? {
     scheduledAt: new Date(currentInterview.scheduledAt),
     duration: currentInterview.duration,
-    interviewType: currentInterview.interviewType,
-    location: currentInterview.location || undefined,
-    notes: currentInterview.notes || undefined
+    interviewType: currentInterview.interviewType as 'ONLINE' | 'ONSITE',
+    location: currentInterview.location || undefined, // Konversi null ke undefined
+    notes: currentInterview.notes || undefined // Konversi null ke undefined
   } : undefined;
 
   return (
