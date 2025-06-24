@@ -103,7 +103,9 @@ export async function PUT(
       existingInterview.jobApplication.jobPosting.company.name,
       new Date(scheduledAt),
       location,
-      interviewType
+      interviewType,
+      duration,
+      notes,
     );
 
     return NextResponse.json(updated);

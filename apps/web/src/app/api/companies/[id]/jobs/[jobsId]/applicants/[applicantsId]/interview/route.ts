@@ -103,7 +103,9 @@ export async function POST(
       jobApplication.jobPosting.company.name,
       new Date(scheduledAt),
       location,
-      interviewType
+      interviewType,
+      duration,
+      notes 
     );
 
     return NextResponse.json(interview);
