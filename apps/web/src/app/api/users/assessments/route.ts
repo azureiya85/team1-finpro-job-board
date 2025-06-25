@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-// import { SubscriptionStatus } from '@prisma/client';
+import { getUserSubscriptionDetails } from '@/lib/subscription';
 
 // Get All Active Skill Assessments for Subscribed Users
 export async function GET() {
@@ -11,23 +11,8 @@ export async function GET() {
   }
 
   try {
-    // Check for active subscription
-  // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
-    /*
-    // Check for active subscription
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: {
-        userId: session.user.id,
-        status: SubscriptionStatus.ACTIVE,
-        endDate: { gt: new Date() },
-      },
-    });
-
-    if (!activeSubscription) {
-      return NextResponse.json({ error: 'Active subscription required to access skill assessments.' }, { status: 403 });
-    }
-    */
-    // --- END OF TEMPORARY COMMENT ---
+    // Get user's subscription details INSTEAD of just checking for one
+    const subscriptionDetails = await getUserSubscriptionDetails(session.user.id);
 
     const assessments = await prisma.skillAssessment.findMany({
       where: { 
@@ -72,7 +57,11 @@ export async function GET() {
       } : null
     }));
 
-    return NextResponse.json(transformedAssessments);
+    return NextResponse.json({
+      assessments: transformedAssessments,
+      subscription: subscriptionDetails,
+    });
+
   } catch (error) {
     console.error("Error fetching available skill assessments:", error);
     return NextResponse.json({ error: 'Failed to fetch skill assessments' }, { status: 500 });

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-// import { SubscriptionStatus } from '@prisma/client';
+import { SubscriptionStatus } from '@prisma/client';
 import { AssessmentSubmissionSchema } from '@/lib/validations/zodAssessmentValidation';
 import { isPrismaError } from '@/types/assessments';
 import { generateCertificate } from '@/lib/utils';
@@ -19,19 +19,17 @@ export async function POST(request: Request, { params }: RouteContext) {
   const userId = session.user.id;
 
   try {
-    // FIX: Await the params promise and get the 'id'
     const { id: assessmentId } = await params;
 
-    // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
-    /*
     const activeSubscription = await prisma.subscription.findFirst({
       where: { userId, status: SubscriptionStatus.ACTIVE, endDate: { gt: new Date() } },
+      select: { id: true }
     });
+
     if (!activeSubscription) {
-      return NextResponse.json({ error: 'Active subscription required.' }, { status: 403 });
+        return NextResponse.json({ error: 'Could not find an active subscription to associate this assessment with.' }, { status: 403 });
     }
-    */
-    // --- END OF TEMPORARY COMMENT ---
+
 
     const body = await request.json();
     const validation = AssessmentSubmissionSchema.safeParse(body);
@@ -74,16 +72,17 @@ export async function POST(request: Request, { params }: RouteContext) {
     const score = Math.round((correctAnswersCount / assessment.questions.length) * 100);
     const isPassed = score >= assessment.passingScore;
 
-    // Create or update UserSkillAssessment record
+    // Create or update UserSkillAssessment record, now including the subscriptionId
     const userAssessment = await prisma.userSkillAssessment.upsert({
       where: { userId_assessmentId: { userId, assessmentId: assessment.id } },
       update: {
         score,
         isPassed,
         completedAt: new Date(),
-        timeSpent, // in minutes
+        timeSpent,
         badgeEarned: isPassed,
         badgeIssuedAt: isPassed ? new Date() : null,
+        subscriptionId: activeSubscription.id, 
       },
       create: {
         userId,
@@ -94,6 +93,7 @@ export async function POST(request: Request, { params }: RouteContext) {
         timeSpent,
         badgeEarned: isPassed,
         badgeIssuedAt: isPassed ? new Date() : null,
+        subscriptionId: activeSubscription.id, 
       },
     });
 

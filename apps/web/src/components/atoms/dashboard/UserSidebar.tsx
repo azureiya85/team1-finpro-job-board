@@ -167,9 +167,12 @@ export default function Sidebar() {
               ))}
             </div>
             {badges.length > 5 && (
-              <Link href="/dashboard/profile#badges" legacyBehavior>
-                  <a className="text-xs text-primary hover:underline px-3 mt-2 block">View all badges...</a>
-              </Link>
+           <Link 
+    href="/dashboard/profile#badges" 
+    className="text-xs text-primary hover:underline px-3 mt-2 block"
+  >
+      View all badges...
+  </Link>
             )}
           </>
         ) : (

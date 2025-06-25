@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 import { generateCvPdf } from '@/lib/server/cvGenerator';
 import { uploadFileToCloudinary } from '@/lib/cloudinary';
 import { generateCvSchema } from '@/lib/validations/zodCVGenerateValidation';
-// import { SubscriptionStatus } from '@prisma/client';
+import { SubscriptionStatus } from '@prisma/client';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -29,8 +29,6 @@ export async function POST(request: Request) {
 
     const { professionalSummary, customSkills, languages } = validationResult.data;
 
-    // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
-    /*
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
         userId: session.user.id,
@@ -42,8 +40,6 @@ export async function POST(request: Request) {
     if (!activeSubscription) {
       return NextResponse.json({ error: 'CV Generator is an exclusive feature for subscribed users.' }, { status: 403 });
     }
-    */
-    // --- END OF TEMPORARY COMMENT ---
     
     // 1. Fetch all required data for the CV from the database
     const userData = await prisma.user.findUnique({

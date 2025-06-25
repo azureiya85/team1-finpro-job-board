@@ -444,6 +444,7 @@ model Subscription {
   user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId String
   plan   SubscriptionPlan @relation(fields: [planId], references: [id])
+  userAssessments UserSkillAssessment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -517,6 +518,8 @@ model UserSkillAssessment {
   timeSpent     Int // Time spent in minutes
   badgeEarned   Boolean   @default(false)
   badgeIssuedAt DateTime?
+  subscriptionId String? 
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   userId       String
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)

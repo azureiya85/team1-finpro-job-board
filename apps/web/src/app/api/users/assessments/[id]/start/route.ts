@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-// import { SubscriptionStatus } from '@prisma/client';
+import { getUserSubscriptionDetails } from '@/lib/subscription';
 
 interface Params {
   params: Promise<{ id: string }>; 
@@ -13,24 +13,22 @@ export async function POST(request: Request, { params }: Params) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const userId = session.user.id;
 
   try {
-    // Await params to get the actual parameters
-    const { id } = await params;
+       const { id: assessmentId } = await params;
+       const subscriptionDetails = await getUserSubscriptionDetails(userId);
 
-    // --- TEMPORARILY COMMENTED OUT FOR TESTING ---
-    /*
-    const activeSubscription = await prisma.subscription.findFirst({
-      where: { userId: session.user.id, status: SubscriptionStatus.ACTIVE, endDate: { gt: new Date() } },
-    });
-    if (!activeSubscription) {
-      return NextResponse.json({ error: 'Active subscription required.' }, { status: 403 });
+    if (!subscriptionDetails.isActive) {
+      return NextResponse.json({ error: 'An active subscription is required to start an assessment.' }, { status: 403 });
     }
-    */
-    // --- END OF TEMPORARY COMMENT ---
+
+    if (subscriptionDetails.limit !== 'unlimited' && subscriptionDetails.assessmentsTaken >= subscriptionDetails.limit) {
+      return NextResponse.json({ error: `You have reached your assessment limit of ${subscriptionDetails.limit} for this period. Please upgrade your plan to continue.` }, { status: 403 });
+    }
 
     const assessment = await prisma.skillAssessment.findUnique({
-      where: { id, isActive: true }, // Use the awaited id
+      where: { id: assessmentId, isActive: true }, 
       include: {
         questions: {
           select: { 

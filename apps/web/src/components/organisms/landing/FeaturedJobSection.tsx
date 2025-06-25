@@ -326,23 +326,6 @@ const jobsToDisplay = useMemo(() => {
             </p>
             </motion.div>
         )}
-
-        {/* Call to action for exploring ALL jobs - can link to your main jobs page */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center mt-12"
-        >
-          <Button 
-            asChild 
-            size="lg"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
-          >
-       
-          </Button>
-        </motion.div>
       </div>
     </section>
   );
