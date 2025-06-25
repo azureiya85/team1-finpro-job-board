@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatDateTime, formatDuration, formatRelativeTime, isInterviewPassed } from '@/lib/dateTimeUtils';
+import { formatDateTime } from '@/lib/dateTimeUtils';
 import { InterviewStatusBadge } from '@/components/atoms/badges/InterviewStatusBadge';
 import { InterviewActionButton } from '@/components/atoms/buttons/InterviewActionButton';
 import { InterviewSchedule, InterviewStatus } from '@prisma/client';
@@ -32,13 +32,12 @@ export function ApplicationDetailsInterview({
   onStatusChange,
   onReschedule 
 }: ApplicationDetailsInterviewProps) {
-  const isPassed = isInterviewPassed(interview.scheduledAt, interview.duration);
 
   const handleComplete = async () => {
     try {
       await onStatusChange?.('COMPLETED');
       toast.success('Interview marked as completed');
-    } catch (error) {
+    } catch {
       toast.error('Failed to update interview status');
     }
   };
@@ -47,7 +46,7 @@ export function ApplicationDetailsInterview({
     try {
       await onStatusChange?.('CANCELLED');
       toast.success('Interview cancelled');
-    } catch (error) {
+    } catch {
       toast.error('Failed to cancel interview');
     }
   };

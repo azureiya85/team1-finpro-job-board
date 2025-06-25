@@ -1,14 +1,13 @@
 'use client';
 
-import { ApplicationStatus, JobApplication,JobPosting, Company, InterviewSchedule } from '@prisma/client';
+import { ApplicationStatus, JobApplication,JobPosting, Company, InterviewSchedule, InterviewStatus } from '@prisma/client';
 import { XCircle, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ApplicationDetailsTimeline from './AppDetails/ApplicationDetailsTimeline';
-import ApplicationDetailsInterview from './AppDetails/ApplicationDetailsInterview';
-import { statusConfig } from '@/lib/statusConfig';
+import { ApplicationDetailsInterview } from './AppDetails/ApplicationDetailsInterview';
 import { PreSelectionTest } from '@prisma/client';
 
 export type ApplicationWithDetails = JobApplication & {
@@ -71,7 +70,7 @@ export default function ApplicationDetailModal({ application, isOpen, onClose }:
                 jobPostingId: jobPosting.id,
                 candidateId: application.candidateId
               }}
-              onStatusChange={async (newStatus) => {
+              onStatusChange={async (newStatus: InterviewStatus) => {
                 try {
                   const response = await fetch(`/api/interviews/${interviewSchedules[0].id}/status`, {
                     method: 'PATCH',
