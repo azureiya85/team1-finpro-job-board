@@ -4,48 +4,50 @@ import { useEffect, useState, useCallback } from 'react';
 import { useCompanyProfileStore } from '@/stores/companyProfileStores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ApplicationStatus } from '@prisma/client';
+import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
 import type { ApplicationFilters } from '@/types/applicants';
 import { getStatusDisplay } from '@/lib/applicants/statusValidation'; 
 import { toast } from "sonner";
-import { Loader2, FileText } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import ApplicationListFilter from './AppList/ApplicationListFilter';
 import ApplicationListPagination from './AppList/ApplicationListPagination';
 import ApplicationListCVPreview from './AppList/ApplicationListCVPreview';
 import ApplicantListContent from './AppList/ApplicationListContent';
 import RejectionReasonDialog from './AppList/RejectionReasonDialog';
+import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal';
 
 export default function ApplicantListModal() {
   const {
-    isApplicantModalOpen,
-    setIsApplicantModalOpen,
+    isApplicantModalOpen, setIsApplicantModalOpen,
     selectedJobForApplicants,
-    applicants,
-    setApplicants,
-    isLoadingApplicants,    
-    setLoadingApplicants, 
-    applicantsError,
-    setApplicantsError,
-    applicantFilters,
-    setApplicantFilters,
-    applicantPagination,
-    setApplicantPagination,
+    applicants, setApplicants,
+    isLoadingApplicants, setLoadingApplicants,
+    applicantsError, setApplicantsError,
+    applicantFilters, setApplicantFilters,
+    applicantPagination, setApplicantPagination,
     updateApplicantInList,
   } = useCompanyProfileStore();
 
   const [showFullCvPreview, setShowFullCvPreview] = useState<string | null>(null);
-  const companyId = selectedJobForApplicants?.companyId;
-
-  // Tambahkan state untuk dialog
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
   const [pendingRejection, setPendingRejection] = useState<{ applicationId: string; status: ApplicationStatus } | null>(null);
+  
+  // State untuk modal interview
+  const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
+  const [selectedInterview, setSelectedInterview] = useState<{
+    applicationId: string;
+    candidateId: string;
+    interview?: InterviewSchedule;
+  } | null>(null);
+
+  const companyId = selectedJobForApplicants?.companyId;
 
   const fetchApplicants = useCallback(async (jobId: string, filters: ApplicationFilters, page: number, limit: number) => {
     if (!companyId) {
       setApplicantsError("Company context is missing.");
       return;
     }
-    setLoadingApplicants(true); 
+    setLoadingApplicants(true);
     setApplicantsError(null);
     try {
       const queryParams = new URLSearchParams();
@@ -80,8 +82,8 @@ export default function ApplicantListModal() {
       console.error("Fetch applicants error:", error);
       setApplicantsError(error instanceof Error ? error.message : 'An unknown error occurred');
       setApplicants([]);
-     } finally {
-      setLoadingApplicants(false); 
+    } finally {
+      setLoadingApplicants(false);
     }
   }, [companyId, setLoadingApplicants, setApplicantsError, setApplicants, setApplicantPagination]);
 
@@ -95,13 +97,13 @@ export default function ApplicantListModal() {
       setApplicantsError(null);
     }
   }, [
-      selectedJobForApplicants, 
-      isApplicantModalOpen, 
-      fetchApplicants, 
-      setApplicantFilters, 
-      setApplicants,       
-      setApplicantsError,  
-      applicantPagination.limit 
+    selectedJobForApplicants,
+    isApplicantModalOpen,
+    fetchApplicants,
+    setApplicantFilters,
+    setApplicants,
+    setApplicantsError,
+    applicantPagination.limit
   ]);
 
   const handleFiltersChange = (newFilters: ApplicationFilters) => {
@@ -127,7 +129,7 @@ export default function ApplicantListModal() {
 
   const handleStatusChange = async (applicationId: string, newStatus: ApplicationStatus) => {
     if (!selectedJobForApplicants || !companyId) return;
-    
+
     if (newStatus === ApplicationStatus.REJECTED) {
       setPendingRejection({ applicationId, status: newStatus });
       setIsRejectionDialogOpen(true);
@@ -137,9 +139,50 @@ export default function ApplicantListModal() {
     await updateApplicationStatus(applicationId, newStatus);
   };
 
+  const handleCvPreview = (cvUrl: string | null) => {
+    setShowFullCvPreview(cvUrl);
+  };
+
+  const handleScheduleInterview = (applicationId: string, scheduleData: any, isRescheduling: boolean) => {
+    console.log('handleScheduleInterview - Input Data:', {
+      applicationId,
+      scheduleData,
+      isRescheduling
+    });
+
+    const applicant = applicants.find(app => app.id === applicationId);
+    if (!applicant) {
+      console.error('Applicant not found:', applicationId);
+      return;
+    }
+
+    console.log('Found applicant:', applicant);
+
+    setSelectedInterview({
+      applicationId,
+      candidateId: applicant.applicant.id,
+      interview: isRescheduling ? {
+        id: scheduleData.id,
+        jobApplicationId: applicationId,
+        jobPostingId: selectedJobForApplicants?.id || '',
+        candidateId: applicant.applicant.id,
+        status: 'SCHEDULED',
+        scheduledAt: new Date(scheduleData.scheduledAt),
+        duration: Number(scheduleData.duration),
+        interviewType: scheduleData.interviewType,
+        location: scheduleData.location || '',
+        notes: scheduleData.notes || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        reminderSent: false // Menambahkan properti wajib yang sebelumnya hilang
+      } : undefined
+    });
+    setIsInterviewModalOpen(true);
+};
+
   const updateApplicationStatus = async (applicationId: string, newStatus: ApplicationStatus, rejectionReason?: string) => {
     if (!selectedJobForApplicants || !companyId) return;
-    
+
     try {
       const response = await fetch(`/api/companies/${companyId}/jobs/${selectedJobForApplicants.id}/applicants/${applicationId}`, {
         method: 'PUT',
@@ -185,70 +228,52 @@ export default function ApplicantListModal() {
             </DialogDescription>
           </DialogHeader>
 
-          {/* Filters Section */}
           <ApplicationListFilter
             filters={applicantFilters}
             onFiltersChange={handleFiltersChange}
             onClearFilters={handleClearFilters}
           />
-          
+
           <div className="flex-1 overflow-hidden">
             <ScrollArea className="h-full w-full">
-              {isLoadingApplicants && (
+              {isLoadingApplicants ? (
                 <div className="flex items-center justify-center h-64">
                   <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
                     <p className="text-gray-600">Loading applicants...</p>
                   </div>
                 </div>
-              )}
-              
-              {applicantsError && (
-                <div className="m-4">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-                    <strong>Error:</strong> {applicantsError}
-                  </div>
+              ) : applicantsError ? (
+                <div className="flex items-center justify-center h-64">
+                  <p className="text-red-500">{applicantsError}</p>
                 </div>
-              )}
-              
-              {!isLoadingApplicants && !applicantsError && applicants.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 mb-2">
-                    <FileText className="w-12 h-12 mx-auto" />
-                  </div>
-                  <p className="text-lg font-medium text-gray-900 mb-1">No applicants found</p>
-                  <p className="text-gray-500">Try adjusting your filters or check back later.</p>
-                </div>
-              )}
-
-              {!isLoadingApplicants && !applicantsError && applicants.length > 0 && (
+              ) : (
                 <ApplicantListContent
                   applicants={applicants}
                   onStatusChange={handleStatusChange}
-                  onCvPreview={(cvUrl) => setShowFullCvPreview(cvUrl)}
+                  onCvPreview={handleCvPreview}
+                  onScheduleInterview={handleScheduleInterview}
                 />
               )}
             </ScrollArea>
           </div>
 
-          {/* Pagination */}
           <ApplicationListPagination
-            pagination={applicantPagination}
-            currentItemsCount={applicants.length}
-            onPageChange={handlePageChange}
-            isLoading={isLoadingApplicants}
+           pagination={applicantPagination}
+           currentItemsCount={applicants.length}
+           onPageChange={handlePageChange}
           />
         </DialogContent>
       </Dialog>
 
-      {/* CV Preview Modal */}
-      <ApplicationListCVPreview
-        cvUrl={showFullCvPreview}
-        isOpen={!!showFullCvPreview}
-        onClose={() => setShowFullCvPreview(null)}
-      />
+      {showFullCvPreview && (
+         <ApplicationListCVPreview
+         cvUrl={showFullCvPreview}
+         isOpen={!!showFullCvPreview}
+         onClose={() => setShowFullCvPreview(null)}
+       />
+      )}
 
-      {/* Rejection Reason Dialog */}
       <RejectionReasonDialog
         isOpen={isRejectionDialogOpen}
         onClose={() => {
@@ -257,6 +282,21 @@ export default function ApplicantListModal() {
         }}
         onConfirm={handleRejectionConfirm}
       />
+
+      {selectedInterview && selectedJobForApplicants && (
+        <InterviewScheduleModal
+          isOpen={isInterviewModalOpen}
+          onClose={() => {
+            setIsInterviewModalOpen(false);
+            setSelectedInterview(null);
+          }}
+          applicationId={selectedInterview.applicationId}
+          jobId={selectedJobForApplicants.id}
+          candidateId={selectedInterview.candidateId}
+          companyId={selectedJobForApplicants.companyId}
+          interview={selectedInterview.interview}
+        />
+      )}
     </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { JobApplication, JobPosting, Company, InterviewSchedule } from '@prisma/client';
-import { MapPin, CalendarDays, Briefcase, ChevronRight, CheckCircle, Clock, XCircle, CalendarCheck, MessageSquare, UserCheck, AlertTriangle } from 'lucide-react';
+import { JobApplication, JobPosting, Company, InterviewSchedule, PreSelectionTest } from '@prisma/client';
+import { MapPin, CalendarDays, Briefcase, ChevronRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,87 +9,32 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ApplicationStatus } from '@prisma/client';
 import { TakeTestButton } from '../test/TakeTestButton';
+import { statusConfig } from '@/lib/statusConfig';
 
 export type ApplicationWithDetails = JobApplication & {
   jobPosting: Pick<JobPosting, 'id' | 'title' | 'isRemote' | 'preSelectionTestId'> & { 
     province?: { name: string } | null;
     city?: { name: string } | null;
     company: Pick<Company, 'id' | 'name' | 'logo'>;
+    preSelectionTest?: PreSelectionTest | null; 
   };
-  interviewSchedules: (Pick<InterviewSchedule, 'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes'>)[];
+  interviewSchedules: (Pick<
+    InterviewSchedule, 
+    'id' | 'scheduledAt' | 'interviewType' | 'location' | 'status' | 'duration' | 'notes' | 
+    'jobApplicationId' | 'jobPostingId' | 'candidateId' 
+  >)[];
   testResult?: {
-    id: string;
+    id?: string; 
     score: number;
     passed: boolean;
   } | null;
+  candidateId: string; 
 };
 
 interface ApplicationCardProps {
   application: ApplicationWithDetails;
   onViewDetails: (application: ApplicationWithDetails) => void;
 }
-
-const statusConfig: Record<ApplicationStatus, {
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
-  className: string;
-  icon: React.ElementType;
-  text: string;
-}> = {
-  PENDING: { 
-    variant: 'secondary', 
-    className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100', 
-    icon: Clock, 
-    text: 'Pending' 
-  },
-  REVIEWED: { 
-    variant: 'secondary', 
-    className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100', 
-    icon: MessageSquare, 
-    text: 'Reviewed' 
-  },
-  TEST_REQUIRED: { 
-    variant: 'secondary', 
-    className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100', 
-    icon: AlertTriangle, 
-    text: 'Test Required' 
-  },
-  TEST_COMPLETED: {
-    variant:'secondary',
-    className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
-    icon: CheckCircle,
-    text: 'Test Completed'
-  },
-  INTERVIEW_SCHEDULED: { 
-    variant: 'secondary', 
-    className: 'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100', 
-    icon: CalendarCheck, 
-    text: 'Interview Scheduled' 
-  },
-  INTERVIEW_COMPLETED: { 
-    variant: 'secondary', 
-    className: 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100', 
-    icon: UserCheck, 
-    text: 'Interview Completed' 
-  },
-  ACCEPTED: { 
-    variant: 'secondary', 
-    className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100', 
-    icon: CheckCircle, 
-    text: 'Accepted' 
-  },
-  REJECTED: { 
-    variant: 'destructive', 
-    className: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100', 
-    icon: XCircle, 
-    text: 'Rejected' 
-  },
-  WITHDRAWN: { 
-    variant: 'outline', 
-    className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100', 
-    icon: AlertTriangle, 
-    text: 'Withdrawn' 
-  },
-};
 
 function StatusBadge({ status }: { status: ApplicationStatus }) {
   const config = statusConfig[status] || statusConfig.PENDING;
@@ -172,7 +117,7 @@ export default function ApplicationCard({ application, onViewDetails }: Applicat
         </div>
       </CardContent>    
       <CardFooter className="px-6 py-4 bg-muted/20 border-t border-border/50">
-        <div className="flex justify-end items-center w-full gap-208">
+        <div className="flex justify-end items-center w-full gap-2">
         {status === ApplicationStatus.TEST_REQUIRED && !application.testResult && jobPosting.preSelectionTestId && (
               <TakeTestButton
                 applicationId={application.id}

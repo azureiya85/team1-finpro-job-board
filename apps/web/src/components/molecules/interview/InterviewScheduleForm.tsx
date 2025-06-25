@@ -1,0 +1,225 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { TimePicker } from '@/components/ui/time-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { CalendarIcon } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { formatDateTime } from '@/lib/dateTimeUtils';
+import { addDays } from 'date-fns';
+
+const interviewFormSchema = z.object({
+  scheduledAt: z.date(),
+  duration: z.number().min(15, 'Duration must be at least 15 minutes'),
+  interviewType: z.enum(['ONLINE', 'ONSITE']),
+  location: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type InterviewFormData = z.infer<typeof interviewFormSchema>;
+
+interface InterviewSubmitData extends InterviewFormData {
+  jobApplicationId: string;
+  jobPostingId: string;
+  candidateId: string;
+}
+  
+interface InterviewScheduleFormProps {
+  applicationId: string;
+  jobId: string;
+  candidateId: string;
+  defaultValues?: Partial<InterviewFormData>;
+  onSubmit: (data: InterviewSubmitData) => void;
+  onDelete?: () => Promise<void>;
+  isSubmitting?: boolean;
+  mode: 'create' | 'edit';
+}
+
+export function InterviewScheduleForm({
+  applicationId,
+  jobId,
+  candidateId,
+  defaultValues,
+  onSubmit,
+  onDelete,
+  isSubmitting,
+  mode
+}: InterviewScheduleFormProps) {
+  const form = useForm<InterviewFormData>({
+    resolver: zodResolver(interviewFormSchema),
+    defaultValues: {
+      scheduledAt: new Date(),
+      duration: 60,
+      interviewType: 'ONLINE',
+      location: '',
+      notes: '',
+      ...defaultValues
+    }
+  });
+
+  const handleSubmit = form.handleSubmit((formData: InterviewFormData) => {
+    const submitData: InterviewSubmitData = {
+      ...formData,
+      jobApplicationId: applicationId,
+      jobPostingId: jobId,
+      candidateId: candidateId
+    };
+    onSubmit(submitData);
+  });
+
+  return (
+    <>
+      <DialogTitle>
+        {mode === 'create' ? 'Schedule Interview' : 'Reschedule Interview'}
+      </DialogTitle>
+      <Form {...form}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="scheduledAt"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Interview Date & Time</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          formatDateTime(field.value)
+                        ) : (
+                          <span>Select date and time</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date() || date > addDays(new Date(), 30)}
+                      className="rounded-t-md"
+                    />
+                    <div className="p-3 border-t border-border">
+                      <TimePicker date={field.value} setDate={field.onChange} />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="duration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Duration (minutes)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    value={field.value ?? ''}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      field.onChange(isNaN(val) ? '' : val);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="interviewType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Interview Type</FormLabel>
+                <Select
+                  value={field.value}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="ONLINE">Online</SelectItem>
+                    <SelectItem value="ONSITE">Onsite</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Meeting link or physical location" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea {...field} placeholder="Additional notes or instructions" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex gap-2 justify-end">
+            {mode === 'edit' && onDelete && (
+              <Button 
+                type="button" 
+                variant="destructive"
+                onClick={onDelete}
+                disabled={isSubmitting}
+              >
+                Delete Interview
+              </Button>
+            )}
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting 
+                ? (mode === 'create' ? "Scheduling..." : "Rescheduling...") 
+                : (mode === 'create' ? "Schedule Interview" : "Reschedule Interview")
+              }
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </>
+  );
+}

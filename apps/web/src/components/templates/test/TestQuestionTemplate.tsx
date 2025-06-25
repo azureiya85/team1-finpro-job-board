@@ -13,12 +13,9 @@ export function TestQuestionTemplate() {
   
   const [test, setTest] = useState<Test | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Inisialisasi answers dari localStorage
+  const [isSubmitting, setIsSubmitting] = useState(false); 
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
-  // Load answers dari localStorage saat komponen mount
   useEffect(() => {
     if (typeof window === 'undefined' || !params.testId) return;
     
@@ -78,9 +75,7 @@ export function TestQuestionTemplate() {
       const nextQuestion = test.questions[currentIndex + 1];
       router.push(`/jobs/${params.id}/test/${params.testId}/take-test/${nextQuestion.id}`);
     } else {
-      if (window.confirm('Apakah Anda yakin ingin menyelesaikan test ini?')) {
-        handleSubmitTest(false);
-      }
+      handleSubmitTest(false);  
     }
   };
 
@@ -92,10 +87,8 @@ export function TestQuestionTemplate() {
       [currentQuestion.id]: answer
     };
     
-    // Update state
     setAnswers(newAnswers);
     
-    // Simpan ke localStorage
     try {
       localStorage.setItem(`test_answers_${params.testId}`, JSON.stringify(newAnswers));
     } catch (error) {
@@ -109,15 +102,10 @@ export function TestQuestionTemplate() {
     try {
       setIsSubmitting(true);
       
-      if (!isTimeUp && !window.confirm('Apakah Anda yakin ingin menyelesaikan test ini?')) {
+      if (!isTimeUp && !window.confirm('Are you sure you want to submit the test?')) {
         setIsSubmitting(false);
         return;
       }
-
-      const submittedAnswers = test.questions.map(q => ({
-        questionId: q.id,
-        answer: answers[q.id] || ''
-      }));
 
       const response = await fetch(`/api/jobs/${params.id}/test/${params.testId}/take-test`, {
         method: 'POST',
@@ -125,8 +113,8 @@ export function TestQuestionTemplate() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          answers, // Kirim answers langsung karena sudah dalam format yang benar
-          timeSpent: Math.floor((test.timeLimit * 60) - timeLeft) // Tambahkan timeSpent dalam detik
+          answers,
+          timeSpent: Math.floor((test.timeLimit * 60) - timeLeft)
         }),
       });
 
@@ -137,11 +125,15 @@ export function TestQuestionTemplate() {
       // Bersihkan localStorage setelah submit berhasil
       localStorage.removeItem(`test_timer_${params.testId}`);
       localStorage.removeItem(`test_answers_${params.testId}`);
+      setTest(null);
+      setCurrentQuestion(null);
+      setAnswers({});
 
+      await new Promise(resolve => setTimeout(resolve, 100));
       router.push(`/jobs/${params.id}/test/${params.testId}/result`);
     } catch (error) {
       console.error('Error submitting test:', error);
-      alert('Gagal mengirim jawaban test. Silakan coba lagi.');
+      alert('Failed to submit test. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
