@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { generateCertificatePdf } from '@/lib/server/pdfGenerator';
+import { generateCertificatePdf } from '@/lib/server/cvGenerator.ts';
 import { uploadFileToCloudinary } from '@/lib/cloudinary';
 
 interface RouteContext {

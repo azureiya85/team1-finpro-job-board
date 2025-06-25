@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -67,6 +66,7 @@ model User {
   interviewSchedules InterviewSchedule[]
   notifications      Notification[]
   TestResult         TestResult[]
+  generatedCvs       GeneratedCv[]
 
   @@map("users")
 }
@@ -164,6 +164,21 @@ model Company {
   preSelectionTests PreSelectionTest[]
 
   @@map("companies")
+}
+
+model GeneratedCv {
+  id        String   @id @default(cuid())
+  url       String 
+  template  String   @default("ATS_DEFAULT") 
+  fileName  String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("generated_cvs")
 }
 
 // ============================================
