@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 import cn from 'classnames';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,22 +8,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FileText, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
+import { ApplicationStatus } from '@prisma/client';
 import { getStatusDisplay } from '@/lib/applicants/statusValidation';
 import { getStatusAction } from '@/lib/statusConfig';
 import { formatEducationLevelDisplay } from '@/lib/utils';
-import { formatDateTime } from '@/lib/dateTimeUtils';
 import type { JobApplicationDetails } from '@/types/applicants';
-import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal'
+import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal';
+import type { InterviewSchedule } from '@prisma/client';
 
-type InterviewFormCompatible = {
-  id?: string;
-  scheduledAt: Date;
-  duration: number;
-  interviewType: 'ONLINE' | 'ONSITE';
-  location?: string;
-  notes?: string;
-};
+type InterviewModalData = JobApplicationDetails['latestInterview'];
 
 interface ApplicantListContentProps {
   applicants: JobApplicationDetails[];
@@ -52,29 +44,43 @@ export default function ApplicantListContent({
   onScheduleInterview,
   companyId
 }: ApplicantListContentProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<{
     applicationId: string;
     jobId: string;
     candidateId: string;
-    interview?: {
-      id?: string;
-      scheduledAt: Date;
-      duration: number;
-      interviewType: 'ONLINE' | 'ONSITE';
-      location?: string | null;
-      notes?: string | null;
-    };
+    interview?: InterviewModalData; 
   } | null>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  
   const handleOpenInterviewModal = (
     applicationId: string,
     jobId: string,
     candidateId: string,
-    interview?: InterviewFormCompatible
+    interview?: InterviewModalData
   ) => {
     setSelectedInterview({ applicationId, jobId, candidateId, interview });
     setModalOpen(true);
+  };
+
+  const handleInterviewUpdate = (interview: InterviewSchedule) => {
+    const scheduleData = {
+      id: interview.id,
+      scheduledAt: new Date(interview.scheduledAt),
+      duration: interview.duration,
+      interviewType: interview.interviewType as 'ONLINE' | 'ONSITE',
+      location: interview.location || undefined,
+      notes: interview.notes || undefined
+    };
+
+    if (selectedInterview) {
+      const isRescheduling = !!selectedInterview.interview;
+      onScheduleInterview(selectedInterview.applicationId, scheduleData, isRescheduling);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedInterview(null);
   };
 
   return (
@@ -175,26 +181,22 @@ export default function ApplicantListContent({
                   )}
                 </TableCell>
                 <TableCell className="text-center">
-                {app.status === ApplicationStatus.INTERVIEW_SCHEDULED || app.status === ApplicationStatus.TEST_COMPLETED ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleOpenInterviewModal(
-                    app.id,
-                    app.jobPosting?.id || '',
-                    app.applicant.id,
-                    app.status === ApplicationStatus.INTERVIEW_SCHEDULED && app.latestInterview ? {
-                      id: app.latestInterview.id,
-                      scheduledAt: app.latestInterview.scheduledAt ? new Date(app.latestInterview.scheduledAt) : new Date(),
-                      duration: app.latestInterview.duration,
-                      interviewType: app.latestInterview.interviewType,
-                      location: app.latestInterview.location === null ? undefined : app.latestInterview.location,
-                      notes: app.latestInterview.notes === null ? undefined : app.latestInterview.notes
-                    } : undefined
-                  )}
-                >
-                  {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? 'Reschedule Interview' : 'Schedule Interview'}
-                </Button>
+                  {app.status === ApplicationStatus.INTERVIEW_SCHEDULED || app.status === ApplicationStatus.TEST_COMPLETED ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenInterviewModal(
+                        app.id,
+                        app.jobPosting?.id || '',
+                        app.applicant.id,
+                        // Pass app.latestInterview if status is INTERVIEW_SCHEDULED and it exists, otherwise pass undefined
+                        app.status === ApplicationStatus.INTERVIEW_SCHEDULED && app.latestInterview ? 
+                          app.latestInterview : undefined 
+                      )}
+                      className="h-8 px-2 text-xs"
+                    >
+                      {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? 'Reschedule' : 'Schedule Interview'}
+                    </Button>
                   ) : (
                     <span className="text-xs text-gray-400">
                       Not available
@@ -245,12 +247,13 @@ export default function ApplicantListContent({
       {selectedInterview && (
         <InterviewScheduleModal
           isOpen={isModalOpen}
-          onClose={() => setModalOpen(false)}
+          onClose={handleModalClose}
           applicationId={selectedInterview.applicationId}
           jobId={selectedInterview.jobId}
           candidateId={selectedInterview.candidateId}
           companyId={companyId}
           interview={selectedInterview.interview}
+          onInterviewUpdate={handleInterviewUpdate}
         />
       )}
     </div>
