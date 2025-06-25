@@ -1,9 +1,8 @@
-import AnalyticsDetailTemplate from '@/components/templates/analytics/AnalyticsDetailTemplate';
+import AnalyticsTemplate from '@/components/templates/analytics/AnalyticsTemplate';
 import { AnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 
 interface PageProps {
   params: {
-    id: string;
     period: 'salary' | 'demographics' | 'interests' | 'location';
   };
 }
@@ -12,7 +11,7 @@ export default function AnalyticsDetailPage({ params }: PageProps) {
   const { period } = params;
 
   const filters: AnalyticsFilters = {
-    location: 'all', 
+    location: 'all',
     dateRange: null,
   };
 
@@ -24,7 +23,7 @@ export default function AnalyticsDetailPage({ params }: PageProps) {
   };
 
   return (
-    <AnalyticsDetailTemplate
+    <AnalyticsTemplate
       title={titleMap[period]}
       filters={filters}
       metricType={period}

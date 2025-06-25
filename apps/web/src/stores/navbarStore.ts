@@ -30,7 +30,7 @@ export const useNavbarStore = create<NavbarState>((set) => ({
   navigationItems: [
     { href: '/jobs', label: 'Find Jobs', icon: Briefcase },
     { href: '/companies', label: 'Companies', icon: Building },
-    { href: '/analytics', label: 'Website Analytics', icon: BarChart3 },
+    { href: '/analytics/salary', label: 'Website Analytics', icon: BarChart3 },
   ],
   
   // Actions
