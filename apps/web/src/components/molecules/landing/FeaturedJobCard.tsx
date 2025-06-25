@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Star, TrendingUp } from 'lucide-react';
+import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Star, TrendingUp, Locate } from 'lucide-react'; 
 import { JobPostingFeatured } from '@/types';
 import { formatRelativeDate, formatSalary, cn } from '@/lib/utils';
 import { EmploymentType } from '@prisma/client';
@@ -51,10 +51,7 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
     >
       <Link href={`/jobs/${job.id}`} className="group block h-full">
         <Card className="h-full relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group-hover:shadow-primary/10">
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          
-          {/* Floating elements */}
           <div className="absolute top-4 right-4">
             <motion.div
               animate={{ rotate: 360 }}
@@ -64,7 +61,6 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
               <TrendingUp className="h-4 w-4 text-primary" />
             </motion.div>
           </div>
-
           <CardHeader className="pb-4 relative z-10">
             <div className="flex items-start gap-4">
               <motion.div
@@ -101,8 +97,9 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
             </div>
           </CardHeader>
 
+
           <CardContent className="space-y-4 relative z-10">
-            {/* Location */}
+            {/* Location  */}
             <motion.div 
               className="flex items-center gap-3 p-3 rounded-lg bg-gray-50/50 dark:bg-gray-800/50"
               whileHover={{ scale: 1.02 }}
@@ -110,12 +107,19 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
               <div className="p-2 rounded-lg bg-primary/10">
                 <MapPin className="h-4 w-4 text-primary" />
               </div>
-              <span className="font-medium text-foreground truncate" title={location}>
-                {location}
-              </span>
+              <div className='flex flex-col min-w-0'>
+                <span className="font-medium text-foreground truncate" title={location}>
+                  {location}
+                </span>
+                {job.distance != null && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                     <Locate className="h-3 w-3" />
+                     {job.distance.toFixed(1)} km away
+                  </span>
+                )}
+              </div>
             </motion.div>
 
-            {/* Employment type and remote */}
             <div className="ml-3 flex items-center gap-2 flex-wrap">
               <div className="p-2 rounded-lg bg-primary/10">
                 <Briefcase className="h-4 w-4 text-primary" />
@@ -136,8 +140,6 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
                 </Badge>
               )}
             </div>
-
-            {/* Salary */}
             {salaryDisplay !== "Competitive" && (
               <motion.div 
                 className="flex items-center gap-3 p-3 rounded-lg bg-green-50/50 dark:bg-green-900/20"
@@ -151,8 +153,6 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
                 </span>
               </motion.div>
             )}
-
-            {/* Posted date and Featured badge */}
             <div className="flex items-center justify-between pt-2 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
@@ -173,7 +173,6 @@ export function FeaturedJobCard({ job, index }: FeaturedJobCardProps) {
             </div>
           </CardContent>
 
-          {/* Hover effect glow */}
           <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-primary/10 via-transparent to-primary/5 pointer-events-none" />
         </Card>
       </Link>

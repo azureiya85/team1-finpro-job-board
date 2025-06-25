@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getJobs, GetJobsParams } from '@/lib/jobsUtils';
-import { jobSearchParamsSchema } from '@/lib/validations/zodCompanyValidation'; 
+import { jobSearchParamsSchema } from '@/lib/validations/zodCompanyValidation';
+import { Prisma } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const paramsForZod: Record<string, string | string[]> = {};
 
-  // Define which keys are treated as arrays by Zod's preprocess logic.
   const arrayKeys = ['categories', 'employmentTypes', 'experienceLevels', 'companySizes'];
 
-  for (const [key, value] of searchParams.entries()) { 
+  for (const [key, value] of searchParams.entries()) {
     if (arrayKeys.includes(key)) {
       const existingValue = paramsForZod[key];
       if (existingValue) {
         if (Array.isArray(existingValue)) {
-          existingValue.push(value); // Add to the existing array
+          existingValue.push(value);
         } else {
           paramsForZod[key] = [existingValue as string, value];
         }
@@ -42,7 +42,23 @@ export async function GET(request: NextRequest) {
     employmentTypes,
     experienceLevels,
     companySizes,
-  } = validationResult.data; 
+    userLatitude,
+    userLongitude,
+    radiusKm,
+  } = validationResult.data;
+
+  let orderBy: Prisma.JobPostingOrderByWithRelationInput[] = [
+    { publishedAt: 'desc' },
+    { createdAt: 'desc' }
+  ];
+
+  if (userLatitude !== undefined && userLongitude !== undefined) {
+    orderBy = [
+      { isPriority: 'desc' },
+      { publishedAt: 'desc' },
+      { createdAt: 'desc' }
+    ];
+  }
 
   const paramsForDb: GetJobsParams = {
     take,
@@ -55,10 +71,22 @@ export async function GET(request: NextRequest) {
     companySizes,
     isRemote,
     companyId,
-    orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+    userLatitude,
+    userLongitude,
+    radiusKm,
+    orderBy, 
+    includePagination: searchParams.has('includePagination') ? searchParams.get('includePagination') === 'true' : false,
   };
 
   try {
+    console.log('API: Fetching jobs with params:', {
+      userLatitude,
+      userLongitude,
+      radiusKm,
+      take,
+      hasCoordinates: userLatitude !== undefined && userLongitude !== undefined
+    });
+
     const jobs = await getJobs(paramsForDb);
     return NextResponse.json(jobs);
   } catch (error) {
