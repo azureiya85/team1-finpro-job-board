@@ -21,13 +21,13 @@ interface TestResultsProps {
 
 export function TestResults({
   score,
-  totalQuestions,
   answers,
   questions,
   timeSpent,
   passingScore
 }: TestResultsProps) {
-  const isPassed = score >= (passingScore / 100 * totalQuestions);
+  const percentScore = score;
+  const isPassed = percentScore >= passingScore;
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -39,7 +39,7 @@ export function TestResults({
       <Card className="p-6">
         <div className="text-center space-y-4">
           <div className={`text-4xl font-bold ${isPassed ? 'text-green-600' : 'text-red-600'}`}>
-            {score}
+            {percentScore.toFixed(0)}%
           </div>
           <div className="text-xl font-medium">
             {isPassed ? 'Congratulations! You Passed' : 'Sorry, You Did Not Pass'}

@@ -48,21 +48,21 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
 
   const form = useForm<UpdateCompanyFormData>({
     resolver: zodResolver(updateCompanySchema),
-    defaultValues: {
-      name: '',
-      website: '',
-      industry: '',
-      email: '',
-      phone: '',
-      address: '',
-      country: '',
-      linkedinUrl: '',
-      facebookUrl: '',
-      twitterUrl: '',
-      instagramUrl: '',
-      logo: '',
-      banner: '',
-    }
+    defaultValues: company ? {
+      name: company.name || '',
+      website: company.website || '',
+      industry: company.industry || '',
+      email: company.email || '',
+      phone: company.phone || '',
+      address: company.address || '',
+      country: company.country || '',
+      linkedinUrl: company.linkedinUrl || '',
+      facebookUrl: company.facebookUrl || '',
+      twitterUrl: company.twitterUrl || '',
+      instagramUrl: company.instagramUrl || '',
+      logo: company.logo || '',
+      banner: company.banner || '',
+    } : undefined
   });
 
   const { handleSubmit, reset, watch } = form;

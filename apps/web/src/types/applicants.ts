@@ -51,8 +51,11 @@ export interface JobApplicationDetails {
   latestInterview?: {
     id: string;
     scheduledAt: Date;
+    duration: number;
     status: InterviewStatus; 
     interviewType: InterviewType; 
+    location?: string | null;
+    notes?: string | null;
   } | null;
 }
 
