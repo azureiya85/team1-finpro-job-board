@@ -1,59 +1,78 @@
 'use client'
 
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'sonner'; // Import toast
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Briefcase,
-  MapPin,
-  Building,
-  Clock,
-  DollarSign,
-  Wifi,
-  Info,
-  Users,
-  Tag,
-  ArrowRight,
-  Star,
-  TrendingUp,
-  Bookmark,
-  LogIn
+  Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Info, Users, Tag, ArrowRight, Star,
+  TrendingUp, Bookmark, BookmarkCheck, LogIn // Add BookmarkCheck for saved state
 } from 'lucide-react';
 import { JobPostingFeatured } from '@/types';
 import { formatRelativeDate, formatSalary, cn } from '@/lib/utils';
 import {
-  employmentTypeLabels,
-  experienceLevelLabels,
-  companySizeLabels,
-  categoryLabels
+  employmentTypeLabels, experienceLevelLabels, companySizeLabels, categoryLabels
 } from '@/lib/jobConstants';
 import { EmploymentType } from '@prisma/client';
 import { useAuthStore } from '@/stores/authStores';
 import { useCVModalStore } from '@/stores/CVModalStores';
+import { useRouter } from 'next/navigation'
 
 interface JobDetailsHeaderProps {
-  job: JobPostingFeatured;
+  job: JobPostingFeatured & { isSavedByCurrentUser?: boolean }; 
 }
 
 export function JobDetailsHeader({ job }: JobDetailsHeaderProps) {
   const { isAuthenticated } = useAuthStore();
   const { openModal } = useCVModalStore();
+  const router = useRouter();
   
-  const location = job.isRemote
-    ? 'Remote'
-    : job.city?.name
-    ? `${job.city.name}${job.province?.name ? ', ' + job.province.name.replace('Provinsi ', '') : ''}`
-    : 'Location Undisclosed';
+  // State for save button
+  const [isSaved, setIsSaved] = useState(job.isSavedByCurrentUser || false);
+  const [isSaving, setIsSaving] = useState(false);
 
+  const location = job.isRemote ? 'Remote' : `${job.city?.name || ''}${job.city && job.province ? ', ' : ''}${job.province?.name?.replace('Provinsi ', '') || ''}` || 'Location Undisclosed';
   const postedDate = formatRelativeDate(job.publishedAt || job.createdAt);
   const salaryDisplay = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency);
-        
-const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : null;
+  const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : null;
 
-  const handleApplyClick = () => {
-    openModal(job);
+  const handleApplyClick = () => openModal(job);
+
+  const handleSaveToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please sign in to save jobs.");
+      router.push('/auth/login');
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/jobs/${job.id}/save`, {
+        method: 'POST',
+      });
+      
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update save status.');
+      }
+
+      setIsSaved(data.saved); // Update state from API response
+      if (data.saved) {
+        toast.success("Job Saved!", { description: `"${job.title}" has been added to your list.` });
+      } else {
+        toast.info("Job Unsaved", { description: `"${job.title}" has been removed from your list.` });
+      }
+
+    } catch (error) {
+      console.error("Save job error:", error);
+      toast.error("An error occurred.", { description: (error as Error).message });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -63,7 +82,7 @@ const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : nul
     )}>
       <CardContent className="p-8">
         {/* Company Logo and Job Title */}
-        <div className="flex items-start gap-6 mb-6">
+    <div className="flex items-start gap-6 mb-6">
           <div className="relative">
             {job.company?.logo ? (
               <Image
@@ -171,7 +190,7 @@ const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : nul
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 pt-4 border-t mt-6">
           {isAuthenticated ? (
             <Button
               onClick={handleApplyClick}
@@ -196,12 +215,14 @@ const companyProfileUrl = job.company?.id ? `/companies/${job.company.id}` : nul
           )}
 
           <Button
-            variant="outline"
+            onClick={handleSaveToggle}
+            disabled={isSaving}
+            variant={isSaved ? "default" : "outline"}
             size="lg"
-            className="border-2 border-tertiary/50 hover:border-tertiary/60 hover:bg-secondary/30 hover:text-primary/70 font-medium px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 cursor-pointer group"
+            className="border-2 border-tertiary/50 hover:border-tertiary/60 hover:bg-secondary/30 font-medium px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 cursor-pointer group"
           >
-            <Bookmark className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-            Save Job
+            {isSaved ? <BookmarkCheck className="mr-2 h-4 w-4" /> : <Bookmark className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform duration-300" />}
+            {isSaving ? 'Saving...' : (isSaved ? 'Saved' : 'Save Job')}
           </Button>
         </div>
       </CardContent>

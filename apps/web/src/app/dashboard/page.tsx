@@ -1,106 +1,160 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '@/stores/authStores'; 
+import { useAuthStore } from '@/stores/authStores';
+import { useApplicationListStore } from '@/stores/ApplicationListStores';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Bookmark } from 'lucide-react';
+
+// Application Components
 import ApplicationCard, { ApplicationWithDetails } from '@/components/atoms/dashboard/ApplicationCard';
 import ApplicationDetailModal from '@/components/atoms/modals/dashboard/ApplicationDetailsModal';
-import { FileText, AlertTriangle } from 'lucide-react';
 
-export default function MyApplicationsPage() {
-  const { user } = useAuthStore(); // Or however you get the current user's ID
+// Saved Job Components
+import SavedJobCard, { SavedJobWithDetails } from '@/components/atoms/dashboard/SavedJobCard';
+import { Skeleton } from '@/components/ui/skeleton';
+
+
+// Generic Empty State Component
+const EmptyState = ({ icon: Icon, title, message }: { icon: React.ElementType, title: string, message: string }) => (
+  <div className="bg-white p-8 rounded-lg shadow-sm border text-center">
+    <Icon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+    <h2 className="text-xl font-semibold text-gray-700 mb-2">{title}</h2>
+    <p className="text-gray-500">{message}</p>
+  </div>
+);
+
+// Generic Loading Skeleton
+const ListSkeleton = () => (
+  <div className="space-y-4">
+    <Skeleton className="h-32 w-full rounded-lg" />
+    <Skeleton className="h-32 w-full rounded-lg" />
+  </div>
+);
+
+// Component for Applied Jobs List
+function AppliedJobsList() {
+  const { user } = useAuthStore();
   const [applications, setApplications] = useState<ApplicationWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationWithDetails | null>(null);
 
   useEffect(() => {
-    if (user?.id) {
-      const fetchApplications = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-          const response = await fetch(`/api/users/${user.id}/applications`, {
-          });
-          if (!response.ok) {
-            throw new Error(`Failed to fetch applications: ${response.statusText}`);
-          }
-          const data = await response.json();
-          setApplications(data);
-        } catch (err) {
-          console.error(err);
-          setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchApplications();
-    } else {
-      setIsLoading(false); // No user ID, nothing to load
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
     }
+    const fetchApplications = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/users/${user.id}/applications`);
+        if (!response.ok) throw new Error(`Failed to fetch applications: ${response.statusText}`);
+        setApplications(await response.json());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchApplications();
   }, [user?.id]);
 
-  const handleViewDetails = (application: ApplicationWithDetails) => {
-    setSelectedApplication(application);
-  };
+  if (isLoading) return <ListSkeleton />;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
 
-  const handleCloseModal = () => {
-    setSelectedApplication(null);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="bg-white p-6 rounded-lg shadow-sm border animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-        </div>
-         <div className="bg-white p-6 rounded-lg shadow-sm border animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 p-6 rounded-lg shadow-sm border border-red-200 text-red-700 flex items-center gap-3">
-        <AlertTriangle className="w-6 h-6 text-red-500" />
-        <div>
-          <h3 className="font-semibold">Error loading applications</h3>
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
-  
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Job Applications</h1>
+    <>
       {applications.length === 0 ? (
-        <div className="bg-white p-8 rounded-lg shadow-sm border text-center">
-          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No Applications Yet</h2>
-          <p className="text-gray-500">You haven&lsquo;t applied for any jobs. Start exploring and find your next opportunity!</p>
-          {/* Optional: Link to job search page */}
-          {/* <Link href="/jobs" className="mt-4 inline-block bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors">
-            Find Jobs
-          </Link> */}
-        </div>
+        <EmptyState icon={FileText} title="No Applications Yet" message="You haven't applied for any jobs. Start exploring!" />
       ) : (
         <div className="space-y-4">
           {applications.map((app) => (
-            <ApplicationCard key={app.id} application={app} onViewDetails={handleViewDetails} />
+            <ApplicationCard key={app.id} application={app} onViewDetails={setSelectedApplication} />
           ))}
         </div>
       )}
-      <ApplicationDetailModal 
-        application={selectedApplication} 
-        onClose={handleCloseModal}       
+      <ApplicationDetailModal
+        application={selectedApplication}
+        onClose={() => setSelectedApplication(null)}
         isOpen={selectedApplication !== null}
       />
+    </>
+  );
+}
+
+// Component for Saved Jobs List
+function SavedJobsList() {
+  const { user } = useAuthStore();
+  const [savedJobs, setSavedJobs] = useState<SavedJobWithDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+    const fetchSavedJobs = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch(`/api/users/${user.id}/saved-jobs`);
+        if (!response.ok) throw new Error(`Failed to fetch saved jobs: ${response.statusText}`);
+        setSavedJobs(await response.json());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSavedJobs();
+  }, [user?.id]);
+
+  const handleUnsave = (jobId: string) => {
+    setSavedJobs(prev => prev.filter(job => job.jobPostingId !== jobId));
+  };
+
+  if (isLoading) return <ListSkeleton />;
+  if (error) return <p className="text-red-500">Error: {error}</p>;
+
+  return (
+    <div className="space-y-4">
+      {savedJobs.length === 0 ? (
+        <EmptyState icon={Bookmark} title="No Saved Jobs" message="Click the bookmark icon on a job to save it for later." />
+      ) : (
+        savedJobs.map((savedJob) => (
+          <SavedJobCard key={savedJob.id} savedJob={savedJob} onUnsave={handleUnsave} />
+        ))
+      )}
+    </div>
+  );
+}
+
+// Main Dashboard Page Component
+export default function DashboardPage() {
+  const { activeTab, setActiveTab } = useApplicationListStore();
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Dashboard</h1>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'applied' | 'saved')} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="applied">
+            <FileText className="mr-2 h-4 w-4" /> Applied Jobs
+          </TabsTrigger>
+          <TabsTrigger value="saved">
+            <Bookmark className="mr-2 h-4 w-4" /> Saved Jobs
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="applied" className="mt-6">
+          <AppliedJobsList />
+        </TabsContent>
+        <TabsContent value="saved" className="mt-6">
+          <SavedJobsList />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
