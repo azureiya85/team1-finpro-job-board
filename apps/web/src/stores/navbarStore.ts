@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { 
   Briefcase, 
   Building, 
-  LucideIcon
+  LucideIcon,
+  BarChart3
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -29,6 +30,7 @@ export const useNavbarStore = create<NavbarState>((set) => ({
   navigationItems: [
     { href: '/jobs', label: 'Find Jobs', icon: Briefcase },
     { href: '/companies', label: 'Companies', icon: Building },
+    { href: '/analytics', label: 'Website Analytics', icon: BarChart3 },
   ],
   
   // Actions

@@ -10,9 +10,7 @@ interface Props {
 }
 
 export default function StatCardGroup({ filters }: Props) {
-  const { companyId } = filters;
-
-  const { current, previous, isLoading } = useAnalyticsSummary(companyId || '');
+  const { current, previous, isLoading } = useAnalyticsSummary();
 
   if (isLoading || !current) {
     return <div className="grid grid-cols-2 md:grid-cols-4 gap-4">Loading...</div>;

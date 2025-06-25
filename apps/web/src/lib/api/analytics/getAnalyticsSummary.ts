@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { subDays } from 'date-fns';
 
-export async function getAnalyticsSummary(companyId: string) {
+export async function getAnalyticsSummary() {
   const today = new Date();
   const yesterday = subDays(today, 1);
 

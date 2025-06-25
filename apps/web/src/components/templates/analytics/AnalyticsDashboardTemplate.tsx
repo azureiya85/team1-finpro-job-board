@@ -1,6 +1,5 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 import DateRangePicker from '@/components/atoms/analytics/DateRangePicker';
 import FilterGroup from '@/components/molecules/analytics/FilterGroup';
@@ -13,11 +12,8 @@ import LocationMapSection from '@/components/organisms/analytics/LocationMapSect
 export default function AnalyticsDashboardTemplate() {
   const { filters, setLocation, setDateRange } = useAnalyticsFilters();
 
-  const companyId = useParams()?.id as string;
-
   const filtersWithCompany = {
     ...filters,
-    companyId,
   };
 
   return (

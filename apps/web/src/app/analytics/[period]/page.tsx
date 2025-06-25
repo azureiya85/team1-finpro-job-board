@@ -9,12 +9,11 @@ interface PageProps {
 }
 
 export default function AnalyticsDetailPage({ params }: PageProps) {
-  const { id, period } = params;
+  const { period } = params;
 
   const filters: AnalyticsFilters = {
     location: 'all', 
     dateRange: null,
-    companyId: id,
   };
 
   const titleMap: Record<typeof period, string> = {

@@ -9,10 +9,7 @@ interface Filters {
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-export function useApplicantInterestChart(
-  companyId?: string,
-  filters?: Filters
-) {
+export function useApplicantInterestChart(filters?: Filters) {
   const params = new URLSearchParams();
 
   if (filters?.start) params.append('start', filters.start.toISOString());
@@ -20,9 +17,7 @@ export function useApplicantInterestChart(
   if (filters?.location) params.append('location', filters.location);
 
   const queryString = params.toString();
-  const url = companyId
-    ? `/api/analytics/${companyId}/applicant-interests${queryString ? `?${queryString}` : ''}`
-    : null;
+  const url = `/api/analytics/applicant-interests${queryString ? `?${queryString}` : ''}`;
 
   const { data, error, isLoading } = useSWR<InterestChartData[]>(url, fetcher);
 

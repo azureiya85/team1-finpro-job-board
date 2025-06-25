@@ -6,14 +6,12 @@ export interface AnalyticsFilters {
     start: Date;
     end: Date;
   } | null;
-  companyId: string;
 }
 
 export function useAnalyticsFilters() {
   const [filters, setFilters] = useState<AnalyticsFilters>({
     location: 'all',
     dateRange: null,
-    companyId: '',
   });
 
   const setLocation = (location: string) =>
@@ -26,7 +24,6 @@ export function useAnalyticsFilters() {
     setFilters({
       location: 'all',
       dateRange: null,
-      companyId: '',
     });
 
   return {

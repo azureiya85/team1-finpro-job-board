@@ -2,10 +2,10 @@ import useSWR from 'swr';
 import { WebsiteAnalytics } from '@prisma/client';
 import { getAnalyticsSummary } from '@/lib/api/analytics/getAnalyticsSummary';
 
-export function useAnalyticsSummary(companyId: string) {
+export function useAnalyticsSummary() {
   const { data, error, isLoading } = useSWR(
-    ['analytics-summary', companyId],
-    () => getAnalyticsSummary(companyId)
+    'analytics-summary',
+    () => getAnalyticsSummary()
   );
 
   return {

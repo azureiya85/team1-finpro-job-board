@@ -55,5 +55,4 @@ export interface AnalyticsFilters {
     start: Date;
     end: Date;
   } | null;
-  companyId?: string;
 }

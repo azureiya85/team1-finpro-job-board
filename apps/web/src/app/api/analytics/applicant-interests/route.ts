@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { companyId: string } }
-) {
-  const companyId = params.companyId;
+export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
 
   const start = searchParams.get('start');
   const end = searchParams.get('end');
   const location = searchParams.get('location'); // e.g., cityId
 
-  const where: any = {
-    jobPosting: {
-      companyId,
-    },
-  };
+  const where: any = {};
 
   if (start && end) {
     where.createdAt = {
@@ -26,10 +18,7 @@ export async function GET(
   }
 
   if (location && location !== 'all') {
-    where.jobPosting = {
-      ...where.jobPosting,
-      cityId: location,
-    };
+    where.cityId = location;
   }
 
   const result = await prisma.jobPosting.groupBy({
