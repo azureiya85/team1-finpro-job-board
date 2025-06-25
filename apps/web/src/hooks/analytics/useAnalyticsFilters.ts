@@ -28,6 +28,7 @@ export function useAnalyticsFilters() {
 
   return {
     filters,
+    setFilters,
     setLocation,
     setDateRange,
     resetFilters,

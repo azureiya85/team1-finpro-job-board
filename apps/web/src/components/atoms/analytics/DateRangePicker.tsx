@@ -3,6 +3,8 @@
 import { useState } from 'react';
 
 interface DateRangePickerProps {
+  startDate?: Date;
+  endDate?: Date;
   onChange?: (start: Date, end: Date) => void;
 }
 

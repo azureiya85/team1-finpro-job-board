@@ -1,15 +1,16 @@
 'use client';
 
-import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
+import { AnalyticsFilters } from '@/types/analyticsTypes';
 import DemographicChart from '@/components/molecules/analytics/DemographicChart';
 import { useDemographicChart } from '@/hooks/analytics/useDemographicChart';
 
-export default function DemographicsSection() {
-  const { filters } = useAnalyticsFilters();
-  const { data, isLoading, error } = useDemographicChart({
-    location: filters.location,
-    dateRange: filters.dateRange,
-  });
+interface DemographicsSectionProps {
+  filters: AnalyticsFilters;
+}
+
+export default function DemographicsSection({ filters }: DemographicsSectionProps) {
+  const { location, dateRange } = filters;
+  const { data, isLoading, error } = useDemographicChart({ location, dateRange });
 
   return (
     <section className="bg-white dark:bg-gray-900 rounded-xl shadow p-6 space-y-4">

@@ -1,13 +1,12 @@
 'use client';
 
+import { AnalyticsFilters } from '@/types/analyticsTypes';
 import { useSalaryTrendChart } from '@/hooks/analytics/useSalaryTrendChart';
 import { getTrendLineChartData } from '@/lib/analytics/chartConfigs/salaryTrendChartConfig';
 import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
 
 interface SalaryTrendsSectionProps {
-  location: string;
-  startDate?: Date;
-  endDate?: Date;
+  filters: AnalyticsFilters;
 }
 
 const dummyChartData = {
@@ -15,15 +14,13 @@ const dummyChartData = {
   values: [5200000, 5300000, 5000000, 5500000, 5800000],
 };
 
-export default function SalaryTrendsSection({
-  location,
-  startDate,
-  endDate,
-}: SalaryTrendsSectionProps) {
+export default function SalaryTrendsSection({ filters }: SalaryTrendsSectionProps) {
+  const { location, dateRange } = filters;
+
   const { chartData, isLoading, isError } = useSalaryTrendChart({
     location,
-    start: startDate,
-    end: endDate,
+    start: dateRange?.start,
+    end: dateRange?.end,
   });
 
   const chart = getTrendLineChartData(chartData ?? dummyChartData);
@@ -35,12 +32,7 @@ export default function SalaryTrendsSection({
       {isLoading && <p className="text-gray-500">Loading chart...</p>}
       {isError && <p className="text-red-500">Failed to load salary trends. Showing sample data.</p>}
 
-      <ChartWrapper
-        type="line"
-        data={chart.data}
-        options={chart.options}
-        height={400}
-      />
+      <ChartWrapper type="line" data={chart.data} options={chart.options} height={400} />
 
       {!isLoading && chartData?.labels.length === 0 && (
         <p className="text-gray-500 text-sm mt-2">No salary data available for this period. Showing dummy.</p>

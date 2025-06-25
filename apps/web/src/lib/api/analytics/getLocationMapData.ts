@@ -8,12 +8,12 @@ export async function getLocationMapData(filters?: AnalyticsFilters) {
     },
   };
 
-  if (filters?.startDate && filters?.endDate) {
+  if (filters?.dateRange?.start && filters?.dateRange?.end) {
     where.jobApplications.some.createdAt = {
-      gte: filters.startDate,
-      lte: filters.endDate,
+      gte: filters.dateRange.start,
+      lte: filters.dateRange.end,
     };
-  }
+  }  
 
   const result = await prisma.city.findMany({
     where: {

@@ -42,7 +42,7 @@ export interface LocationData {
 }
 
 export interface StatCardItem {
-  label: string;
+  title: string;
   value: number | string;
   change?: number;
   positive?: boolean;
@@ -50,8 +50,10 @@ export interface StatCardItem {
 }
 
 export interface AnalyticsFilters {
-  startDate?: Date;
-  endDate?: Date;
+  location: string;
+  dateRange: {
+    start: Date;
+    end: Date;
+  } | null;
   companyId?: string;
-  period?: string;
 }

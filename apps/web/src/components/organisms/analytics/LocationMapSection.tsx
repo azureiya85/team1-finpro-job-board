@@ -1,29 +1,32 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { getUserLocationDistribution } from "@/lib/api/analytics/getUserLocationDistribution";
-import { Skeleton } from "@/components/ui/skeleton";
-import LocationMap from "@/components/molecules/analytics/LocationMap";
-import { LocationData } from "@/types/analyticsTypes";
+import { useEffect, useState } from 'react';
+import { getLocationMapData } from '@/lib/api/analytics/getLocationMapData';
+import { Skeleton } from '@/components/ui/skeleton';
+import LocationMap from '@/components/molecules/analytics/LocationMap';
+import { LocationData, AnalyticsFilters } from '@/types/analyticsTypes';
 
+interface LocationMapSectionProps {
+  filters: AnalyticsFilters;
+}
 
-export default function LocationMapSection() {
+export default function LocationMapSection({ filters }: LocationMapSectionProps) {
   const [locationData, setLocationData] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getUserLocationDistribution();
+        const data = await getLocationMapData(filters);
         setLocationData(data);
       } catch (error) {
-        console.error("Error fetching location data:", error);
+        console.error('Error fetching location data:', error);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [filters]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
