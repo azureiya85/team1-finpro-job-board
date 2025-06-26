@@ -8,23 +8,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/stores/authStores';
 import { loginSchema, LoginFormData } from '@/lib/validations/zodAuthValidation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  LogIn,
-  Loader2,
   Shield,
   TrendingUp,
   CheckCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import Link from 'next/link';
-import { loginWithCredentialsAction } from '@/lib/actions/authActions'; 
+import { loginWithCredentialsAction } from '@/lib/actions/authActions';
+import { CredentialsLoginFields } from '@/components/molecules/auth/CredentialsLoginFields';
+import { CredentialsLoginActions } from '@/components/molecules/auth/CredentialsLoginActions';
 
 export function CredentialsLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -159,141 +151,16 @@ export function CredentialsLogin() {
 
       <CardContent className="space-y-6 relative z-10">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Email field */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Label htmlFor="email" className="text-sm font-medium text-foreground">
-              Email Address
-            </Label>
-            <div className="relative mt-2">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="pl-10 h-12 border-2 focus:ring-2 focus:ring-primary/90 transition-all duration-300"
-                {...form.register('email')}
-              />
-            </div>
-            {form.formState.errors.email && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-red-600 mt-1"
-              >
-                {form.formState.errors.email.message}
-              </motion.p>
-            )}
-          </motion.div>
-
-          {/* Password field */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <Label htmlFor="password" className="text-sm font-medium text-foreground">
-              Password
-            </Label>
-            <div className="relative mt-2">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                className="pl-10 pr-10 h-12 border-2 focus:ring-2 focus:ring-primary/90 transition-all duration-300"
-                {...form.register('password')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-primary transition-colors duration-200"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            {form.formState.errors.password && (
-              <motion.p
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-sm text-red-600 mt-1"
-              >
-                {form.formState.errors.password.message}
-              </motion.p>
-            )}
-          </motion.div>
-
-          {/* Submit button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="pt-2"
-          >
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Sign In
-                </>
-              )}
-            </Button>
-          </motion.div>
+          <CredentialsLoginFields
+            form={form}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+          />
+          
+          <CredentialsLoginActions
+            isPending={isPending}
+          />
         </form>
-
-        {/* Additional options */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="space-y-4"
-        >
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-muted-foreground/20" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Need help?
-              </span>
-            </div>
-          </div>
-
-         <div className="flex items-center justify-between text-sm">
-            <Link
-              href="/auth/reset-password" 
-              className="text-primary hover:text-primary/80 transition-colors duration-200 font-medium"
-            >
-              Forgot password?
-            </Link>
-            <Link
-              href="/auth/register" 
-              className="text-muted-foreground hover:text-foreground transition-colors duration-200"
-            >
-              Create account
-            </Link>
-          </div>
-        </motion.div>
       </CardContent>
 
       {/* Bottom gradient effect */}

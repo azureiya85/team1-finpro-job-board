@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { emailService } from '@/services/email.service';
-import { RegisterFormData, CompanyRegisterFormData } from '@/lib/validations/zodAuthValidation';
+import { RegisterFormData, CompanyRegisterFormData, DeveloperRegisterFormData } from '@/lib/validations/zodAuthValidation';
 import { universalCrypto } from '@/lib/crypto';
 import { UserRole } from '@prisma/client';
 
@@ -356,4 +356,59 @@ export const authHelpers = {
       console.error('Update last login error:', error);
     }
   },
+
+    registerDeveloper: async (data: DeveloperRegisterFormData): Promise<RegisterResult> => {
+    try {
+      const { email, password } = data;
+      
+      // Check if a developer already exists
+      const existingDeveloper = await prisma.user.findFirst({
+        where: { role: 'Developer' }
+      });
+      
+      if (existingDeveloper) {
+        return { 
+          success: false, 
+          message: 'A developer account already exists in the system. Only one developer account is allowed.' 
+        };
+      }
+      
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return { success: false, message: 'User with this email already exists' };
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const emailVerificationToken = generateSecureToken();
+      const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      const newUser = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: 'Developer',
+          role: 'Developer',
+          provider: 'EMAIL',
+          isEmailVerified: false,
+          emailVerificationToken,
+          emailVerificationExpires,
+        },
+      });
+
+      await sendEmailSafely(
+        emailService.sendVerificationEmail(newUser.email, 'Developer', emailVerificationToken),
+        'developer verification email'
+      );
+
+      return {
+        success: true,
+        message: 'Developer registration successful! Please check your email to verify your account.',
+        user: createUserResponse(newUser),
+      };
+    } catch (error) {
+      console.error('Developer registration error:', error);
+      return { success: false, message: 'An unexpected error occurred during developer registration' };
+    }
+  },
 };
+
