@@ -4,18 +4,16 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getLocationMapData } from '@/lib/api/analytics/getLocationMapData';
 import { Skeleton } from '@/components/ui/skeleton';
-import { LocationData, AnalyticsFilters } from '@/types/analyticsTypes';
+import { LocationData } from '@/types/analyticsTypes';
+import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 
 // ⬅️ Dynamic import agar LocationMap hanya dirender di client
 const LocationMap = dynamic(() => import('@/components/molecules/analytics/LocationMap'), {
   ssr: false,
 });
 
-interface LocationMapSectionProps {
-  filters: AnalyticsFilters;
-}
-
-export default function LocationMapSection({ filters }: LocationMapSectionProps) {
+export default function LocationMapSection() {
+  const { filters } = useAnalyticsFilters(); // 🔁 Ambil langsung dari context
   const [locationData, setLocationData] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +37,7 @@ export default function LocationMapSection({ filters }: LocationMapSectionProps)
       {loading ? (
         <Skeleton className="h-[300px] w-full rounded-md" />
       ) : (
-        <LocationMap data={locationData} />
+        <LocationMap data={locationData} filters={filters} />
       )}
     </div>
   );

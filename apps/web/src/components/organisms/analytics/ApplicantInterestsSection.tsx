@@ -1,16 +1,11 @@
 'use client';
 
-import { AnalyticsFilters } from '@/types/analyticsTypes';
-import ApplicantInterestChart from '@/components/molecules/analytics/ApplicantInterestChart';
 import { useApplicantInterestChart } from '@/hooks/analytics/useApplicantInterestChart';
+import ApplicantInterestChart from '@/components/molecules/analytics/ApplicantInterestChart';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface ApplicantInterestsSectionProps {
-  filters: AnalyticsFilters;
-}
-
-export default function ApplicantInterestsSection({ filters }: ApplicantInterestsSectionProps) {
-  const { data, isLoading } = useApplicantInterestChart(); // Pastikan hook mendukung props
+export default function ApplicantInterestsSection() {
+  const { data, isLoading } = useApplicantInterestChart(); // Jika mendukung filter, bisa ditambahkan dari context
 
   return (
     <section className="space-y-4">

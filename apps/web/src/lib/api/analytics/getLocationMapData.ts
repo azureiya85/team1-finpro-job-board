@@ -6,26 +6,17 @@ export async function getLocationMapData(filters: AnalyticsFilters) {
   if (filters.dateRange?.start) {
     params.append('start', filters.dateRange.start.toISOString());
   }
-
   if (filters.dateRange?.end) {
     params.append('end', filters.dateRange.end.toISOString());
   }
 
-  if (filters.location && filters.location !== 'all') {
-    params.append('cityId', filters.location);
+  // ✅ Pastikan location adalah objek sebelum akses id
+  if (typeof filters.location === 'object' && filters.location !== null) {
+    params.append('cityId', filters.location.id);
   }
-
-  console.log('[getLocationMapData]', filters, params.toString());
 
   const res = await fetch(`/api/analytics/location-map?${params.toString()}`);
+  if (!res.ok) throw new Error('Failed to fetch location data');
 
-  // ✅ Tangani error status
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Failed to fetch location data: ${errorText}`);
-  }
-
-  // ✅ Aman melakukan parsing JSON
-  const data = await res.json();
-  return data;
+  return res.json();
 }

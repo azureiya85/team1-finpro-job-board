@@ -24,8 +24,8 @@ export interface InterestChartData {
 
 export interface MapData {
   city: string;
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   count: number;
 }
 
@@ -35,6 +35,7 @@ export interface TrendChartData {
 }
 
 export interface LocationData {
+  cityId: string;
   city: string;
   latitude: number;
   longitude: number;
@@ -50,7 +51,7 @@ export interface StatCardItem {
 }
 
 export interface AnalyticsFilters {
-  location: string | 'all';
+  location: { id: string; name: string } | 'all';
   dateRange: {
     start: Date;
     end: Date;

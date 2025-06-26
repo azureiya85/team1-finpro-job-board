@@ -1,69 +1,57 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const cityId = searchParams.get('cityId');
-    const start = searchParams.get('start');
-    const end = searchParams.get('end');
+export async function GET(req: NextRequest) {
+  const { searchParams } = req.nextUrl;
+  const start = searchParams.get('start');
+  const end = searchParams.get('end');
+  const cityId = searchParams.get('cityId');
 
-    const whereClause = {
-      ...(cityId && { cityId }),
-      ...(start && end && {
-        createdAt: {
-          gte: new Date(start),
-          lte: new Date(end)
-        }
-      })
-    };
+  const startDate = start ? new Date(start) : null;
+  const endDate = end ? new Date(end) : null;
 
-    // Dapatkan data pengguna yang dikelompokkan berdasarkan cityId
-    const usersByLocation = await prisma.user.groupBy({
-      by: ['cityId'],
-      where: whereClause,
-      _count: {
-        _all: true
-      }
-    });
-
-    // Filter cityId yang tidak null dan dapatkan data kota
-    const validCityIds = usersByLocation
-      .map(loc => loc.cityId)
-      .filter((id): id is string => id !== null);
-
-    const cities = await prisma.city.findMany({
-      where: {
-        id: {
-          in: validCityIds
-        }
+  // Ambil semua kota, tidak hanya yang punya applicant
+  const cities = await prisma.city.findMany({
+    where: cityId && cityId !== 'all' ? { id: cityId } : {},
+    select: {
+      id: true,
+      name: true,
+      latitude: true,
+      longitude: true,
+      users: {
+        where: {
+          role: 'USER',
+        },
+        select: {
+          id: true,
+          jobApplications: {
+            select: {
+              createdAt: true,
+            },
+          },
+        },
       },
-      select: {
-        id: true,
-        name: true,
-        latitude: true,
-        longitude: true
-      }
+    },
+  });
+
+  const result = cities.map((city) => {
+    const applicants = city.users.filter((user) => {
+      return user.jobApplications.some((app) => {
+        if (startDate && endDate) {
+          return app.createdAt >= startDate && app.createdAt <= endDate;
+        }
+        return true; // Tidak filter tanggal
+      });
     });
 
-    // Gabungkan data
-    const locationData = usersByLocation.map(location => {
-      const cityData = cities.find(city => city.id === location.cityId);
-      return {
-        cityId: location.cityId,
-        cityName: cityData?.name,
-        latitude: cityData?.latitude,
-        longitude: cityData?.longitude,
-        userCount: location._count._all
-      };
-    });
+    return {
+      cityId: city.id,
+      city: city.name,
+      latitude: city.latitude ?? 0,
+      longitude: city.longitude ?? 0,
+      count: applicants.length,
+    };
+  });
 
-    return NextResponse.json(locationData);
-  } catch (error) {
-    console.error('[LOCATION_MAP_ERROR]', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(result);
 }

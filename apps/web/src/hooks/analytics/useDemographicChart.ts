@@ -1,13 +1,16 @@
-// hooks/analytics/useDemographicChart.ts
 import useSWR from 'swr';
 import { getDemographics } from '@/lib/api/analytics/getDemographics';
 
-export function useDemographicChart({ location, dateRange }: {
-  location: string;
+interface LocationParam {
+  location: { id: string; name: string } | 'all';
   dateRange: { start: Date; end: Date } | null;
-}) {
+}
+
+export function useDemographicChart({ location, dateRange }: LocationParam) {
+  const locationId = typeof location === 'object' ? location.id : 'all';
+
   const params = {
-    location,
+    location: locationId,
     start: dateRange?.start.toISOString(),
     end: dateRange?.end.toISOString(),
   };

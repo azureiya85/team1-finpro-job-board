@@ -45,16 +45,6 @@ export default function AnalyticsSidebar() {
         onDateChange={(start, end) => setDateRange(start, end)}
         onLocationChange={(loc) => setLocation(loc)}
       />
-
-      <div className="mt-4 text-sm text-gray-600 dark:text-gray-300 space-y-1">
-        <p><strong>Selected Location:</strong> {filters.location}</p>
-        <p>
-          <strong>Date Range:</strong>{' '}
-          {filters.dateRange
-            ? `${filters.dateRange.start.toDateString()} → ${filters.dateRange.end.toDateString()}`
-            : 'Not selected'}
-        </p>
-      </div>
     </aside>
   );
 }

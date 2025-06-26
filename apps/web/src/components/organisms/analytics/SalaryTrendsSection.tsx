@@ -1,20 +1,17 @@
 'use client';
 
-import { AnalyticsFilters } from '@/types/analyticsTypes';
+import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 import { useSalaryTrendChart } from '@/hooks/analytics/useSalaryTrendChart';
 import { getTrendLineChartData } from '@/lib/analytics/chartConfigs/salaryTrendChartConfig';
 import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
-
-interface SalaryTrendsSectionProps {
-  filters: AnalyticsFilters;
-}
 
 const dummyChartData = {
   labels: ['Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025'],
   values: [5200000, 5300000, 5000000, 5500000, 5800000],
 };
 
-export default function SalaryTrendsSection({ filters }: SalaryTrendsSectionProps) {
+export default function SalaryTrendsSection() {
+  const { filters } = useAnalyticsFilters();
   const { location, dateRange } = filters;
 
   const { chartData, isLoading, isError } = useSalaryTrendChart({
