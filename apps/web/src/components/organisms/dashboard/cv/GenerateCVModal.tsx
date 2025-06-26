@@ -6,12 +6,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { generateCvSchema, type GenerateCvPayload } from '@/lib/validations/zodCVGenerateValidation';
 import axiosInstance from '@/lib/axios';
 import axios from 'axios';
-import { Loader2, X, FileText, Users, Globe, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
+import { 
+  X, 
+  FileText, 
+  CheckCircle2
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import GenerateCVModalSummary from './GenerateCVModalSummary';
+import GenerateCVModalSkills from './GenerateCVModalSkills';
+import GenerateCVModalLanguages from './GenerateCVModalLanguages';
+import GenerateCVModalAction from './GenerateCVModalAction';
 
 interface GenerateCvModalProps {
   isOpen: boolean;
@@ -29,6 +33,12 @@ interface ApiErrorResponse {
   }>;
 }
 
+// Extended form data type to handle languages array
+export interface ExtendedGenerateCvPayload extends Omit<GenerateCvPayload, 'languages'> {
+  customSkillsArray?: string[];
+  languagesArray?: Array<{ language: string; proficiency: string }>;
+}
+
 export default function GenerateCvModal({ isOpen, onClose, onSuccess }: GenerateCvModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState<'form' | 'generating' | 'success'>('form');
@@ -39,28 +49,40 @@ export default function GenerateCvModal({ isOpen, onClose, onSuccess }: Generate
     formState: { errors, isValid },
     reset,
     watch,
-  } = useForm<GenerateCvPayload>({
+    setValue,
+    control,
+  } = useForm<ExtendedGenerateCvPayload>({
     resolver: zodResolver(generateCvSchema),
     mode: 'onChange',
+    defaultValues: {
+      customSkillsArray: [],
+      languagesArray: [{ language: '', proficiency: '' }]
+    }
   });
 
-  const professionalSummary = watch('professionalSummary');
-  const summaryLength = professionalSummary?.length || 0;
-
-  const handleFormSubmit = async (data: GenerateCvPayload) => {
+  const handleFormSubmit = async (data: ExtendedGenerateCvPayload) => {
     setIsSubmitting(true);
     setStep('generating');
 
     try {
-      await axiosInstance.post('/api/users/cv/generate', data);
+      // Transform the data back to the expected format
+      const transformedData: GenerateCvPayload = {
+        professionalSummary: data.professionalSummary,
+        customSkills: data.customSkillsArray?.join(', ') || '',
+        languages: data.languagesArray
+          ?.filter(lang => lang.language && lang.proficiency)
+          .map(lang => `${lang.language}:${lang.proficiency}`)
+          .join(', ') || ''
+      };
+
+      await axiosInstance.post('/api/users/cv/generate', transformedData);
       
       setStep('success');
       toast.success('CV generated successfully!');
       
       // Auto-close after showing success for 2 seconds
       setTimeout(() => {
-        reset();
-        setStep('form');
+        handleReset();
         onSuccess();
         onClose();
       }, 2000);
@@ -98,10 +120,14 @@ export default function GenerateCvModal({ isOpen, onClose, onSuccess }: Generate
     }
   };
 
+  const handleReset = () => {
+    reset();
+    setStep('form');
+  };
+
   const handleClose = () => {
     if (!isSubmitting) {
-      reset();
-      setStep('form');
+      handleReset();
       onClose();
     }
   };
@@ -110,7 +136,7 @@ export default function GenerateCvModal({ isOpen, onClose, onSuccess }: Generate
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-primary-50 to-indigo-50">
           <div className="flex items-center gap-3">
@@ -134,130 +160,29 @@ export default function GenerateCvModal({ isOpen, onClose, onSuccess }: Generate
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
           {step === 'form' && (
-            <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-6">
-              {/* Professional Summary */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="professionalSummary" className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <FileText className="w-4 h-4" />
-                    Professional Summary <span className="text-red-500">*</span>
-                  </label>
-                  <span className={cn(
-                    "text-xs px-2 py-1 rounded-full",
-                    summaryLength < 50 ? "bg-red-100 text-red-600" :
-                    summaryLength > 1000 ? "bg-red-100 text-red-600" :
-                    "bg-green-100 text-green-600"
-                  )}>
-                    {summaryLength}/1000
-                  </span>
-                </div>
-                <Textarea
-                  id="professionalSummary"
-                  {...register('professionalSummary')}
-                  rows={6}
-                  placeholder="Write a compelling summary of your professional experience, key skills, and career objectives. This will be the first thing employers see on your CV."
-                  className={cn(
-                    "resize-none transition-colors",
-                    errors.professionalSummary ? 'border-red-500 focus:border-red-500' : 'focus:border-primary-500'
-                  )}
-                />
-                {errors.professionalSummary && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.professionalSummary.message}
-                  </div>
-                )}
-                {!errors.professionalSummary && summaryLength >= 50 && (
-                  <div className="flex items-center gap-2 text-green-600 text-sm">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Great! Your summary looks good.
-                  </div>
-                )}
-              </div>
+            <form onSubmit={handleSubmit(handleFormSubmit)} className="p-6 space-y-8">
+              <GenerateCVModalSummary 
+                register={register}
+                errors={errors}
+                watch={watch}
+              />
 
-              {/* Custom Skills */}
-              <div className="space-y-2">
-                <label htmlFor="customSkills" className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Users className="w-4 h-4" />
-                  Additional Skills
-                  <span className="text-xs text-gray-500 font-normal">(optional)</span>
-                </label>
-                <Input
-                  id="customSkills"
-                  {...register('customSkills')}
-                  placeholder="Project Management, Agile Methodology, Team Leadership, Data Analysis"
-                  className={cn(
-                    "transition-colors",
-                    errors.customSkills ? 'border-red-500 focus:border-red-500' : 'focus:border-primary-500'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  Add skills not covered in your assessments. Separate multiple skills with commas.
-                </p>
-                {errors.customSkills && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.customSkills.message}
-                  </div>
-                )}
-              </div>
+              <GenerateCVModalSkills 
+                watch={watch}
+                setValue={setValue}
+              />
 
-              {/* Languages */}
-              <div className="space-y-2">
-                <label htmlFor="languages" className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <Globe className="w-4 h-4" />
-                  Languages
-                  <span className="text-xs text-gray-500 font-normal">(optional)</span>
-                </label>
-                <Input
-                  id="languages"
-                  {...register('languages')}
-                  placeholder="English:Fluent, Spanish:Conversational, French:Basic"
-                  className={cn(
-                    "transition-colors",
-                    errors.languages ? 'border-red-500 focus:border-red-500' : 'focus:border-primary-500'
-                  )}
-                />
-                <p className="text-xs text-gray-500">
-                  Format: <code className="bg-gray-100 px-1 rounded">Language:Proficiency</code>, separate multiple with commas
-                </p>
-                {errors.languages && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.languages.message}
-                  </div>
-                )}
-              </div>
+              <GenerateCVModalLanguages 
+                control={control}
+                register={register}
+                setValue={setValue}
+              />
 
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleClose} 
-                  disabled={isSubmitting}
-                  className="min-w-[100px]"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || !isValid}
-                  className="min-w-[140px] bg-primary-600 hover:bg-primary-700"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="mr-2 h-4 w-4" />
-                      Generate CV
-                    </>
-                  )}
-                </Button>
-              </div>
+              <GenerateCVModalAction 
+                isSubmitting={isSubmitting}
+                isValid={isValid}
+                onCancel={handleClose}
+              />
             </form>
           )}
 
