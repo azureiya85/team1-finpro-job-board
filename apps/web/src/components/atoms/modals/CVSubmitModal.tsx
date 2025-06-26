@@ -1,17 +1,10 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCVModalStore } from '@/stores/CVModalStores';
-import { useAuthStore } from '@/stores/authStores';
-import { cvSubmissionSchema, CVSubmissionForm } from '@/lib/validations/zodApplicationValidation';
 import { CVSubmissionHeader, CVSubmissionFooter } from './CVSubmissionHeaderFooter'; 
-import CVSubmissionContent from './CVSubmissionContent'; 
-
-const FORM_ID = 'cv-submission-form';
+import CVSubmissionForm from './CVSubmissionForm';
 
 interface Job {
   id: string;
@@ -25,202 +18,25 @@ interface Job {
   requiresCoverLetter?: boolean;
 }
 
-// Define error response type 
-interface ValidationError {
-  path?: (string | number)[];
-  message: string;
-}
-
-interface ErrorResponse {
-  message?: string;
-  error?: string;
-  details?: ValidationError[];
-}
-
 export default function CVSubmitModal() {
   const { isOpen, selectedJob, closeModal, isSubmitting, setSubmitting } = useCVModalStore();
-  const { user } = useAuthStore();
-  const [cvFile, setCvFile] = useState<File | null>(null);
-  const [uploadError, setUploadError] = useState<string>('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm<CVSubmissionForm>({
-    resolver: zodResolver(cvSubmissionSchema),
-    defaultValues: {
-      fullName: user?.firstName && user?.lastName
-        ? `${user.firstName} ${user.lastName}`
-        : user?.name || '',
-      email: user?.email || '',
-      phoneNumber: user?.phoneNumber || '',
-      currentLocation: user?.currentAddress || '',
-      expectedSalary: 1000000, 
-      coverLetter: '',
-      availableStartDate: '',
-      portfolioUrl: '',
-      linkedinUrl: '',
-    },
-  });
-
-   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      const documentTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-      
-      if (!documentTypes.includes(file.type)) {
-        setUploadError('Please upload a PDF or Word document (PDF, DOC, DOCX)');
-        return;
-      }
-      
-      // Check file size (5MB limit to match API)
-      if (file.size > 5 * 1024 * 1024) {
-        setUploadError('File size should not exceed 5MB');
-        return;
-      }
-      
-      setCvFile(file);
-      setUploadError('');
-    }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'application/pdf': ['.pdf'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-    },
-    multiple: false,
-  });
-
-  const formatSalary = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const onSubmit = async (data: CVSubmissionForm) => {
-    if (!cvFile) {
-      setUploadError('Please upload your CV');
-      return;
-    }
-    
-    if (!selectedJob) {
-      setUploadError('No job selected');
-      return;
-    }
-
-    setSubmitting(true);
-    setUploadError('');
-
-    try {
-      let cvUrl = '';
-      if (cvFile) {
-        const formData = new FormData();
-        formData.append('file', cvFile);
-        formData.append('folder', 'cv-uploads');
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!uploadResponse.ok) {
-          const errorData = await uploadResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to upload CV');
-        }
-        
-        const uploadJson = await uploadResponse.json();
-        cvUrl = uploadJson.url;
-      }
-
-      // Prepare application data to match backend schema exactly
-      const applicationData = {
-        jobPostingId: selectedJob.id,
-        cvUrl: cvUrl,
-        expectedSalary: Number(data.expectedSalary), 
-        coverLetter: data.coverLetter || '', 
-        fullName: data.fullName,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-        currentLocation: data.currentLocation,
-        availableStartDate: data.availableStartDate,
-        portfolioUrl: data.portfolioUrl || null, 
-        linkedinUrl: data.linkedinUrl || null, 
-      };
-
-      console.log('Application data being sent:', applicationData);
-
-      const submitResponse = await fetch('/api/submit-cv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(applicationData),
-      });
-
-      if (!submitResponse.ok) {
-        const errorText = await submitResponse.text();
-        console.error('Submit error response:', errorText);
-        
-        let errorData: ErrorResponse;
-        try {
-          errorData = JSON.parse(errorText) as ErrorResponse;
-        } catch {
-          errorData = { message: errorText };
-        }
-        
-        // Show detailed validation errors 
-        if (errorData.details && Array.isArray(errorData.details)) {
-          const validationErrors = errorData.details.map((detail: ValidationError) => 
-            `${detail.path?.join('.')}: ${detail.message}`
-          ).join(', ');
-          throw new Error(`Validation errors: ${validationErrors}`);
-        }
-        
-        throw new Error(errorData.message || errorData.error || 'Failed to submit application');
-      }
-      
-      const responseData = await submitResponse.json();
-      console.log('Success response:', responseData);
-      
-      setSubmitSuccess(true);
-      setTimeout(() => {
-        handleClose();
-      }, 2000);
-
-    } catch (error) {
-      console.error('Submission error:', error);
-      setUploadError(error instanceof Error ? error.message : 'Failed to submit application');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleClose = () => {
     if (!isSubmitting) {
       closeModal();
-      reset();
-      setCvFile(null);
-      setUploadError('');
       setSubmitSuccess(false);
     }
   };
 
-  if (!isOpen || !selectedJob) return null;
+  const handleSubmitSuccess = () => {
+    setSubmitSuccess(true);
+    setTimeout(() => {
+      handleClose();
+    }, 2000);
+  };
 
-  const showCoverLetterSection = (selectedJob as Job)?.requiresCoverLetter !== false; 
-  const showCompensationSection = (selectedJob as Job)?.type !== "Internship"; 
+  if (!isOpen || !selectedJob) return null;
 
   return (
     <AnimatePresence>
@@ -245,30 +61,18 @@ export default function CVSubmitModal() {
           />
 
           <div className="overflow-y-auto flex-grow min-h-0">
-            <form id={FORM_ID} onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
-              <CVSubmissionContent
-                register={register}
-                errors={errors}
-                watch={watch}
-                cvFile={cvFile}
-                uploadError={uploadError}
-                getRootProps={getRootProps}
-                getInputProps={getInputProps}
-                isDragActive={isDragActive}
-                formatSalary={formatSalary}
-                showUploadCV={true} 
-                showPersonalInfo={true} 
-                showCompensationAvailability={showCompensationSection}
-                showCoverLetter={showCoverLetterSection}
-              />
-            </form>
+            <CVSubmissionForm
+              selectedJob={selectedJob as Job}
+              onSubmitSuccess={handleSubmitSuccess}
+              setSubmitting={setSubmitting}
+            />
           </div>
 
           <CVSubmissionFooter
             handleClose={handleClose}
             isSubmitting={isSubmitting}
             submitSuccess={submitSuccess}
-            formId={FORM_ID}
+            formId="cv-submission-form"
           />
         </motion.div>
       </motion.div>

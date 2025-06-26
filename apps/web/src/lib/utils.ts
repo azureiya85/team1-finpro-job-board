@@ -1,11 +1,12 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict, formatDistanceToNow } from 'date-fns';
 import { id as IndonesianLocale } from 'date-fns/locale';
 import { Plan } from '@/types/subscription';
-import { Subscription as PrismaSubscription, SubscriptionPlan } from '@prisma/client';
+import { Subscription as PrismaSubscription, SubscriptionPlan, EmploymentType, ExperienceLevel } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
+import { employmentTypeLabels, experienceLevelLabels } from '@/lib/jobConstants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -31,10 +32,60 @@ export function formatSalary(min?: number | null, max?: number | null, currency?
   if (min) {
     return `${currency || 'IDR'} ${min / 1000000}jt`;
   }
-  if (max) { // Unlikely to have only max, but good to handle
+  if (max) { 
     return `Up to ${currency || 'IDR'} ${max / 1000000}jt`;
   }
   return "Competitive";
+}
+
+// Job-specific formatting functions
+export function formatJobSalary(minSalary?: number | null, maxSalary?: number | null): string { 
+  const formatNumber = (num: number) => num.toLocaleString('id-ID');
+
+  if (minSalary && maxSalary) {
+    if (minSalary === maxSalary) return `Rp ${formatNumber(minSalary)}`;
+    return `Rp ${formatNumber(minSalary)} - Rp ${formatNumber(maxSalary)}`;
+  }
+  if (minSalary) return `Rp ${formatNumber(minSalary)}+`;
+  if (maxSalary) return `Up to Rp ${formatNumber(maxSalary)}`;
+
+  return 'Competitive';
+}
+
+export function formatJobType(type: EmploymentType): string {
+  return employmentTypeLabels[type] || type;
+}
+
+export function formatExperienceLevel(level: ExperienceLevel): string {
+  return experienceLevelLabels[level] || level;
+}
+
+export function formatJobPostedDate(date: Date | string): string {
+  return formatDistanceToNow(new Date(date), { addSuffix: true });
+}
+
+export function formatDeadlineDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString('id-ID', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+export function generateShareLinks(jobId: string, jobTitle: string) {
+  if (typeof window === 'undefined') return null;
+  
+  const jobUrl = `${window.location.origin}/jobs/${jobId}`;
+  const shareText = `Check out this job opportunity: ${jobTitle}`;
+  const encodedUrl = encodeURIComponent(jobUrl);
+  const encodedText = encodeURIComponent(shareText);
+
+  return {
+    linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedText}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`,
+    whatsapp: `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`,
+  };
 }
 
 export function formatEducationLevelDisplay(educationLevel: string | null | undefined): string {

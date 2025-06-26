@@ -199,11 +199,7 @@ export default function SubscriptionPageTemplate() {
           </AlertDescription>
         </Alert>
       )}
-
-      {/* Plan Selection Component */}
       <SubscriptionPagePlans />
-
-      {/* Payment Component */}
       <SubscriptionPagePayment onRefreshSubscription={fetchSubscription} />
     </div>
   );
