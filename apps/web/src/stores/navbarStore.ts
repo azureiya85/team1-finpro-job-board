@@ -6,6 +6,8 @@ import {
   BarChart3
 } from 'lucide-react';
 
+import { User } from '@prisma/client';
+
 interface NavigationItem {
   href: string;
   label: string;
@@ -30,7 +32,12 @@ export const useNavbarStore = create<NavbarState>((set) => ({
   navigationItems: [
     { href: '/jobs', label: 'Find Jobs', icon: Briefcase },
     { href: '/companies', label: 'Companies', icon: Building },
-    { href: '/analytics/salary', label: 'Website Analytics', icon: BarChart3 },
+    {
+      href: '/analytics/salary',
+      label: 'Website Analytics',
+      icon: BarChart3,
+      show: (user: User | null) => user?.role === 'Developer'
+    },
   ],
   
   // Actions

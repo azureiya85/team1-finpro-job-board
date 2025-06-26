@@ -82,17 +82,19 @@ export function NavbarDesktop() {
     <>
       {/* Desktop Navigation */}
       <div className="hidden md:flex items-center space-x-8">
-        {navigationItems.map((item) => (
-          <motion.div key={item.href} whileHover={{ y: -2 }}>
-            <Link
-              href={item.href}
-              className="flex items-center space-x-2 text-white hover:text-accent dark:hover:text-accent transition-colors duration-300 font-medium group"
-            >
-              <item.icon className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-              <span>{item.label}</span>
-            </Link>
-          </motion.div>
-        ))}
+        {navigationItems
+          .filter(item => !item.href.includes('analytics') || user?.role === 'Developer')
+          .map((item) => (
+            <motion.div key={item.href} whileHover={{ y: -2 }}>
+              <Link
+                href={item.href}
+                className="flex items-center space-x-2 text-white hover:text-accent dark:hover:text-accent transition-colors duration-300 font-medium group"
+              >
+                <item.icon className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+                <span>{item.label}</span>
+              </Link>
+            </motion.div>
+          ))}
       </div>
 
       {/* Auth Section */}
