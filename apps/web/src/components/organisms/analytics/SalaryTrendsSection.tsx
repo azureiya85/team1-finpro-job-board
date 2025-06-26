@@ -24,7 +24,6 @@ export default function SalaryTrendsSection() {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
-      <h2 className="text-lg font-semibold mb-4">Salary Trends</h2>
 
       {isLoading && <p className="text-gray-500">Loading chart...</p>}
       {isError && <p className="text-red-500">Failed to load salary trends. Showing sample data.</p>}

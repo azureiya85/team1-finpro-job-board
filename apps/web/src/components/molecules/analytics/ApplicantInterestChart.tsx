@@ -21,7 +21,6 @@ export default function ApplicantInterestChart({ data = dummyData }: ApplicantIn
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
-      <h2 className="text-lg font-semibold mb-4">Applicant Interests</h2>
       <ChartWrapper
         type="bar"
         data={chart.data}

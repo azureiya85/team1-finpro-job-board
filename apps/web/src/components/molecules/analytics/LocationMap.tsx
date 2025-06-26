@@ -6,14 +6,14 @@ import { useEffect } from 'react';
 import { LocationData, AnalyticsFilters } from '@/types/analyticsTypes';
 import 'leaflet/dist/leaflet.css';
 
-const icon = L.icon({
-  iconUrl: '/leaflet/marker-icon.png',
-  shadowUrl: '/leaflet/marker-shadow.png',
-  iconRetinaUrl: '/leaflet/marker-icon-2x.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const icon = L.divIcon({
+  className: 'custom-marker',
+  html: `<div class="w-8 h-8 bg-primary rounded-full border-4 border-white shadow-lg flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2">
+          <div class="w-2 h-2 bg-white rounded-full"></div>
+        </div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32]
 });
 
 L.Marker.prototype.options.icon = icon;

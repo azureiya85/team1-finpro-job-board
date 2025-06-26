@@ -9,7 +9,6 @@ export default function ApplicantInterestsSection() {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xl font-semibold">Applicant Interests</h2>
       {isLoading ? (
         <Skeleton className="w-full h-[300px] rounded-xl" />
       ) : (
