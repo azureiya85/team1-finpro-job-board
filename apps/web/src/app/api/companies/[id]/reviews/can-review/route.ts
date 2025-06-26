@@ -3,9 +3,9 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; 
-  };
+  }>;
 }
 
 // GET: Checks if the currently authenticated user is eligible to review a company.
@@ -18,7 +18,7 @@ export async function GET(request: Request, { params }: RouteContext) {
     );
   }
 
-  const { id: companyId } = params; 
+  const { id: companyId } = await params; 
   const userId = session.user.id;
 
   try {

@@ -1,28 +1,19 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X } from 'lucide-react';
-import StarRatingInput from '@/components/atoms/stars/StarsRatingInput'; 
+import { X, Star, CheckCircle2 } from 'lucide-react';
 import { createReviewSchema } from '@/lib/validations/zodReviewValidation';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { toast } from 'sonner';
+import { EmploymentStatus } from '@prisma/client';
+import { CompanyReviewFormModalProps } from '@/types/reviews';
+import CompanyReviewFormField from '@/components/atoms/modals/companies/reviews/ReviewFormField';
+import CompanyReviewFormRating from '@/components/atoms/modals/companies/reviews/ReviewFormRating';
+import CompanyReviewFormAction from '@/components/atoms/modals/companies/reviews/ReviewFormActions';
 
 type ReviewFormData = z.infer<typeof createReviewSchema>;
-
-// Define a shape for the review data passed for editing
-interface EditableReviewData extends ReviewFormData {
-  id: string;
-}
-
-interface ReviewFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  companyId: string;
-  companyName: string;
-  initialData?: EditableReviewData | null; 
-}
 
 export default function CompanyReviewFormModal({ 
   isOpen, 
@@ -31,53 +22,61 @@ export default function CompanyReviewFormModal({
   companyId, 
   companyName,
   initialData 
-}: ReviewFormModalProps) {
+}: CompanyReviewFormModalProps) {
   const isEditMode = !!initialData;
+  const [step, setStep] = useState<'form' | 'submitting' | 'success'>('form');
 
-  const { control, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ReviewFormData>({
+  const getInitialValues = useCallback(() => {
+    return {
+      title: initialData?.title || '',
+      review: initialData?.review || '',
+      rating: initialData?.rating || 0,
+      cultureRating: initialData?.cultureRating || 0,
+      workLifeBalance: initialData?.workLifeBalance || 0,
+      facilitiesRating: initialData?.facilitiesRating || 0,
+      careerRating: initialData?.careerRating || 0,
+      jobPosition: initialData?.jobPosition || '',
+      employmentStatus: initialData?.employmentStatus || 'CURRENT_EMPLOYEE' as EmploymentStatus,
+      workDuration: initialData?.workDuration || '',
+      salaryEstimate: initialData?.salaryEstimate || undefined,
+    };
+  }, [initialData]);
+
+  const { control, handleSubmit, formState: { errors, isSubmitting, isValid }, reset, watch } = useForm<ReviewFormData>({
     resolver: zodResolver(createReviewSchema),
-    // Set default values based on whether we are editing or creating
-    defaultValues: initialData || {
-      title: '',
-      review: '',
-      rating: 0,
-      cultureRating: 0,
-      workLifeBalance: 0,
-      facilitiesRating: 0,
-      careerRating: 0,
-      workDuration: '',
-    }
+    mode: 'onChange',
+    defaultValues: getInitialValues()
   });
   
-  // Effect to reset the form when the modal opens with new data
+  const watchedFields = watch();
+
   useEffect(() => {
     if (isOpen) {
-        // When using initialData, make sure all fields are present or have a fallback
-        reset(initialData || {
-          title: '',
-          review: '',
-          rating: 0,
-          cultureRating: 0,
-          workLifeBalance: 0,
-          facilitiesRating: 0,
-          careerRating: 0,
-          workDuration: '',
-        });
+        reset(getInitialValues());
+        setStep('form');
     }
-  }, [isOpen, initialData, reset]);
+  }, [isOpen, initialData, reset, getInitialValues]); 
 
   const onSubmit = async (data: ReviewFormData) => {
+    setStep('submitting');
     const url = isEditMode
       ? `/api/companies/${companyId}/reviews/${initialData!.id}`
       : `/api/companies/${companyId}/reviews`;
       
     const method = isEditMode ? 'PUT' : 'POST';
 
+    // Sanitize data before sending: convert empty strings for nullable fields back to null
+    const payload = {
+      ...data,
+      workDuration: data.workDuration || null,
+      salaryEstimate: data.salaryEstimate || null
+    };
+
     try {
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -85,106 +84,112 @@ export default function CompanyReviewFormModal({
         throw new Error(errorData.error || `Failed to ${isEditMode ? 'update' : 'submit'} review.`);
       }
       
-      onSuccess();
-      handleClose();
+      setStep('success');
+      toast.success(`Review ${isEditMode ? 'updated' : 'submitted'} successfully!`);
+      
+      setTimeout(() => {
+        onSuccess();
+        handleClose();
+      }, 1500);
 
     } catch (error: unknown) {
+      setStep('form');
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      alert(`Error: ${errorMessage}`);
+      toast.error(errorMessage);
     }
   };
 
   const handleClose = () => {
-    onClose();
+    if (!isSubmitting) {
+      onClose();
+      setStep('form');
+    }
   };
 
   if (!isOpen) return null;
-  
-  const renderError = (fieldName: keyof ReviewFormData) => errors[fieldName] && (
-    <p className="text-red-500 text-sm mt-1">{errors[fieldName]?.message}</p>
-  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-white">
-          <h2 className="text-xl font-bold text-gray-800">
-            {isEditMode ? 'Edit Your Review' : `Write a review for ${companyName}`}
-          </h2>
-          <button onClick={handleClose} className="text-gray-500 hover:text-gray-800">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-primary-50 to-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Star className="w-5 h-5 text-primary-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {isEditMode ? 'Edit Your Review' : 'Write a Review'}
+              </h2>
+              <p className="text-sm text-gray-600">{companyName}</p>
+            </div>
+          </div>
+          <button 
+            onClick={handleClose} 
+            disabled={isSubmitting}
+            className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+          >
             <X className="w-6 h-6" />
           </button>
-        </header>
+        </div>
         
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 overflow-y-auto space-y-6">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Review Title</label>
-            <Controller name="title" control={control} render={({ field }) => (
-              <input {...field} id="title" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
-            )} />
-            {renderError('title')}
-          </div>
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+          {step === 'form' && (
+            <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-8">
+              <CompanyReviewFormField 
+                control={control}
+                errors={errors}
+                watchedFields={watchedFields}
+              />
+              
+              <CompanyReviewFormRating 
+                control={control}
+                errors={errors}
+              />
+              
+              <CompanyReviewFormAction
+                isEditMode={isEditMode}
+                isSubmitting={isSubmitting}
+                isValid={isValid}
+                onCancel={handleClose}
+              />
+            </form>
+          )}
           
-          {/* === MISSING FIELD ADDED HERE === */}
-          <div>
-            <label htmlFor="review" className="block text-sm font-medium text-gray-700">Your Anonymous Review</label>
-             <Controller name="review" control={control} render={({ field }) => (
-                <textarea 
-                    {...field} 
-                    id="review" 
-                    rows={5} 
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" 
-                    placeholder="Share details of your own experience at this company..."
-                />
-            )} />
-            {renderError('review')}
-          </div>
+          {/* Submitting State */}
+          {step === 'submitting' && (
+            <div className="flex flex-col items-center justify-center py-16 space-y-6">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-primary-200 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 w-16 h-16 border-4 border-primary-600 rounded-full animate-spin border-t-transparent"></div>
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {isEditMode ? 'Updating Your Review...' : 'Submitting Your Review...'}
+                </h3>
+                <p className="text-gray-600">Please wait while we process your request.</p>
+              </div>
+            </div>
+          )}
           
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Overall Rating*</label>
-                <Controller name="rating" control={control} render={({ field }) => 
-                  <StarRatingInput value={field.value ?? 0} onChange={field.onChange} size={28} />
-                } />
-                {renderError('rating')}
+          {/* Success State */}
+          {step === 'success' && (
+            <div className="flex flex-col items-center justify-center py-16 space-y-6">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="w-8 h-8 text-green-600" />
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {isEditMode ? 'Review Updated Successfully!' : 'Review Submitted Successfully!'}
+                </h3>
+                <p className="text-gray-600">
+                  Thank you for sharing your experience with {companyName}.
+                </p>
+              </div>
             </div>
-             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Work-Life Balance*</label>
-                <Controller name="workLifeBalance" control={control} render={({ field }) => 
-                  <StarRatingInput value={field.value ?? 0} onChange={field.onChange} />
-                } />
-                {renderError('workLifeBalance')}
-            </div>
-             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Culture*</label>
-                <Controller name="cultureRating" control={control} render={({ field }) => 
-                  <StarRatingInput value={field.value ?? 0} onChange={field.onChange} />
-                } />
-                {renderError('cultureRating')}
-            </div>
-             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Career Opportunities*</label>
-                <Controller name="careerRating" control={control} render={({ field }) => 
-                  <StarRatingInput value={field.value ?? 0} onChange={field.onChange} />
-                } />
-                {renderError('careerRating')}
-            </div>
-             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Company Facilities*</label>
-                <Controller name="facilitiesRating" control={control} render={({ field }) => 
-                  <StarRatingInput value={field.value ?? 0} onChange={field.onChange} />
-                } />
-                {renderError('facilitiesRating')}
-            </div>
-          </div>
-          
-          <footer className="pt-6 border-t flex justify-end gap-3">
-            <button type="button" onClick={handleClose} className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-accent disabled:bg-primary-300">
-              {isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update Review' : 'Submit Review')}
-            </button>
-          </footer>
-        </form>
+          )}
+        </div>
       </div>
     </div>
   );

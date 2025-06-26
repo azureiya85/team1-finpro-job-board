@@ -106,7 +106,7 @@ export default function AssessmentContent({ assessments, subscription }: Props) 
           {incompleteAssessments.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="w-5 h-5 text-blue-600" />
+                <BookOpen className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-semibold text-gray-800">Available Assessments</h2>
                 <Badge variant="secondary">{incompleteAssessments.length}</Badge>
               </div>

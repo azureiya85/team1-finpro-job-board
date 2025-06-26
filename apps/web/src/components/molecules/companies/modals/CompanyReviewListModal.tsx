@@ -1,43 +1,27 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { X, Building, Briefcase, TrendingUp, HeartHandshake, Home, Wallet, Edit, Trash2 } from 'lucide-react';
-import RatingStars from '@/components/atoms/stars/RatingStars';
-import { EmploymentStatus } from '@prisma/client';
+import { X, Star } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStores';
 import CompanyReviewFormModal from './CompanyReviewFormModal';
+import ReviewCard from '@/components/atoms/modals/companies/reviews/ReviewListCard';
+import ReviewStates from '@/components/atoms/modals/companies/reviews/ReviewListStates';
+import { toast } from 'sonner';
+import { CompanyReview, CompanyReviewListModalProps } from '@/types/reviews';
 
-interface ReviewListModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  companyId: string;
-  companyName: string;
-  onReviewChange: () => void; 
-}
-
-type CompanyReview = {
-  id: string;
-  title: string;
-  review: string;
-  rating: number;
-  cultureRating: number | null;
-  workLifeBalance: number | null;
-  facilitiesRating: number | null;
-  careerRating: number | null;
-  jobPosition: string;
-  employmentStatus: EmploymentStatus;
-  workDuration: string | null;
-  salaryEstimate: number | null;
-  createdAt: string;
-  userId: string;
-};
-
-export default function CompanyReviewListModal({ isOpen, onClose, companyId, companyName, onReviewChange }: ReviewListModalProps) {
+export default function CompanyReviewListModal({ 
+  isOpen, 
+  onClose, 
+  companyId, 
+  companyName, 
+  onReviewChange 
+}: CompanyReviewListModalProps) {
   const { user } = useAuthStore();
   const [reviews, setReviews] = useState<CompanyReview[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, hasMore: true });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   // State to manage the review being edited and the form modal
   const [editingReview, setEditingReview] = useState<CompanyReview | null>(null);
@@ -65,6 +49,7 @@ export default function CompanyReviewListModal({ isOpen, onClose, companyId, com
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'An unknown error occurred.';
         setError(message);
+        toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -82,8 +67,10 @@ export default function CompanyReviewListModal({ isOpen, onClose, companyId, com
   };
 
   const handleDelete = async (reviewId: string) => {
-    if (!window.confirm("Are you sure you want to delete this review? This action cannot be undone.")) return;
+    const confirmDelete = window.confirm("Are you sure you want to delete this review? This action cannot be undone.");
+    if (!confirmDelete) return;
 
+    setDeletingId(reviewId);
     try {
       const response = await fetch(`/api/companies/${companyId}/reviews/${reviewId}`, { method: 'DELETE' });
       if (!response.ok) {
@@ -93,8 +80,12 @@ export default function CompanyReviewListModal({ isOpen, onClose, companyId, com
 
       setReviews(prev => prev.filter(r => r.id !== reviewId));
       onReviewChange();
+      toast.success('Review deleted successfully');
     } catch (err) {
-      alert((err as Error).message);
+      const errorMessage = (err as Error).message;
+      toast.error(errorMessage);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -105,102 +96,76 @@ export default function CompanyReviewListModal({ isOpen, onClose, companyId, com
     onReviewChange();
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-    }).format(value);
-  }
-
   if (!isOpen) return null;
 
   return (
-    <> {/* Use a fragment to wrap both modals */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-          <header className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-            <h2 className="text-xl font-bold text-gray-800">Reviews for {companyName}</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          {/* Header */}
+          <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Star className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Employee Reviews</h2>
+                <p className="text-sm text-gray-600">{companyName}</p>
+              </div>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
               <X className="w-6 h-6" />
             </button>
-          </header>
+          </div>
 
-          <main className="p-6 overflow-y-auto space-y-6">
-            {isLoading && reviews.length === 0 && <p className="text-center text-gray-500">Loading reviews...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
-            {!isLoading && reviews.length === 0 && <p className="text-center text-gray-500">No reviews have been submitted for this company yet.</p>}
-            
-            <div className="space-y-6">
-              {reviews.map(review => (
-                <div key={review.id} className="border rounded-lg p-4 bg-gray-50/50">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-grow"> {/* Added flex-grow to take up available space */}
-                      <h3 className="font-bold text-lg text-gray-900">{review.title}</h3>
-                      <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm text-gray-600 mt-1">
-                        <div className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" /> <span>{review.jobPosition}</span></div>
-                        <span className="text-gray-300 hidden md:inline">|</span>
-                        <span className="capitalize">{review.employmentStatus.replace('_', ' ').toLowerCase()}</span>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <RatingStars rating={review.rating} />
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </p>
-                      {user?.id === review.userId && (
-                        <div className="flex items-center justify-end gap-3 mt-2">
-                          <button onClick={() => handleEdit(review)} className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm font-medium transition-colors">
-                            <Edit className="w-3.5 h-3.5" /> Edit
-                          </button>
-                          <button onClick={() => handleDelete(review.id)} className="text-red-600 hover:text-red-800 flex items-center gap-1 text-sm font-medium transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-700 my-3">{review.review}</p>
-                  
-                  {review.salaryEstimate && (
-                      <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-1.5 text-sm font-semibold mb-4 w-fit">
-                          <Wallet className="w-4 h-4" />
-                          <span>Estimated Salary: {formatCurrency(review.salaryEstimate)}/month</span>
-                      </div>
-                  )}
-
-                  <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2" title="Work-Life Balance">
-                          <Home className="w-4 h-4 text-blue-500"/> <RatingStars rating={review.workLifeBalance ?? 0} />
-                      </div>
-                      <div className="flex items-center gap-2" title="Culture & Values">
-                          <HeartHandshake className="w-4 h-4 text-green-500"/> <RatingStars rating={review.cultureRating ?? 0} />
-                      </div>
-                      <div className="flex items-center gap-2" title="Career Opportunities">
-                          <TrendingUp className="w-4 h-4 text-purple-500"/> <RatingStars rating={review.careerRating ?? 0} />
-                      </div>
-                      <div className="flex items-center gap-2" title="Facilities">
-                          <Building className="w-4 h-4 text-orange-500"/> <RatingStars rating={review.facilitiesRating ?? 0} />
-                      </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {pagination.hasMore && (
-              <div className="text-center mt-6">
-                <button
-                  onClick={() => fetchReviews(pagination.page + 1)}
-                  disabled={isLoading}
-                  className="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition-colors"
-                >
-                  {isLoading ? 'Loading...' : 'Load More Reviews'}
-                </button>
+          {/* Content */}
+          <div className="overflow-y-auto max-h-[calc(90vh-100px)]">
+            <div className="p-6">
+              <ReviewStates 
+                isLoading={isLoading && reviews.length === 0}
+                error={error}
+                hasReviews={reviews.length > 0}
+                companyName={companyName}
+              />
+              
+              {/* Reviews List */}
+              <div className="space-y-6">
+                {reviews.map(review => (
+                  <ReviewCard
+                    key={review.id}
+                    review={review}
+                    currentUserId={user?.id}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    isDeleting={deletingId === review.id}
+                  />
+                ))}
               </div>
-            )}
-          </main>
+
+              {/* Load More Button */}
+              {pagination.hasMore && (
+                <div className="text-center mt-8">
+                  <button
+                    onClick={() => fetchReviews(pagination.page + 1)}
+                    disabled={isLoading}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Reviews'
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
       

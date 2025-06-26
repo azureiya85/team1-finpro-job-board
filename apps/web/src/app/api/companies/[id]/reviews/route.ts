@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { createReviewSchema } from '@/lib/validations/zodReviewValidation'; // Import the separated schema
+import { createReviewSchema } from '@/lib/validations/zodReviewValidation'; 
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; 
-  };
+  }>;
 }
 
 // GET: Fetches all public, anonymous reviews for a specific company.
 export async function GET(request: Request, { params }: RouteContext) {
-  const { id: companyId } = params; 
+  const { id: companyId } = await params; 
 
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get('page') || '1');
@@ -79,7 +79,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Unauthorized: You must be logged in to post a review.' }, { status: 401 });
   }
 
-  const { id: companyId } = params;
+  const { id: companyId } = await params;
   const userId = session.user.id;
 
   try {

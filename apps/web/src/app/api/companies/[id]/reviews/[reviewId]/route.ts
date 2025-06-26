@@ -5,10 +5,10 @@ import { createReviewSchema } from '@/lib/validations/zodReviewValidation';
 import { Prisma } from '@prisma/client'; 
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string; 
     reviewId: string;
-  };
+  }>;
 }
 
 // PUT: Updates an existing review
@@ -18,7 +18,7 @@ export async function PUT(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { reviewId } = params;
+  const { reviewId } = await params;
   const userId = session.user.id;
 
   try {
@@ -61,7 +61,7 @@ export async function DELETE(request: Request, { params }: RouteContext) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { reviewId } = params;
+    const { reviewId } = await params;
     const userId = session.user.id;
 
     try {
