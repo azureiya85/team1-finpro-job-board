@@ -36,8 +36,8 @@ export interface TrendChartData {
 
 export interface LocationData {
   city: string;
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   count: number;
 }
 
@@ -50,9 +50,9 @@ export interface StatCardItem {
 }
 
 export interface AnalyticsFilters {
-  location: string;
+  location: string | 'all';
   dateRange: {
     start: Date;
     end: Date;
-  } | null;
+  } | null
 }

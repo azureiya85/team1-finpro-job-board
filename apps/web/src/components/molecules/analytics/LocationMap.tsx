@@ -37,7 +37,7 @@ export default function LocationMap({ data }: LocationMapProps) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {data.map((loc, index) => (
-          <Marker key={index} position={[loc.lat, loc.lng]}>
+          <Marker key={index} position={[loc.latitude, loc.longitude]}>
             <Popup>
               <strong>{loc.city}</strong><br />
               {loc.count} applicant{loc.count > 1 ? 's' : ''}

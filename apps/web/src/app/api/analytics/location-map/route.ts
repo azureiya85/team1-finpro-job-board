@@ -1,52 +1,69 @@
-// app/api/analytics/location-map/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const start = searchParams.get('start');
-  const end = searchParams.get('end');
-  const cityId = searchParams.get('cityId');
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const cityId = searchParams.get('cityId');
+    const start = searchParams.get('start');
+    const end = searchParams.get('end');
 
-  const where: any = {
-    jobApplications: {
-      some: {},
-    },
-  };
-
-  if (start && end) {
-    where.jobApplications.some.createdAt = {
-      gte: new Date(start),
-      lte: new Date(end),
+    const whereClause = {
+      ...(cityId && { cityId }),
+      ...(start && end && {
+        createdAt: {
+          gte: new Date(start),
+          lte: new Date(end)
+        }
+      })
     };
-  }
 
-  if (cityId && cityId !== 'all') {
-    where.id = cityId;
-  }
+    // Dapatkan data pengguna yang dikelompokkan berdasarkan cityId
+    const usersByLocation = await prisma.user.groupBy({
+      by: ['cityId'],
+      where: whereClause,
+      _count: {
+        _all: true
+      }
+    });
 
-  const result = await prisma.city.findMany({
-    where: where,
-    select: {
-      id: true,
-      name: true,
-      latitude: true,
-      longitude: true,
-      users: {
-        where: where.jobApplications ? where : {},
-        select: {
-          id: true,
-        },
+    // Filter cityId yang tidak null dan dapatkan data kota
+    const validCityIds = usersByLocation
+      .map(loc => loc.cityId)
+      .filter((id): id is string => id !== null);
+
+    const cities = await prisma.city.findMany({
+      where: {
+        id: {
+          in: validCityIds
+        }
       },
-    },
-  });
+      select: {
+        id: true,
+        name: true,
+        latitude: true,
+        longitude: true
+      }
+    });
 
-  const formatted = result.map((city) => ({
-    city: city.name,
-    lat: city.latitude || 0,
-    lng: city.longitude || 0,
-    count: city.users.length,
-  }));
+    // Gabungkan data
+    const locationData = usersByLocation.map(location => {
+      const cityData = cities.find(city => city.id === location.cityId);
+      return {
+        cityId: location.cityId,
+        cityName: cityData?.name,
+        latitude: cityData?.latitude,
+        longitude: cityData?.longitude,
+        userCount: location._count._all
+      };
+    });
 
-  return NextResponse.json(formatted);
+    return NextResponse.json(locationData);
+  } catch (error) {
+    console.error('[LOCATION_MAP_ERROR]', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }

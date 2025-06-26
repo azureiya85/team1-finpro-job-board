@@ -1,10 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { getLocationMapData } from '@/lib/api/analytics/getLocationMapData';
 import { Skeleton } from '@/components/ui/skeleton';
-import LocationMap from '@/components/molecules/analytics/LocationMap';
 import { LocationData, AnalyticsFilters } from '@/types/analyticsTypes';
+
+// ⬅️ Dynamic import agar LocationMap hanya dirender di client
+const LocationMap = dynamic(() => import('@/components/molecules/analytics/LocationMap'), {
+  ssr: false,
+});
 
 interface LocationMapSectionProps {
   filters: AnalyticsFilters;

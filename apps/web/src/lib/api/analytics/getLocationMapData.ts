@@ -15,6 +15,17 @@ export async function getLocationMapData(filters: AnalyticsFilters) {
     params.append('cityId', filters.location);
   }
 
+  console.log('[getLocationMapData]', filters, params.toString());
+
   const res = await fetch(`/api/analytics/location-map?${params.toString()}`);
-  return res.json();
+
+  // ✅ Tangani error status
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Failed to fetch location data: ${errorText}`);
+  }
+
+  // ✅ Aman melakukan parsing JSON
+  const data = await res.json();
+  return data;
 }
