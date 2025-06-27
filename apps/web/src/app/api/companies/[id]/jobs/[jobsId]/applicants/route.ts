@@ -6,6 +6,7 @@ import { searchParamsToFilters, validateFilters } from '@/lib/applicants/filterV
 import type {
   RouteAndPaginationFilters,
   JobApplicationDetails,
+  SubscriptionPlanFeatures, 
 } from '@/types/applicants';
 
 const prisma = new PrismaClient();
@@ -32,7 +33,7 @@ export async function GET(
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 20,
     };
 
-    const { isValid, errors: validationErrors } = validateFilters(routeFilters); // Pass without jobPostingId if it expects it
+    const { isValid, errors: validationErrors } = validateFilters(routeFilters);
     if (!isValid) {
       return NextResponse.json({
         message: "Invalid filter parameters",
@@ -41,13 +42,12 @@ export async function GET(
     }
 
     const company = await prisma.company.findFirst({
-      where: { id: companyIdFromPath, adminId: session.user.id }, // Ensure admin owns this company
+      where: { id: companyIdFromPath, adminId: session.user.id },
     });
     if (!company) {
       return NextResponse.json({ error: 'Company not found or unauthorized for this company' }, { status: 404 });
     }
 
-    // Verify the job posting belongs to this company (important!)
     const jobPosting = await prisma.jobPosting.findUnique({
         where: { id: jobIdFromPath },
         select: { companyId: true }
@@ -82,6 +82,20 @@ export async function GET(
             currentAddress: true,
             province: { select: { name: true } },
             city: { select: { name: true } },
+            subscriptions: {
+              where: {
+                status: 'ACTIVE',
+                endDate: { gt: new Date() }
+              },
+              include: {
+                plan: {
+                  select: {
+                    name: true,
+                    features: true
+                  }
+                }
+              }
+            }
           },
         },
         jobPosting: {
@@ -104,9 +118,9 @@ export async function GET(
             scheduledAt: true,
             status: true,
             interviewType: true,
-            duration: true, 
-            location: true, 
-            notes: true,   
+            duration: true,
+            location: true,
+            notes: true,
           },
           orderBy: { scheduledAt: 'desc' },
           take: 1,
@@ -121,10 +135,16 @@ export async function GET(
       where: finalWhereClause,
     });
 
-    const transformedApplications: JobApplicationDetails[] = applications.map((app) => {
+    const transformedApplications: (JobApplicationDetails & { isPriority: boolean })[] = applications.map((app) => {
       const user = app.user;
       const age = user.dateOfBirth ? calculateAge(new Date(user.dateOfBirth)) : null;
       const location = [user.city?.name, user.province?.name].filter(Boolean).join(', ');
+
+      const hasPriority = user.subscriptions.some(sub => {
+        const features = sub.plan.features as SubscriptionPlanFeatures;
+        return sub.plan.name === 'PROFESSIONAL' && features?.priorityCvReview === true;
+      });
+
       return {
         id: app.id,
         status: app.status,
@@ -155,11 +175,18 @@ export async function GET(
           location,
           currentAddress: user.currentAddress,
         },
+        isPriority: hasPriority,
       };
     });
 
+    const sortedApplications = transformedApplications.sort((a, b) => {
+      if (a.isPriority && !b.isPriority) return -1;
+      if (!a.isPriority && b.isPriority) return 1;
+      return 0;
+    });
+
     const response = {
-      applications: transformedApplications,
+      applications: sortedApplications,
       pagination: {
         page: routeFilters.page,
         limit: routeFilters.limit,

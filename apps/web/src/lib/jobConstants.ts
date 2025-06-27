@@ -1,3 +1,5 @@
+import { Education } from '@prisma/client';
+
 export const employmentTypeLabels: Record<string, string> = {
   FULL_TIME: 'Full-time',
   PART_TIME: 'Part-time',
@@ -65,4 +67,19 @@ export const workTypeLabels: Record<string, string> = {
   ON_SITE: 'On-site',
   REMOTE: 'Remote',
   HYBRID: 'Hybrid',
+};
+
+export const educationLabels: Record<Education, string> = {
+  HIGH_SCHOOL: "High School",
+  DIPLOMA: "Diploma",
+  BACHELOR: "Bachelor's",
+  MASTER: "Master's",
+  DOCTORATE: "Doctorate",
+  OTHER: "Other"
+};
+
+// Helper to format education level from the enum
+export const formatEducationLevelDisplay = (education: Education | null | undefined): string => {
+  if (!education) return 'N/A';
+  return educationLabels[education] || education;
 };

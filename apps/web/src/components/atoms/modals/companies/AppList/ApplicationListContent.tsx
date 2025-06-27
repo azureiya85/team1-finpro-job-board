@@ -1,38 +1,41 @@
-"use client";
-
-import cn from 'classnames';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { FileText, MoreHorizontal } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import React from 'react';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { FileText } from 'lucide-react';
 import { ApplicationStatus } from '@prisma/client';
-import { getStatusDisplay } from '@/lib/applicants/statusValidation';
-import { getStatusAction } from '@/lib/statusConfig';
-import { formatEducationLevelDisplay } from '@/lib/utils';
 import type { JobApplicationDetails } from '@/types/applicants';
+import ApplicantTableRow from './ApplicationListTable';
 
-type LatestInterviewData = NonNullable<JobApplicationDetails['latestInterview']>;
+// Define a more specific type for the component's props
+type ApplicantWithPriority = JobApplicationDetails & { isPriority: boolean };
 
 interface ApplicantListContentProps {
-  applicants: JobApplicationDetails[];
-  onStatusChange: (applicationId: string, newStatus: ApplicationStatus) => void;
-  onCvPreview: (cvUrl: string | null) => void;
-  onScheduleInterview: (
+  applicants?: ApplicantWithPriority[];
+  onStatusChange?: (applicationId: string, newStatus: ApplicationStatus) => void;
+  onCvPreview?: (cvUrl: string) => void;
+  onScheduleInterview?: (
     applicationId: string,
-    scheduleData: LatestInterviewData | null,
+    scheduleData: ApplicantWithPriority['latestInterview'],
     isRescheduling: boolean
   ) => void;
-  companyId: string; // Kept in case it's needed for future actions
+  companyId?: string;
 }
 
 export default function ApplicantListContent({
-  applicants,
-  onStatusChange,
-  onCvPreview,
-  onScheduleInterview,
+  applicants = [],
+  onStatusChange = () => {},
+  onCvPreview = () => {},
+  onScheduleInterview = () => {},
 }: ApplicantListContentProps) {
+
+  if (applicants.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center">
+        <FileText className="w-16 h-16 text-gray-300" />
+        <h3 className="mt-4 text-lg font-medium text-gray-800">No Applicants Yet</h3>
+        <p className="mt-1 text-sm text-gray-500">Applications for this job will appear here.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -52,140 +55,15 @@ export default function ApplicantListContent({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {applicants.map((app) => {
-            const statusInfo = getStatusDisplay(app.status);
-            return (
-              <TableRow key={app.id} className="hover:bg-gray-50/50 transition-colors">
-                <TableCell className="pl-6">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={app.applicant.profileImage || undefined} alt={app.applicant.name} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                      {app.applicant.name?.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <p className="font-semibold text-gray-900 truncate">{app.applicant.name}</p>
-                    <p className="text-sm text-gray-600 truncate">{app.applicant.email}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="space-y-1">
-                    <p className="text-sm">
-                      <span className="text-gray-600">Age:</span>
-                      <span className="font-medium ml-1">{app.applicant.age ?? 'N/A'}</span>
-                    </p>
-                    <p className="text-sm">
-                      <span className="text-gray-600">Edu:</span>
-                      <span className="font-medium ml-1 text-xs">
-                        {formatEducationLevelDisplay(app.applicant.education)}
-                      </span>
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">
-                    {app.expectedSalary ? (
-                      <span className="font-semibold text-green-700">
-                        Rp {app.expectedSalary.toLocaleString('id-ID')}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">Not specified</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm text-gray-600">
-                    {new Date(app.createdAt).toLocaleDateString('id-ID', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: '2-digit'
-                    })}
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">
-                  {app.cvUrl ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onCvPreview(app.cvUrl)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      <FileText className="w-3 h-3" />
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                      No CV
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center">
-                  {app.testResult ? (
-                    <span className={`text-sm font-medium ${app.testResult.passed ? 'text-green-600' : 'text-red-600'}`}>
-                      {app.testResult.score}%
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
-                      Not taken
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center">
-                  {app.status === ApplicationStatus.INTERVIEW_SCHEDULED || app.status === ApplicationStatus.TEST_COMPLETED ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onScheduleInterview(app.id, app.latestInterview || null, !!app.latestInterview)}
-                      className="h-8 px-2 text-xs"
-                    >
-                      {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? 'Reschedule' : 'Schedule'}
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-gray-400">
-                      Not available
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    className={`${statusInfo.bgColor} ${statusInfo.color} hover:${statusInfo.bgColor} px-2 py-1 text-xs whitespace-nowrap`}
-                  >
-                    {statusInfo.label}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 px-2">
-                        <MoreHorizontal className="w-4 h-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {Object.values(ApplicationStatus).map(status => {
-                        const actionConfig = getStatusAction(status);
-                        const Icon = actionConfig.icon;
-                        return (
-                          <DropdownMenuItem
-                            key={status}
-                            onClick={() => onStatusChange(app.id, status)}
-                            disabled={app.status === status}
-                            className={app.status === status ? 'bg-muted cursor-not-allowed' : ''}
-                          >
-                            <Icon className={cn("mr-2 h-4 w-4", actionConfig.color)} />
-                            <span>{actionConfig.label}</span>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {applicants.map((app) => (
+            <ApplicantTableRow
+              key={app.id}
+              applicant={app}
+              onStatusChange={onStatusChange}
+              onCvPreview={onCvPreview}
+              onScheduleInterview={onScheduleInterview}
+            />
+          ))}
         </TableBody>
       </Table>
     </div>

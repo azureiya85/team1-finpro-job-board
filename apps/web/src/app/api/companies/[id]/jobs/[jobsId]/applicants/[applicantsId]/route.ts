@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, ApplicationStatus, NotificationType, InterviewType } from '@prisma/client';
 import { auth } from '@/auth';
-import { updateApplicationStatus } from '@/lib/applicants/applicationStatusHelper'; 
-import { calculateAge } from '@/lib/applicants/applicationStatsHelper'; 
-import type { JobApplicationDetails, UpdateApplicationRequestBody } from '@/types/applicants';
+import { updateApplicationStatus } from '@/lib/applicants/applicationStatusHelper';
+import { calculateAge } from '@/lib/applicants/applicationStatsHelper';
+import type {
+  JobApplicationDetails,
+  UpdateApplicationRequestBody,
+  SubscriptionPlanFeatures, 
+} from '@/types/applicants';
 
 const prisma = new PrismaClient();
 
@@ -17,11 +21,10 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: companyIdFromPath, jobsId: jobIdFromPath, applicantsId: applicationIdFromPath } = context.params; 
+    const { id: companyIdFromPath, jobsId: jobIdFromPath, applicantsId: applicationIdFromPath } = context.params;
 
-    // Verify company ownership and job ownership
-     const company = await prisma.company.findFirst({
-      where: { id: companyIdFromPath, adminId: session.user.id }, 
+    const company = await prisma.company.findFirst({
+      where: { id: companyIdFromPath, adminId: session.user.id },
     });
     if (!company) {
       return NextResponse.json({ error: 'Company not found or unauthorized' }, { status: 404 });
@@ -29,10 +32,10 @@ export async function GET(
 
     const application = await prisma.jobApplication.findFirst({
       where: {
-        id: applicationIdFromPath, 
-        jobPostingId: jobIdFromPath, 
+        id: applicationIdFromPath,
+        jobPostingId: jobIdFromPath,
         jobPosting: {
-          companyId: companyIdFromPath, 
+          companyId: companyIdFromPath,
         }
       },
       include: {
@@ -49,6 +52,20 @@ export async function GET(
             currentAddress: true,
             province: { select: { name: true } },
             city: { select: { name: true } },
+            subscriptions: {
+              where: {
+                status: 'ACTIVE',
+                endDate: { gt: new Date() }
+              },
+              include: {
+                plan: {
+                  select: {
+                    name: true,
+                    features: true
+                  }
+                }
+              }
+            }
           },
         },
         jobPosting: {
@@ -77,13 +94,17 @@ export async function GET(
     if (!application) {
       return NextResponse.json({ error: 'Application not found, or does not belong to this job/company' }, { status: 404 });
     }
-    
-    // Transform data for response (similar to the list, but for a single item)
+
     const user = application.user;
     const age = user.dateOfBirth ? calculateAge(new Date(user.dateOfBirth)) : null;
     const location = [user.city?.name, user.province?.name].filter(Boolean).join(', ');
 
-    const transformedApplication: JobApplicationDetails = {
+    const hasPriority = user.subscriptions.some(sub => {
+      const features = sub.plan.features as SubscriptionPlanFeatures;
+      return sub.plan.name === 'PROFESSIONAL' && features?.priorityCvReview === true;
+    });
+
+    const transformedApplication: JobApplicationDetails & { isPriority: boolean } = {
       id: application.id,
       status: application.status,
       expectedSalary: application.expectedSalary,
@@ -109,6 +130,7 @@ export async function GET(
         location,
         currentAddress: user.currentAddress,
       },
+      isPriority: hasPriority,
     };
 
     return NextResponse.json(transformedApplication);
@@ -122,7 +144,6 @@ export async function GET(
   }
 }
 
-
 // PUT: Update status of a specific applicant for a specific job
 export async function PUT(
   request: NextRequest,
@@ -134,8 +155,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id: companyIdFromPath, jobsId: jobIdFromPath, applicantsId: applicationIdFromPath } = context.params; 
-    const body = (await request.json()) as UpdateApplicationRequestBody; 
+    const { id: companyIdFromPath, jobsId: jobIdFromPath, applicantsId: applicationIdFromPath } = context.params;
+    const body = (await request.json()) as UpdateApplicationRequestBody;
 
     const {
       status,
@@ -144,21 +165,20 @@ export async function PUT(
       scheduleInterview,
     } = body;
 
-    if (!status) { 
-      return NextResponse.json({ 
-        error: 'Status is required' 
-      }, { status: 400 });
-    }
-    
-    if (!Object.values(ApplicationStatus).includes(status)) {
-      return NextResponse.json({ 
-        error: 'Invalid application status value' 
+    if (!status) {
+      return NextResponse.json({
+        error: 'Status is required'
       }, { status: 400 });
     }
 
-    // Verify company ownership
+    if (!Object.values(ApplicationStatus).includes(status)) {
+      return NextResponse.json({
+        error: 'Invalid application status value'
+      }, { status: 400 });
+    }
+
     const company = await prisma.company.findFirst({
-      where: { id: companyIdFromPath, adminId: session.user.id }, 
+      where: { id: companyIdFromPath, adminId: session.user.id },
     });
     if (!company) {
       return NextResponse.json({
@@ -169,15 +189,15 @@ export async function PUT(
     const application = await prisma.jobApplication.findFirst({
       where: {
         id: applicationIdFromPath,
-        jobPostingId: jobIdFromPath, 
-        jobPosting: { companyId: companyIdFromPath }, 
+        jobPostingId: jobIdFromPath,
+        jobPosting: { companyId: companyIdFromPath },
       },
       include: {
         user: { select: { id: true, email: true, firstName: true, lastName: true } },
-        jobPosting: { select: { id: true, title: true } }, 
+        jobPosting: { select: { id: true, title: true } },
       },
     });
-    
+
       if (!application) {
       return NextResponse.json({
         error: 'Application not found or does not belong to this job/company'
@@ -185,12 +205,12 @@ export async function PUT(
     }
 
     const updatedApplication = await updateApplicationStatus(
-      applicationIdFromPath, // CORRECTED
+      applicationIdFromPath,
       status,
       {
-        rejectionReason: rejectionReason || undefined, 
+        rejectionReason: rejectionReason || undefined,
         adminNotes: adminNotes || undefined,
-        reviewedBy: session.user.id, 
+        reviewedBy: session.user.id,
       }
     );
 
@@ -204,14 +224,14 @@ export async function PUT(
       } = scheduleInterview;
 
       if (!scheduledAt) {
-        return NextResponse.json({ 
-          error: 'Interview scheduled date is required' 
+        return NextResponse.json({
+          error: 'Interview scheduled date is required'
         }, { status: 400 });
       }
-      
+
       if (interviewType && !Object.values(InterviewType).includes(interviewType)) {
-        return NextResponse.json({ 
-          error: 'Invalid interview type value' 
+        return NextResponse.json({
+          error: 'Invalid interview type value'
         }, { status: 400 });
       }
 
@@ -222,9 +242,9 @@ export async function PUT(
           location: location || undefined,
           interviewType,
           notes: notes || undefined,
-           jobApplicationId: applicationIdFromPath, 
-          jobPostingId: jobIdFromPath, 
-          candidateId: application.user.id,   
+           jobApplicationId: applicationIdFromPath,
+          jobPostingId: jobIdFromPath,
+          candidateId: application.user.id,
         },
       });
     }
@@ -234,7 +254,7 @@ export async function PUT(
         userId: application.user.id,
         type: NotificationType.APPLICATION_STATUS_UPDATE,
         message: `Your application for "${application.jobPosting.title}" has been ${status.toLowerCase().replace('_', ' ')}.`,
-       link: `/applications/${applicationIdFromPath}`, 
+       link: `/applications/${applicationIdFromPath}`,
       },
     });
 
