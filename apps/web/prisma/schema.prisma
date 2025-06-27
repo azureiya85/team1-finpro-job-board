@@ -439,6 +439,7 @@ model Subscription {
   paymentProof      String?   
   paymentStatus     PaymentStatus @default(PENDING)
   transactionId     String?
+  lastExpiryNotificationSent DateTime? 
 
   userId String
   user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)

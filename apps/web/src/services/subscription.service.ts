@@ -2,18 +2,42 @@ import axios from 'axios';
 import axiosInstance from '@/lib/axios'; 
 import type { Plan, Subscription, PaymentMethod, MidtransResponse, PaymentDetails } from '@/types/subscription';
 
+// Request for creating a new subscription
 export interface CreateSubscriptionRequest {
   planId: string;
   paymentMethod: PaymentMethod;
-  proof?: File;
 }
 
-export interface CreateSubscriptionResponse {
-  success: boolean;
+// Request for renewing an existing subscription
+export interface RenewSubscriptionRequest {
+  subscriptionId: string;
+  paymentMethod: PaymentMethod;
+}
+
+// Universal response for both create and renew
+export interface SubscriptionActionResponse {
+  success?: boolean; 
   message?: string;
   midtrans?: MidtransResponse;
   paymentDetails?: PaymentDetails;
   url?: string;
+  renewalSubscriptionId?: string; 
+}
+
+export interface UploadProofRequest {
+  subscriptionId: string;
+  paymentProofUrl: string;
+}
+
+export interface RenewalEligibilityResponse {
+  subscription: Subscription;
+  renewalEligibility: {
+    canRenew: boolean;
+    reason: string | null;
+    daysUntilExpiry: number;
+    hasExistingPendingRenewal: boolean;
+    existingPendingRenewalId: string | null;
+  }
 }
 
 class SubscriptionApiService {
@@ -39,30 +63,18 @@ class SubscriptionApiService {
   }
 
   // Create or renew subscription
-  async createSubscription(request: CreateSubscriptionRequest): Promise<CreateSubscriptionResponse> {
-    const { planId, paymentMethod, proof } = request;
-
-    // Handle file upload for bank transfer with proof
-    if (paymentMethod === "BANK_TRANSFER" && proof) {
-      const formData = new FormData();
-      formData.append("planId", planId);
-      formData.append("paymentMethod", paymentMethod);
-      formData.append("proof", proof);
-
-      const response = await axiosInstance.post(this.baseUrl, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data;
-    }
-
-    // Handle JSON requests for other payment methods
-    const response = await axiosInstance.post(this.baseUrl, {
-      planId,
-      paymentMethod,
-    });
-    
+ async createSubscription(request: CreateSubscriptionRequest): Promise<SubscriptionActionResponse> {
+    const response = await axiosInstance.post(this.baseUrl, request);
+    return response.data;
+  }
+  
+   // Renew an existing subscription
+  async renewSubscription(request: RenewSubscriptionRequest): Promise<SubscriptionActionResponse> {
+    const { subscriptionId, paymentMethod } = request;
+    const response = await axiosInstance.post(
+      `${this.baseUrl}/${subscriptionId}/renew`, 
+      { paymentMethod } 
+    );
     return response.data;
   }
 
@@ -81,6 +93,20 @@ class SubscriptionApiService {
   // Verify payment status (for polling payment updates)
   async verifyPaymentStatus(orderId: string): Promise<{ status: string; subscription?: Subscription }> {
     const response = await axiosInstance.get(`${this.baseUrl}/verify/${orderId}`);
+    return response.data;
+  }
+
+   async uploadPaymentProof(request: UploadProofRequest): Promise<{ message: string; subscription: Subscription }> {
+    const { subscriptionId, paymentProofUrl } = request;
+    const response = await axiosInstance.post(
+      `/api/subscription/${subscriptionId}/payment-proof`, 
+      { subscriptionId, paymentProofUrl } // Send the URL in the body
+    );
+    return response.data;
+  }
+
+  async checkRenewalEligibility(subscriptionId: string): Promise<RenewalEligibilityResponse> {
+    const response = await axiosInstance.get(`${this.baseUrl}/${subscriptionId}/renew`);
     return response.data;
   }
 }

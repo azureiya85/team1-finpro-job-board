@@ -6,22 +6,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Building, QrCode } from "lucide-react";
-import type { PaymentMethod } from '@/types/subscription';
+import type { PaymentMethod, Subscription } from '@/types/subscription'; 
 import { subscriptionApi } from '@/services/subscription.service';
 import { getPaymentMethodIcon } from '@/lib/statusConfig';
 import { useSubscriptionStore } from '@/stores/subscriptionStores';
 import SubscriptionPageBankPayment from '@/components/molecules/dashboard/Subscription/SubscriptionPageBankPayment';
 import SubscriptionPageMTPayment from '@/components/molecules/dashboard/Subscription/SubscriptionPageMTPayment';
+import { toast } from "sonner";
 
 interface SubscriptionPagePaymentProps {
   onRefreshSubscription: () => Promise<void>;
+  subscriptionToRenew?: Subscription | null; 
 }
 
-export default function SubscriptionPagePayment({ onRefreshSubscription }: SubscriptionPagePaymentProps) {
+export default function SubscriptionPagePayment({ 
+  onRefreshSubscription,
+  subscriptionToRenew 
+}: SubscriptionPagePaymentProps) {
   const {
-    selectedPlan,
+    selectedPlan, 
     paymentMethod,
-    proofFile,
     uploading,
     setPaymentMethod,
     setUploading,
@@ -31,51 +35,47 @@ export default function SubscriptionPagePayment({ onRefreshSubscription }: Subsc
     resetPaymentInfo,
   } = useSubscriptionStore();
 
-  // Reset payment info when payment method changes
   useEffect(() => {
     resetPaymentInfo();
   }, [paymentMethod, resetPaymentInfo]);
 
   // Purchase handler
-  const handlePurchase = async () => {
-    if (!selectedPlan) return;
-    
+  const handlePurchaseOrRenew = async () => {
     setUploading(true);
     setMidtransInfo(null);
     setPaymentDetails(null);
     setError(null);
 
-    try {
-      const response = await subscriptionApi.createSubscription({
-        planId: selectedPlan,
-        paymentMethod,
-        proof: proofFile || undefined,
-      });
-
-      // Handle different response types
-      if (response.url) {
-        // Redirect for credit card/e-wallet
-        window.location.href = response.url;
-        return;
+     try {
+      let response;
+      if (subscriptionToRenew) {
+        response = await subscriptionApi.renewSubscription({
+          subscriptionId: subscriptionToRenew.id,
+          paymentMethod,
+        });
+      } else {
+        if (!selectedPlan) {
+          toast.error("Please select a plan to purchase.");
+          setUploading(false);
+          return;
+        }
+        response = await subscriptionApi.createSubscription({
+          planId: selectedPlan,
+          paymentMethod,
+        });
       }
 
-      if (response.midtrans) {
-        // Set Midtrans info for VA/QRIS
-        setMidtransInfo(response.midtrans);
-      }
+      // Handle response (same logic for both create and renew)
+      if (response.url) { window.location.href = response.url; return; }
+      if (response.midtrans) { setMidtransInfo(response.midtrans); }
+      if (response.paymentDetails) { setPaymentDetails(response.paymentDetails); }
 
-      if (response.paymentDetails) {
-        // Set payment details for manual bank transfer
-        setPaymentDetails(response.paymentDetails);
-      }
-
-      // Refresh subscription data
       await onRefreshSubscription();
       
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Payment processing failed. Please try again.';
       setError(errorMessage);
-      console.error('Purchase error:', err);
+      console.error('Purchase/Renew error:', err);
     } finally {
       setUploading(false);
     }
@@ -87,15 +87,18 @@ export default function SubscriptionPagePayment({ onRefreshSubscription }: Subsc
     return <IconComponent className="w-4 h-4" />;
   };
 
-  const isPurchaseDisabled = uploading || (paymentMethod === "BANK_TRANSFER" && !proofFile);
-
-  if (!selectedPlan) return null;
+  const isPurchaseDisabled = uploading;
+  if (!subscriptionToRenew && !selectedPlan) return null;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Payment Method</CardTitle>
-        <CardDescription>Choose how you&apos;d like to pay</CardDescription>
+     <CardHeader>
+        <CardTitle>{subscriptionToRenew ? 'Renew Subscription' : 'Payment Method'}</CardTitle>
+        <CardDescription>
+          {subscriptionToRenew 
+            ? `Choose a payment method to renew your ${subscriptionToRenew.plan.name} plan.`
+            : "Choose how you'd like to pay"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Payment Method Selection */}
@@ -151,8 +154,8 @@ export default function SubscriptionPagePayment({ onRefreshSubscription }: Subsc
         )}
 
         {/* Purchase Button */}
-        <Button
-          onClick={handlePurchase}
+      <Button
+          onClick={handlePurchaseOrRenew} 
           disabled={isPurchaseDisabled}
           className="w-full"
           size="lg"
@@ -160,7 +163,7 @@ export default function SubscriptionPagePayment({ onRefreshSubscription }: Subsc
           <div className="flex items-center">
             {renderPaymentIcon(paymentMethod)}
             <span className="ml-2">
-              {uploading ? "Processing..." : "Purchase / Renew Subscription"}
+              {uploading ? "Processing..." : (subscriptionToRenew ? 'Renew Now' : 'Purchase Subscription')}
             </span>
           </div>
         </Button>

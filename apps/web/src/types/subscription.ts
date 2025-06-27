@@ -28,6 +28,7 @@ export interface Subscription {
  endDate: string;
  paymentStatus: string;
  paymentMethod: string;
+  paymentProof?: string | null;
 }
 
 

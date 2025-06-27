@@ -152,11 +152,11 @@ export default function SubscriptionPageTemplate() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <Label className="text-sm font-medium">Plan</Label>
-                <p className="text-lg font-semibold">{subscription.plan.name}</p>
+                <p className="text-lg font-semibold">{subscription?.plan.name}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium">Price</Label>
-                <p>IDR {subscription.plan.price.toLocaleString()}</p>
+                <p>IDR {subscription?.plan.price.toLocaleString()}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium">Start Date</Label>

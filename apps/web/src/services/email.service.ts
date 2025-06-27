@@ -4,6 +4,7 @@ import { VerificationEmail } from '@/services/emails/verification-email';
 import { PasswordResetEmail } from '@/services/emails/password-reset';
 import { SubscriptionActivationEmail } from '@/services/emails/subscription-activation';
 import { SubscriptionRejectionEmail } from '@/services/emails/subscription-rejection';
+import { SubscriptionExpiredEmail } from '@/services/emails/subscription-expired';
 
 // Create transporter
 const createTransporter = () => {
@@ -171,6 +172,35 @@ export const emailService = {
       subject: `Subscription Payment Issue - ${planName}`,
       html: emailHtml,
       text: `Hi ${firstName}, there was an issue with your ${planName} subscription payment. ${rejectionReason ? `Reason: ${rejectionReason}` : ''} Please visit ${subscriptionUrl} to try again or contact support at ${supportUrl}.`,
+    });
+  },
+
+  sendSubscriptionExpiredEmail: async (
+    email: string,
+    firstName: string,
+    planName: string,
+    endDate: Date
+  ) => {
+    const renewUrl = `${process.env.NEXTAUTH_URL}/dashboard/subscription`;
+    const formattedEndDate = endDate.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const emailHtml = await render(SubscriptionExpiredEmail({
+      firstName,
+      planName,
+      endDate: formattedEndDate,
+      renewUrl,
+    }));
+
+    return sendEmail({
+      to: email,
+      subject: `Action Required: Your ${planName} subscription has expired`,
+      html: emailHtml,
+      text: `Hi ${firstName}, your ${planName} subscription expired on ${formattedEndDate}. Please renew to continue. Renew here: ${renewUrl}`,
     });
   },
 
