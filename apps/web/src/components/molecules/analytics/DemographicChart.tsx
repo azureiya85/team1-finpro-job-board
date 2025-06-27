@@ -6,22 +6,19 @@ import { getDemographicsChartData } from '@/lib/analytics/chartConfigs/demograph
 import { DemographicChartData } from '@/types/analyticsTypes';
 
 interface DemographicChartProps {
-  chartData?: DemographicChartData; // optional
+  chartData?: DemographicChartData;
 }
-
-const dummyData: DemographicChartData = {
-  labels: ['Male', 'Female', 'Non-binary', 'Prefer not to say'],
-  values: [55, 40, 3, 2],
-};
 
 export default function DemographicChart({ chartData }: DemographicChartProps) {
   const chart = useMemo(() => {
-    const source = chartData ?? dummyData;
-    return getDemographicsChartData(source);
+    if (!chartData) return null;
+    return getDemographicsChartData(chartData);
   }, [chartData]);
 
+  if (!chart) return null;
+
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4" style={{ width: '500px', height: '350px' }}>
       <ChartWrapper
         type="doughnut"
         data={chart.data}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { UserRole } from '@prisma/client';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -8,7 +9,9 @@ export async function GET(req: NextRequest) {
   const end = searchParams.get('end');
 
   try {
-    const where: any = {};
+    const where: any = {
+      role: UserRole.USER
+    };
 
     if (location && location !== 'all') {
       where.city = { name: location };

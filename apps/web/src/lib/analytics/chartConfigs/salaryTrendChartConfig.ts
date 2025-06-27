@@ -1,11 +1,7 @@
 import { ChartData, ChartOptions } from 'chart.js';
+import { TrendChartData } from '@/types/analyticsTypes';
 
-interface TrendData {
-  labels: string[];
-  values: number[];
-}
-
-export function getTrendLineChartData(data: TrendData): {
+export function getTrendLineChartData(data: TrendChartData): {
   data: ChartData<'line'>;
   options: ChartOptions<'line'>;
 } {

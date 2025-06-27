@@ -1,5 +1,4 @@
 import { ChartType, ChartData, ChartOptions } from 'chart.js';
-import { JobCategory } from '@prisma/client';
 
 export interface ChartProps {
   type: ChartType;
@@ -21,7 +20,6 @@ export interface SalaryTrendChartData {
 export interface InterestChartData {
   label: string;
   count: number;
-  category: JobCategory;
 }
 
 export interface MapData {

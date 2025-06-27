@@ -1,11 +1,8 @@
 import { ChartData, ChartOptions } from 'chart.js';
+import { DemographicChartData } from '@/types/analyticsTypes';
 
-interface DemographicData {
-  labels: string[];
-  values: number[];
-}
 
-export function getDemographicsChartData(data: DemographicData): {
+export function getDemographicsChartData(data: DemographicChartData): {
   data: ChartData<'doughnut'>;
   options: ChartOptions<'doughnut'>;
 } {
@@ -22,9 +19,11 @@ export function getDemographicsChartData(data: DemographicData): {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           position: 'right' as const,
+          align: 'center' as const,
         },
         tooltip: {
           callbacks: {
