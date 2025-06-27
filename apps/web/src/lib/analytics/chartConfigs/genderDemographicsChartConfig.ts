@@ -2,7 +2,7 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { DemographicChartData } from '@/types/analyticsTypes';
 
 
-export function getDemographicsChartData(data: DemographicChartData): {
+export function getGenderDemographicsChartData(data: DemographicChartData): {
   data: ChartData<'doughnut'>;
   options: ChartOptions<'doughnut'>;
 } {

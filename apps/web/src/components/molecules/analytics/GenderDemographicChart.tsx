@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
-import { getDemographicsChartData } from '@/lib/analytics/chartConfigs/demographicsChartConfig';
+import { getGenderDemographicsChartData } from '@/lib/analytics/chartConfigs/genderDemographicsChartConfig';
 import { DemographicChartData } from '@/types/analyticsTypes';
 
 interface DemographicChartProps {
@@ -12,7 +12,7 @@ interface DemographicChartProps {
 export default function DemographicChart({ chartData }: DemographicChartProps) {
   const chart = useMemo(() => {
     if (!chartData) return null;
-    return getDemographicsChartData(chartData);
+    return getGenderDemographicsChartData(chartData);
   }, [chartData]);
 
   if (!chart) return null;

@@ -6,6 +6,10 @@ export interface ChartProps {
   options?: ChartOptions;
   height?: number;
 }
+export interface AgeDemographicData {
+  ageRange: string;
+  count: number;
+}
 
 export interface DemographicChartData {
     labels: string[];
