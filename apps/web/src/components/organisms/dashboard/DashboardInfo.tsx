@@ -10,7 +10,6 @@ interface DashboardInfoProps {
 }
 
 export function DashboardInfo({ userRole }: DashboardInfoProps) {
-  // Recommended Solution: Select properties individually (no shallow needed, prevents re-renders)
   const profileForm = useProfileEditStore((state) => state.profileForm);
   const setProfileForm = useProfileEditStore((state) => state.setProfileForm);
   const submitProfileForm = useProfileEditStore((state) => state.submitProfileForm);

@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { User, Mail, Lock, Camera, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner'; 
+import { User, Mail, Lock, Camera, ArrowLeft, AlertCircle } from 'lucide-react';
 import { UserRole } from '@prisma/client'; 
 import { useProfileEditStore } from '@/stores/profileEditStores';
 import { DashboardInfo } from '@/components/organisms/dashboard/DashboardInfo';
@@ -29,11 +30,11 @@ export default function ProfileEditTemplate() {
   const {
     user,
     initialLoading,
-    message,
+    message, 
     activeTab,
     fetchUserData,
     setActiveTab,
-    setMessage,
+    setMessage, 
   } = useProfileEditStore();
 
   useEffect(() => {
@@ -45,19 +46,29 @@ export default function ProfileEditTemplate() {
     fetchUserData(session.user.id);
   }, [session, status, router, fetchUserData]);
 
+  useEffect(() => {
+    if (message) {
+      if (message.type === 'success') {
+        toast.success(message.text);
+      } else if (message.type === 'error') {
+        toast.error(message.text);
+      }
+      setMessage(null);
+    }
+  }, [message, setMessage]);
 
   if (initialLoading && !user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading profile...</p>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-4 text-gray-600">Loading profile...</p>
+            </div>
         </div>
-      </div>
     );
   }
 
-  if (!user && !initialLoading) { // This means fetching failed
+  if (!user && !initialLoading) { 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -99,22 +110,6 @@ export default function ProfileEditTemplate() {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
         </div>
-
-        {message && (
-          <div className={`mb-6 p-4 rounded-md flex items-center ${
-            message.type === 'success'
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {message.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 mr-2" />
-            ) : (
-              <AlertCircle className="h-5 w-5 mr-2" />
-            )}
-            {message.text}
-            <button onClick={() => setMessage(null)} className="ml-auto text-sm font-medium text-current hover:opacity-75">Dismiss</button>
-          </div>
-        )}
 
         <div className="border-b border-gray-200 mb-8">
           <nav className="-mb-px flex space-x-8">

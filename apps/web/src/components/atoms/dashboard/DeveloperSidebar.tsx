@@ -90,7 +90,7 @@ export default function DeveloperSidebar() {
     <div className="w-64 bg-card border-r border-border min-h-screen flex flex-col fixed shadow-sm">
       {/* Header */}
       <div className="p-6 border-b border-border/50">
-        <Link href="/dashboard/developer" className="flex items-center gap-3 group">
+        <Link href="/" className="flex items-center gap-3 group">
           <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center group-hover:bg-primary/90 transition-colors">
             <ShieldCheck className="w-5 h-5 text-primary-foreground" />
           </div>
