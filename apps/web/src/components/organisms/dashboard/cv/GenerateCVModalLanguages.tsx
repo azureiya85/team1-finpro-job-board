@@ -9,13 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Control, UseFormRegister, UseFormSetValue } from 'react-hook-form';
-import { ExtendedGenerateCvPayload } from './GenerateCVModal';
+import { Control, UseFormRegister, UseFormSetValue, UseFormWatch } from 'react-hook-form';
+import { ExtendedGenerateCvPayload } from './GenerateCVModalForm';
 
 interface GenerateCVModalLanguagesProps {
   control: Control<ExtendedGenerateCvPayload>;
   register: UseFormRegister<ExtendedGenerateCvPayload>;
   setValue: UseFormSetValue<ExtendedGenerateCvPayload>;
+  watch: UseFormWatch<ExtendedGenerateCvPayload>;
 }
 
 // Language proficiency levels
@@ -30,12 +31,15 @@ const proficiencyLevels = [
 export default function GenerateCVModalLanguages({ 
   control, 
   register, 
-  setValue 
+  setValue,
+  watch
 }: GenerateCVModalLanguagesProps) {
   const { fields: languageFields, append: appendLanguage, remove: removeLanguage } = useFieldArray({
     control,
     name: 'languagesArray'
   });
+
+  const watchedLanguages = watch('languagesArray');
 
   const addLanguage = () => {
     if (languageFields.length < 10) {
@@ -95,7 +99,7 @@ export default function GenerateCVModalLanguages({
               </Label>
               <Select
                 onValueChange={(value) => setValue(`languagesArray.${index}.proficiency`, value)}
-                defaultValue={field.proficiency}
+                value={watchedLanguages?.[index]?.proficiency || ''}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Select level" />

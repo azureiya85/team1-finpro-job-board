@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { professionalSummary, customSkills, languages } = validationResult.data;
+    const { professionalSummary, customSkills, languages, educationHistory } = validationResult.data;
 
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
@@ -78,6 +78,13 @@ export async function POST(request: Request) {
       }).filter(lang => lang.name && lang.proficiency) : 
       [];
 
+    const educationHistoryArray = educationHistory ? 
+      educationHistory.split(',').map(edu => {
+        const [startYear, endYear, universityName, degree] = edu.split(':').map(part => part.trim());
+        return { startYear, endYear, universityName, degree };
+      }).filter(edu => edu.startYear && edu.endYear && edu.universityName && edu.degree) : 
+      [];
+
     // 3. Prepare the data for the PDF template
     const cvData = {
       user: userData,
@@ -87,6 +94,7 @@ export async function POST(request: Request) {
       professionalSummary,
       customSkills: customSkillsArray,
       languages: languagesArray,
+      educationHistory: educationHistoryArray,
     };
 
     // 4. Generate the PDF buffer
