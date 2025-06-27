@@ -4,7 +4,7 @@ import { auth } from '@/auth';
 import { buildFilterQuery, calculateAge } from '@/lib/applicants/applicationStatsHelper';
 import { searchParamsToFilters, validateFilters } from '@/lib/applicants/filterValidationHelper';
 import type {
-  RouteAndPaginationFilters, 
+  RouteAndPaginationFilters,
   JobApplicationDetails,
 } from '@/types/applicants';
 
@@ -21,11 +21,11 @@ export async function GET(
     }
 
     const resolvedParams = await context.params;
-    const { id: companyIdFromPath, jobsId: jobIdFromPath } = resolvedParams; 
+    const { id: companyIdFromPath, jobsId: jobIdFromPath } = resolvedParams;
     const { searchParams } = new URL(request.url);
 
     const baseClientFilters = searchParamsToFilters(searchParams);
-    
+
     const routeFilters: Omit<RouteAndPaginationFilters, 'jobPostingId'> & { page?: number; limit?: number } = {
       ...baseClientFilters,
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1,
@@ -34,9 +34,9 @@ export async function GET(
 
     const { isValid, errors: validationErrors } = validateFilters(routeFilters); // Pass without jobPostingId if it expects it
     if (!isValid) {
-      return NextResponse.json({ 
-        message: "Invalid filter parameters", 
-        errors: validationErrors 
+      return NextResponse.json({
+        message: "Invalid filter parameters",
+        errors: validationErrors
       }, { status: 400 });
     }
 
@@ -60,9 +60,9 @@ export async function GET(
 
     const finalWhereClause: Prisma.JobApplicationWhereInput = {
       jobPostingId: jobIdFromPath,
-      ...dynamicWhereFromHelper, 
+      ...dynamicWhereFromHelper,
     };
-    
+
     const skip = (routeFilters.page! - 1) * routeFilters.limit!;
     const take = routeFilters.limit!;
 
@@ -84,7 +84,7 @@ export async function GET(
             city: { select: { name: true } },
           },
         },
-        jobPosting: { 
+        jobPosting: {
           select: {
             id: true,
             title: true,
@@ -104,6 +104,9 @@ export async function GET(
             scheduledAt: true,
             status: true,
             interviewType: true,
+            duration: true, 
+            location: true, 
+            notes: true,   
           },
           orderBy: { scheduledAt: 'desc' },
           take: 1,
@@ -165,7 +168,7 @@ export async function GET(
         hasNext: routeFilters.page! * routeFilters.limit! < totalCount,
         hasPrev: routeFilters.page! > 1,
       },
-      appliedFilters: routeFilters, 
+      appliedFilters: routeFilters,
     };
 
     return NextResponse.json(response);

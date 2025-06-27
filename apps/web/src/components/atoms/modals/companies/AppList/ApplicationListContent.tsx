@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from 'react';
 import cn from 'classnames';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,10 +12,8 @@ import { getStatusDisplay } from '@/lib/applicants/statusValidation';
 import { getStatusAction } from '@/lib/statusConfig';
 import { formatEducationLevelDisplay } from '@/lib/utils';
 import type { JobApplicationDetails } from '@/types/applicants';
-import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal';
-import type { InterviewSchedule } from '@prisma/client';
 
-type InterviewModalData = JobApplicationDetails['latestInterview'];
+type LatestInterviewData = NonNullable<JobApplicationDetails['latestInterview']>;
 
 interface ApplicantListContentProps {
   applicants: JobApplicationDetails[];
@@ -24,64 +21,18 @@ interface ApplicantListContentProps {
   onCvPreview: (cvUrl: string | null) => void;
   onScheduleInterview: (
     applicationId: string,
-    scheduleData: {
-      id?: string;
-      scheduledAt: Date;
-      duration: number;
-      interviewType: 'ONLINE' | 'ONSITE';
-      location?: string;
-      notes?: string;
-    },
+    scheduleData: LatestInterviewData | null,
     isRescheduling: boolean
   ) => void;
-  companyId: string;
+  companyId: string; // Kept in case it's needed for future actions
 }
 
-export default function ApplicantListContent({ 
-  applicants, 
-  onStatusChange, 
+export default function ApplicantListContent({
+  applicants,
+  onStatusChange,
   onCvPreview,
   onScheduleInterview,
-  companyId
 }: ApplicantListContentProps) {
-  const [selectedInterview, setSelectedInterview] = useState<{
-    applicationId: string;
-    jobId: string;
-    candidateId: string;
-    interview?: InterviewModalData; 
-  } | null>(null);
-  const [isModalOpen, setModalOpen] = useState(false);
-  
-  const handleOpenInterviewModal = (
-    applicationId: string,
-    jobId: string,
-    candidateId: string,
-    interview?: InterviewModalData
-  ) => {
-    setSelectedInterview({ applicationId, jobId, candidateId, interview });
-    setModalOpen(true);
-  };
-
-  const handleInterviewUpdate = (interview: InterviewSchedule) => {
-    const scheduleData = {
-      id: interview.id,
-      scheduledAt: new Date(interview.scheduledAt),
-      duration: interview.duration,
-      interviewType: interview.interviewType as 'ONLINE' | 'ONSITE',
-      location: interview.location || undefined,
-      notes: interview.notes || undefined
-    };
-
-    if (selectedInterview) {
-      const isRescheduling = !!selectedInterview.interview;
-      onScheduleInterview(selectedInterview.applicationId, scheduleData, isRescheduling);
-    }
-  };
-
-  const handleModalClose = () => {
-    setModalOpen(false);
-    setSelectedInterview(null);
-  };
 
   return (
     <div className="w-full">
@@ -155,9 +106,9 @@ export default function ApplicantListContent({
                 </TableCell>
                 <TableCell className="text-center">
                   {app.cvUrl ? (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => onCvPreview(app.cvUrl)}
                       className="h-8 px-2 text-xs"
                     >
@@ -185,17 +136,10 @@ export default function ApplicantListContent({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleOpenInterviewModal(
-                        app.id,
-                        app.jobPosting?.id || '',
-                        app.applicant.id,
-                        // Pass app.latestInterview if status is INTERVIEW_SCHEDULED and it exists, otherwise pass undefined
-                        app.status === ApplicationStatus.INTERVIEW_SCHEDULED && app.latestInterview ? 
-                          app.latestInterview : undefined 
-                      )}
+                      onClick={() => onScheduleInterview(app.id, app.latestInterview || null, !!app.latestInterview)}
                       className="h-8 px-2 text-xs"
                     >
-                      {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? 'Reschedule' : 'Schedule Interview'}
+                      {app.status === ApplicationStatus.INTERVIEW_SCHEDULED ? 'Reschedule' : 'Schedule'}
                     </Button>
                   ) : (
                     <span className="text-xs text-gray-400">
@@ -204,7 +148,7 @@ export default function ApplicantListContent({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge 
+                  <Badge
                     className={`${statusInfo.bgColor} ${statusInfo.color} hover:${statusInfo.bgColor} px-2 py-1 text-xs whitespace-nowrap`}
                   >
                     {statusInfo.label}
@@ -225,7 +169,7 @@ export default function ApplicantListContent({
                         const actionConfig = getStatusAction(status);
                         const Icon = actionConfig.icon;
                         return (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             key={status}
                             onClick={() => onStatusChange(app.id, status)}
                             disabled={app.status === status}
@@ -244,18 +188,6 @@ export default function ApplicantListContent({
           })}
         </TableBody>
       </Table>
-      {selectedInterview && (
-        <InterviewScheduleModal
-          isOpen={isModalOpen}
-          onClose={handleModalClose}
-          applicationId={selectedInterview.applicationId}
-          jobId={selectedInterview.jobId}
-          candidateId={selectedInterview.candidateId}
-          companyId={companyId}
-          interview={selectedInterview.interview}
-          onInterviewUpdate={handleInterviewUpdate}
-        />
-      )}
     </div>
   );
 }

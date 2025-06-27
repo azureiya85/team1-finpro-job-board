@@ -5,8 +5,8 @@ import { useCompanyProfileStore } from '@/stores/companyProfileStores';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
-import type { ApplicationFilters } from '@/types/applicants';
-import { getStatusDisplay } from '@/lib/applicants/statusValidation'; 
+import type { ApplicationFilters, JobApplicationDetails } from '@/types/applicants';
+import { getStatusDisplay } from '@/lib/applicants/statusValidation';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
 import ApplicationListFilter from './AppList/ApplicationListFilter';
@@ -15,6 +15,8 @@ import ApplicationListCVPreview from './AppList/ApplicationListCVPreview';
 import ApplicantListContent from './AppList/ApplicationListContent';
 import RejectionReasonDialog from './AppList/RejectionReasonDialog';
 import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal';
+
+type LatestInterviewData = NonNullable<JobApplicationDetails['latestInterview']>;
 
 export default function ApplicantListModal() {
   const {
@@ -31,7 +33,7 @@ export default function ApplicantListModal() {
   const [showFullCvPreview, setShowFullCvPreview] = useState<string | null>(null);
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
   const [pendingRejection, setPendingRejection] = useState<{ applicationId: string; status: ApplicationStatus } | null>(null);
-  
+
   // State untuk modal interview
   const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<{
@@ -143,7 +145,8 @@ export default function ApplicantListModal() {
     setShowFullCvPreview(cvUrl);
   };
 
-  const handleScheduleInterview = (applicationId: string, scheduleData: any, isRescheduling: boolean) => {
+  // FIX: Replaced 'any' with a specific, safe type.
+  const handleScheduleInterview = (applicationId: string, scheduleData: LatestInterviewData | null, isRescheduling: boolean) => {
     console.log('handleScheduleInterview - Input Data:', {
       applicationId,
       scheduleData,
@@ -161,7 +164,7 @@ export default function ApplicantListModal() {
     setSelectedInterview({
       applicationId,
       candidateId: applicant.applicant.id,
-      interview: isRescheduling ? {
+      interview: isRescheduling && scheduleData ? {
         id: scheduleData.id,
         jobApplicationId: applicationId,
         jobPostingId: selectedJobForApplicants?.id || '',
@@ -174,7 +177,7 @@ export default function ApplicantListModal() {
         notes: scheduleData.notes || '',
         createdAt: new Date(),
         updatedAt: new Date(),
-        reminderSent: false // Menambahkan properti wajib yang sebelumnya hilang
+        reminderSent: false
       } : undefined
     });
     setIsInterviewModalOpen(true);
@@ -249,11 +252,10 @@ export default function ApplicantListModal() {
                 </div>
               ) : (
                 <ApplicantListContent
-                  applicants={applicants}
-                  onStatusChange={handleStatusChange}
-                  onCvPreview={handleCvPreview}
-                  onScheduleInterview={handleScheduleInterview}
-                />
+                      applicants={applicants}
+                      onStatusChange={handleStatusChange}
+                      onCvPreview={handleCvPreview}
+                      onScheduleInterview={handleScheduleInterview} companyId={''}                />
               )}
             </ScrollArea>
           </div>

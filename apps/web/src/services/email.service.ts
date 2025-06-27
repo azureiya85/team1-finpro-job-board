@@ -26,7 +26,7 @@ interface EmailOptions {
   text?: string;
 }
 
-const sendEmail = async ({ to, subject, html, text }: EmailOptions) => {
+export const sendEmail = async ({ to, subject, html, text }: EmailOptions) => {
   const transporter = createTransporter();
   
   const mailOptions = {
