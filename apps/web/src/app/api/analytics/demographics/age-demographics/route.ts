@@ -8,10 +8,11 @@ export async function GET(req: NextRequest) {
       where: {
         role: 'USER',
         dateOfBirth: { not: null },
+        jobApplications: { some: {} }
       },
       select: {
         dateOfBirth: true,
-      },
+      },  
     });
 
     const currentYear = new Date();

@@ -10,7 +10,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const where: any = {
-      role: UserRole.USER
+      role: UserRole.USER,
+      jobApplications: { some: {} }
     };
 
     if (location && location !== 'all') {
