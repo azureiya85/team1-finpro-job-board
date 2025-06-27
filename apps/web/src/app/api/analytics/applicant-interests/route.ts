@@ -1,36 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { JobCategory } from '@prisma/client';
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
+export async function GET() {
+  try {
+    // Mengambil data aplikasi dan menghitung berdasarkan kategori
+    const applicantInterests = await prisma.jobApplication.groupBy({
+      by: ['jobPostingId'],
+      _count: {
+        _all: true
+      },
+      where: {
+        jobPosting: {
+          isActive: true
+        }
+      }
+    });
 
-  const start = searchParams.get('start');
-  const end = searchParams.get('end');
-  const location = searchParams.get('location'); // e.g., cityId
+    // Mengambil job posting untuk mendapatkan kategori
+    const jobPostings = await prisma.jobPosting.findMany({
+      where: {
+        id: {
+          in: applicantInterests.map(item => item.jobPostingId)
+        }
+      },
+      select: {
+        id: true,
+        category: true
+      }
+    });
 
-  const where: any = {};
+    // Membuat mapping jobPosting ke kategori
+    const jobCategoryMap = jobPostings.reduce((acc, job) => {
+      acc[job.id] = job.category;
+      return acc;
+    }, {} as Record<string, JobCategory>);
 
-  if (start && end) {
-    where.createdAt = {
-      gte: new Date(start),
-      lte: new Date(end),
-    };
+    // Menghitung total aplikasi per kategori
+    const categoryCount = applicantInterests.reduce((acc, item) => {
+      const category = jobCategoryMap[item.jobPostingId];
+      if (category) {
+        acc[category] = (acc[category] || 0) + item._count._all;
+      }
+      return acc;
+    }, {} as Record<JobCategory, number>);
+
+    // Format data untuk response
+    const formattedData = Object.entries(categoryCount).map(([category, count]) => ({
+      label: category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      count,
+      category
+    }));
+
+    return Response.json(formattedData);
+  } catch (error) {
+    console.error('Error fetching applicant interests:', error);
+    return Response.json({ error: 'Failed to fetch applicant interests' }, { status: 500 });
   }
-
-  if (location && location !== 'all') {
-    where.cityId = location;
-  }
-
-  const result = await prisma.jobPosting.groupBy({
-    by: ['category'],
-    where,
-    _count: true,
-  });
-
-  const formatted = result.map((item) => ({
-    label: item.category || 'Unknown',
-    count: item._count,
-  }));
-
-  return NextResponse.json(formatted);
 }

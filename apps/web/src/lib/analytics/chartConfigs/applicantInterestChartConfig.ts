@@ -10,10 +10,10 @@ export function getInterestChartData(data: InterestChartData[]): {
       labels: data.map(d => d.label),
       datasets: [
         {
-          label: 'Applicants',
+          label: 'Number of Applicants',
           data: data.map(d => d.count),
-          backgroundColor: 'rgba(75, 192, 192, 0.5)',
-          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: data.map(() => `hsla(${Math.random() * 360}, 70%, 50%, 0.5)`),
+          borderColor: data.map(() => `hsla(${Math.random() * 360}, 70%, 50%, 1)`),
           borderWidth: 1,
         },
       ],
@@ -24,14 +24,30 @@ export function getInterestChartData(data: InterestChartData[]): {
         y: {
           beginAtZero: true,
           ticks: {
-            stepSize: 5,
+            stepSize: 1,
           },
+          title: {
+            display: true,
+            text: 'Number of Applicants'
+          }
         },
+        x: {
+          ticks: {
+            autoSkip: false,
+            maxRotation: 45,
+            minRotation: 45
+          }
+        }
       },
       plugins: {
         legend: {
           display: false,
         },
+        tooltip: {
+          callbacks: {
+            label: (context) => `Applicants: ${context.parsed.y}`
+          }
+        }
       },
     },
   };
