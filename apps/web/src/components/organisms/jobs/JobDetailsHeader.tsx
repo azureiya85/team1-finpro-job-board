@@ -5,30 +5,11 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Briefcase,
-  MapPin,
-  Building,
-  Clock,
-  DollarSign,
-  Wifi,
-  Info,
-  Users,
-  Tag,
-  ArrowRight,
-  Star,
-  TrendingUp,
-  Bookmark,
-  LogIn
+import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Info, Users, Tag, ArrowRight, Star, TrendingUp, Bookmark, LogIn, 
 } from 'lucide-react';
 import { JobPostingFeatured } from '@/types';
 import { formatRelativeDate, formatSalary, cn } from '@/lib/utils';
-import {
-  employmentTypeLabels,
-  experienceLevelLabels,
-  companySizeLabels,
-  categoryLabels
-} from '@/lib/jobConstants';
+import { employmentTypeLabels, experienceLevelLabels, companySizeLabels, categoryLabels } from '@/lib/jobConstants';
 import { EmploymentType } from '@prisma/client';
 import { useAuthStore } from '@/stores/authStores';
 import { useCVModalStore } from '@/stores/CVModalStores';

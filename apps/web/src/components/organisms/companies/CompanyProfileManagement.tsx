@@ -92,7 +92,6 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
     }
   }, [company, reset]);
 
-  // Watch for form changes
   useEffect(() => {
     const subscription = watch((_value, { name }) => {
       if (company && name) { 
@@ -102,7 +101,6 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
     return () => subscription.unsubscribe();
   }, [watch, company]);
 
-  // Handle description changes
   const handleDescriptionChange = useCallback((newContent: string) => {
     setDescriptionContent(newContent);
     if (company) {
@@ -110,7 +108,6 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
     }
   }, [company]);
 
-  // Toggle field editability
   const toggleFieldEdit = (field: keyof EditableFieldsState) => {
     setEditableFields(prev => ({
       ...prev,
@@ -118,7 +115,6 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
     }));
   };
 
-  // Save changes handler
   const handleSaveChanges = async (data: UpdateCompanyFormData) => {
     if (!company) return;
     
@@ -153,7 +149,6 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
     }
   };
 
-  // Discard changes handler
   const handleDiscardChanges = () => {
     if (company) {
       reset({ 
@@ -183,7 +178,6 @@ export default function CompanyProfileManagement({ className }: CompanyProfileEd
     toast.info('Changes discarded');
   };
 
-  // Loading state
   if (!company) {
     return (
       <div className="animate-pulse space-y-6">

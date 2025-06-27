@@ -11,7 +11,7 @@ export type UserProfile = User & {
 };
 
 interface ProfileDisplayProps {
-  user: UserProfile | null; // Allow null for loading state
+  user: UserProfile | null;
 }
 
 const genderLabels: Record<Gender, string> = {
@@ -95,7 +95,7 @@ export default function ProfileDisplay({ user }: ProfileDisplayProps) {
             )}
           </div>
           <Link
-            href="/dashboard/profile/edit" // Or your actual edit page route
+            href="/dashboard/profile/edit"
             className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors whitespace-nowrap"
           >
             <Edit3 className="w-4 h-4" />

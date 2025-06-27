@@ -35,23 +35,19 @@ export function validateInterviewTime(scheduledAt: Date): ValidationResult {
   return { isValid: true };
 }
 
-// Format durasi (misal: "60 menit")
 export function formatDuration(minutes: number): string {
   return `${minutes} minutes`;
 }
 
-// Cek apakah interview sudah lewat
 export function isInterviewPassed(scheduledAt: Date, duration: number): boolean {
   const endTime = addMinutes(scheduledAt, duration);
   return isAfter(new Date(), endTime);
 }
 
-// Cek apakah interview belum mulai
 export function isInterviewUpcoming(scheduledAt: Date): boolean {
   return isBefore(new Date(), scheduledAt);
 }
 
-// Format waktu relatif (misal: "2 hari yang lalu", "dalam 3 jam")
 export function formatRelativeTime(date: Date): string {
   return formatDistanceToNow(date, { addSuffix: true });
 }

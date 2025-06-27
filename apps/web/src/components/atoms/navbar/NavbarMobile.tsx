@@ -3,12 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  User, 
-  Menu, 
-  X, 
-  LogOut
-} from 'lucide-react';
+import { User, Menu, X, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStores';
 import { useNavbarStore } from '@/stores/navbarStore';
 import { Button } from '@/components/ui/button';

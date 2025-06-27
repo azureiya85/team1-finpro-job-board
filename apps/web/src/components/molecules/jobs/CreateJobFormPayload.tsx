@@ -42,12 +42,9 @@ export const validateForm = (formData: FormData): boolean => {
 };
 
 export const preparePayload = (formData: FormData, companyData: CompanyData | null): JobPayload => {
-  // Bersihkan array
   const cleanRequirements = formData.requirements.filter(req => req.trim() !== '');
   const cleanBenefits = formData.benefits.filter(benefit => benefit.trim() !== '');
   const cleanTags = formData.tags.filter(tag => tag.trim() !== '');
-
-  // Persiapkan payload sesuai skema prisma
   const payload: JobPayload = {
     title: formData.title.trim(),
     description: formData.description.trim(),

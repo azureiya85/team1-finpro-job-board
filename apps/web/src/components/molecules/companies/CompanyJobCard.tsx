@@ -9,7 +9,6 @@ import type { JobPostingInStore } from '@/types';
 import { employmentTypeLabels, experienceLevelLabels, workTypeLabels } from '@/lib/jobConstants';
 import { useAuthStore } from '@/stores/authStores';
 import { useCVModalStore } from '@/stores/CVModalStores';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

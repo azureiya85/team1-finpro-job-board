@@ -36,16 +36,10 @@ const statusConfig = {
   },
 } as const;
 
-export function InterviewStatusBadge({ 
-  status, 
-  scheduledAt,
-  duration,
-  className 
-}: InterviewStatusBadgeProps) {
+export function InterviewStatusBadge({ status, scheduledAt, duration, className }: InterviewStatusBadgeProps) {
   const config = statusConfig[status];
   const Icon = config.icon;
   
-  // Jika interview sudah lewat tapi statusnya masih SCHEDULED
   const isOverdue = status === 'SCHEDULED' && 
     scheduledAt && 
     duration && 

@@ -63,7 +63,7 @@ export default function CompanyProfileBanner({
 
   const removeBanner = () => {
     setValue('banner', '', { shouldDirty: true, shouldTouch: true });
-    setUploadError(''); // Clear error when removing banner
+    setUploadError('');
   };
 
   return (

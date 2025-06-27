@@ -13,10 +13,8 @@ interface TestTableProps {
 export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
   const router = useRouter();
 
-  // Validasi data test
   const validTests = tests.filter(test => test && test.id);
 
-  // Handler untuk delete dengan validasi
   const handleDelete = async (testId: string) => {
     if (!testId) {
       console.error('Test ID is undefined');

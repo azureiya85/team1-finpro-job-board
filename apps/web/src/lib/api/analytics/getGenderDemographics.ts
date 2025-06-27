@@ -14,7 +14,6 @@ export async function getDemographics(params: DemographicsParams) {
   if (params.start) query.append('start', params.start);
   if (params.end) query.append('end', params.end);
 
-  // Mengubah endpoint ke path yang benar
   const res = await fetch(`/api/analytics/demographics/gender-demographics?${query.toString()}`);
 
   if (!res.ok) {

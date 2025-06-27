@@ -6,12 +6,7 @@ import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Info, Users, Tren
 import { JobPostingFeatured } from '@/types'; 
 import { formatRelativeDate, formatSalary, cn } from '@/lib/utils';
 import { EmploymentType, ExperienceLevel, JobCategory } from '@prisma/client';
-import { 
-  employmentTypeLabels, 
-  experienceLevelLabels, 
-  companySizeLabels, 
-  categoryLabels 
-} from '@/lib/jobConstants';
+import { employmentTypeLabels, experienceLevelLabels, companySizeLabels, categoryLabels } from '@/lib/jobConstants';
 
 interface JobCardProps {
   job: JobPostingFeatured & { 

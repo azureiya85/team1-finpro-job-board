@@ -23,8 +23,8 @@ interface SalaryTrendParams {
     const raw = await res.json();
   
     return {
-      labels: raw.map((item: any) => item.month),     // ex: "Jan 2025"
-      values: raw.map((item: any) => item.avgSalary), // ex: 5200000
+      labels: raw.map((item: any) => item.month),     
+      values: raw.map((item: any) => item.avgSalary), 
     };
   }
   

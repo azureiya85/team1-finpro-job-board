@@ -2,9 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { TestCreationForm } from '@/components/organisms/test/TestCreationForm';
-import { TestQuestionList } from '@/components/organisms/test/TestQuestionList';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateTestData } from '@/types/testTypes';
 import { toast } from 'sonner';
 import { useEffect, useState } from 'react';

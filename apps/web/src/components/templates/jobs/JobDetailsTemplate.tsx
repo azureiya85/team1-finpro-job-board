@@ -11,15 +11,14 @@ import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal';
 
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
-// Create axios instance with proper configuration
 const apiClient = axios.create({
   baseURL: EXPRESS_API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true, // Important for CORS
+  withCredentials: true,
 });
 
 export default function JobsDetailsTemplate() {

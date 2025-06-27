@@ -28,7 +28,7 @@ export default function CompanyJobsManagement() {
   const companyId = company?.id;
 
   const fetchJobs = useCallback(async (cId: string, page: number, limit: number, search?: string) => {
-    if (!cId) return; // Guard against undefined companyId
+    if (!cId) return;
     setIsLoadingJobs(true);
     setJobsError(null);
     try {
@@ -55,7 +55,6 @@ export default function CompanyJobsManagement() {
         limit: limit,
       });
       
-      // Update the shared total jobs count
       setTotalJobs(data.pagination.total);
       
     } catch (error) {
@@ -67,14 +66,12 @@ export default function CompanyJobsManagement() {
     }
   }, [setIsLoadingJobs, setJobsError, setJobs, setJobPagination, setTotalJobs]); 
 
-  // Initial fetch and page change fetch
   useEffect(() => {
     if (companyId) {
       fetchJobs(companyId, jobPagination.page, jobPagination.limit, searchTerm || undefined);
     }
   }, [companyId, jobPagination.page, jobPagination.limit, fetchJobs, searchTerm]); 
 
-  // Debounced search effect
   useEffect(() => {
     if (!companyId) return;
     const handler = setTimeout(() => {

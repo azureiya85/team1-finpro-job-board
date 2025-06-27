@@ -17,15 +17,14 @@ interface JobDetailsRelatedProps {
   currentJob: JobPostingFeatured;
 }
 
-// Create axios instance with proper configuration
 const apiClient = axios.create({
   baseURL: EXPRESS_API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true, // Important for CORS
+  withCredentials: true,
 });
 
 export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
@@ -33,14 +32,10 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Use the scroll helper hook
   const { scrollState, scrollLeft, scrollRight } = useHorizontalScroll(
     scrollContainerRef, 
     relatedJobs.length
   );
-
-  // Fetch related jobs with multi-stage attempts
   const fetchRelatedJobs = useCallback(async (attempt = 1) => {
     if (attempt === 1) {
       setIsLoading(true);
@@ -53,15 +48,11 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
       if (!queryString.includes('take=')) {
         console.warn("Query string seems empty, might not fetch anything useful.", queryString);
       }
-
-      // Use the configured axios instance
       const response = await apiClient.get(`/jobs?${queryString}`, {
       });
-
       const responseData: unknown = response.data;
       const fetchedJobsArray = parseJobsResponse(responseData);
       const filteredJobs = filterRelatedJobs(fetchedJobsArray, currentJob.id, 5);
-
       const MAX_ATTEMPTS = 4; 
       if (filteredJobs.length >= 3 || attempt >= MAX_ATTEMPTS) {
         setRelatedJobs(filteredJobs);
@@ -103,12 +94,10 @@ export function JobDetailsRelated({ currentJob }: JobDetailsRelatedProps) {
     }
   }, [currentJob]); 
 
-  // Initial fetch when currentJob.id changes
   useEffect(() => {
     if (currentJob.id) { 
       fetchRelatedJobs(1); 
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps 
   }, [currentJob.id]); 
 
   if (isLoading) {

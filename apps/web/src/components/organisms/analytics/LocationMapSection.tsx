@@ -7,13 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { LocationData } from '@/types/analyticsTypes';
 import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 
-// ⬅️ Dynamic import agar LocationMap hanya dirender di client
 const LocationMap = dynamic(() => import('@/components/molecules/analytics/LocationMap'), {
   ssr: false,
 });
 
 export default function LocationMapSection() {
-  const { filters } = useAnalyticsFilters(); // 🔁 Ambil langsung dari context
+  const { filters } = useAnalyticsFilters();
   const [locationData, setLocationData] = useState<LocationData[]>([]);
   const [loading, setLoading] = useState(true);
 

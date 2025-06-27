@@ -5,7 +5,7 @@ import ApplicantInterestChart from '@/components/molecules/analytics/ApplicantIn
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ApplicantInterestsSection() {
-  const { data, isLoading } = useApplicantInterestChart(); // Jika mendukung filter, bisa ditambahkan dari context
+  const { data, isLoading } = useApplicantInterestChart();
 
   return (
     <section className="space-y-4">

@@ -34,7 +34,6 @@ export async function GET(req: NextRequest) {
       else if (age >= 55) ageGroups['55+']++;
     });
 
-    // Format data sesuai dengan interface AgeDemographicData
     const result = Object.entries(ageGroups).map(([ageRange, count]) => ({
       ageRange,
       count,

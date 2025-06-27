@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { JobCategory } from '@prisma/client';
 
 export async function GET() {
   try {
-    // Mengambil data aplikasi dan menghitung berdasarkan kategori
     const applicantInterests = await prisma.jobApplication.groupBy({
       by: ['jobPostingId'],
       _count: {
@@ -17,7 +15,6 @@ export async function GET() {
       }
     });
 
-    // Mengambil job posting untuk mendapatkan kategori
     const jobPostings = await prisma.jobPosting.findMany({
       where: {
         id: {
@@ -30,13 +27,11 @@ export async function GET() {
       }
     });
 
-    // Membuat mapping jobPosting ke kategori
     const jobCategoryMap = jobPostings.reduce((acc, job) => {
       acc[job.id] = job.category;
       return acc;
     }, {} as Record<string, JobCategory>);
-
-    // Menghitung total aplikasi per kategori
+  
     const categoryCount = applicantInterests.reduce((acc, item) => {
       const category = jobCategoryMap[item.jobPostingId];
       if (category) {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { toast } from 'sonner';
 import cn from 'classnames';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,11 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FileText, MoreHorizontal } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
+import { ApplicationStatus } from '@prisma/client';
 import { getStatusDisplay } from '@/lib/applicants/statusValidation';
 import { getStatusAction } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 import { formatEducationLevelDisplay } from '@/lib/utils';
-import { formatDateTime } from '@/lib/dateTimeUtils';
 import type { JobApplicationDetails } from '@/types/applicants';
 import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal'
 
@@ -49,10 +47,8 @@ export default function ApplicantListContent({
   applicants, 
   onStatusChange, 
   onCvPreview,
-  onScheduleInterview,
   companyId
 }: ApplicantListContentProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<{
     applicationId: string;
     jobId: string;

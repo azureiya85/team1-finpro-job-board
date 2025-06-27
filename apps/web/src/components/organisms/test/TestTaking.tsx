@@ -15,12 +15,11 @@ interface TestFormProps {
   questions: Question[];
   timeLimit: number;
   passingScore?: number;
-  testId: string; // Tambahkan testId sebagai prop
+  testId: string;
   onSubmit: (answers: Record<string, string>) => void;
 }
 
 export function TestTaking({ questions, timeLimit, testId, onSubmit }: TestFormProps) {
-  // Gunakan testId dari props untuk konsistensi
   const answersKey = `test_answers_${testId}`;
   
   const [answers, setAnswers] = useState<Record<string, string>>(() => {
@@ -35,15 +34,11 @@ export function TestTaking({ questions, timeLimit, testId, onSubmit }: TestFormP
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleTimeUp = () => {
     handleSubmit(true);
   };
-
-  // Gunakan testId yang sama untuk timer
   const timeLeft = useTestTimer(testId, timeLimit, handleTimeUp);
 
-  // Simpan jawaban ke localStorage setiap kali berubah
   useEffect(() => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(answersKey, JSON.stringify(answers));
@@ -70,7 +65,6 @@ export function TestTaking({ questions, timeLimit, testId, onSubmit }: TestFormP
 
       await onSubmit(answers);
 
-      // Bersihkan localStorage
       localStorage.removeItem(`test_timer_${testId}`);
       localStorage.removeItem(answersKey);
     } catch (error) {

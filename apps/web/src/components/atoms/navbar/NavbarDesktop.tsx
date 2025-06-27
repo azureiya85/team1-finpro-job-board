@@ -3,23 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { 
-  User, 
-  LogOut,
-  Settings,
-  Heart,
-  FileText,
-  Crown,
-  Building2,
-  Loader2
-} from 'lucide-react';
+import { User, LogOut, Settings, Heart, FileText, Crown, Building2, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStores';
 import { useNavbarStore } from '@/stores/navbarStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
+import { DropdownMenu, DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,

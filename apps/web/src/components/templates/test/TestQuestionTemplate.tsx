@@ -122,7 +122,6 @@ export function TestQuestionTemplate() {
         throw new Error('Failed to submit test');
       }
 
-      // Bersihkan localStorage setelah submit berhasil
       localStorage.removeItem(`test_timer_${params.testId}`);
       localStorage.removeItem(`test_answers_${params.testId}`);
       setTest(null);

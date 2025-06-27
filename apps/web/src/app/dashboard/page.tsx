@@ -7,7 +7,7 @@ import ApplicationDetailModal from '@/components/atoms/modals/dashboard/Applicat
 import { FileText, AlertTriangle } from 'lucide-react';
 
 export default function MyApplicationsPage() {
-  const { user } = useAuthStore(); // Or however you get the current user's ID
+  const { user } = useAuthStore();
   const [applications, setApplications] = useState<ApplicationWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function MyApplicationsPage() {
       };
       fetchApplications();
     } else {
-      setIsLoading(false); // No user ID, nothing to load
+      setIsLoading(false);
     }
   }, [user?.id]);
 

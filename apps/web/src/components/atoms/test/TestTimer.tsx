@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 interface TestTimerProps {
-  timeLeft: number; // dalam detik
+  timeLeft: number;
   isWarning: boolean;
   onTimeUp?: () => void;
 }

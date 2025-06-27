@@ -23,7 +23,6 @@ interface LocationMapProps {
   filters: AnalyticsFilters;
 }
 
-// Helper untuk ambil cityId dari filters.location
 function getLocationId(location: AnalyticsFilters['location']): string | null {
   return typeof location !== 'string' ? location.id : null;
 }

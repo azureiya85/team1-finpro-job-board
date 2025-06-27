@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default function AnalyticsDetailPage({ params }: PageProps) {
-  const { period } = use(params); // ✅ Gunakan use()
+  const { period } = use(params);
 
   const titleMap: Record<typeof period, string> = {
     salary: 'Salary Trends',

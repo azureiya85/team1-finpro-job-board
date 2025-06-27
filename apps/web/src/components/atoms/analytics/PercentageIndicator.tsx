@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PercentageIndicatorProps {
-  value: number; // e.g. 12.5 or -7.3
+  value: number;
 }
 
 export default function PercentageIndicator({ value }: PercentageIndicatorProps) {

@@ -28,7 +28,7 @@ interface InterviewScheduleModalProps {
   jobId: string;
   candidateId: string;
   companyId: string;
-  interview?: InterviewSchedule | null; // Ubah tipe di sini
+  interview?: InterviewSchedule | null;
   onInterviewUpdate?: (interview: InterviewSchedule) => void;
 }
 

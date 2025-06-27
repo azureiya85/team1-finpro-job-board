@@ -13,7 +13,6 @@ import {
   FileText
 } from 'lucide-react';
 
-// Complete status configuration for badges and UI elements
 export const statusConfig: Record<
   ApplicationStatus,
   {
@@ -132,7 +131,6 @@ export const statusActionConfig: Record<ApplicationStatus, {
   }
 };
 
-// Helper function to get status action configuration
 export const getStatusAction = (status: ApplicationStatus) => {
   return statusActionConfig[status] || { 
     icon: Clock, 
@@ -141,7 +139,6 @@ export const getStatusAction = (status: ApplicationStatus) => {
   };
 };
 
-// Application status order for timeline progression
 export const statusOrder: ApplicationStatus[] = [
   ApplicationStatus.PENDING,
   ApplicationStatus.REVIEWED,

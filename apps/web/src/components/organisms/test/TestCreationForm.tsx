@@ -40,7 +40,7 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
       explanation: '',
       createdAt: new Date(),
       updatedAt: new Date(),
-      testId: '', // Akan diisi saat test dibuat
+      testId: '',
       isValid: true
     };
     setQuestions([...questions, newQuestion]);

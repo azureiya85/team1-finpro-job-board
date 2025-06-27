@@ -1,15 +1,7 @@
 'use client';
 
-import {
-  ApplicationStatus,
-  InterviewSchedule,
-} from '@prisma/client';
-import {
-  X,
-  CheckCircle,
-  Activity,
-  Clock,
-} from 'lucide-react';
+import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
+import { X, CheckCircle, Activity, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { statusConfig, statusOrder } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
 
@@ -32,7 +24,6 @@ export default function ApplicationDetailsTimeline({
   interviewSchedules 
 }: ApplicationDetailsTimelineProps) {
 
-  // Timeline steps definition
   const timelineSteps = [
     { name: 'Applied', status: ApplicationStatus.PENDING, date: createdAt },
     {
@@ -47,7 +38,7 @@ export default function ApplicationDetailsTimeline({
     },
     {
       name: 'Interview Stage',
-      status: ApplicationStatus.INTERVIEW_SCHEDULED, // Represents the start of interview process
+      status: ApplicationStatus.INTERVIEW_SCHEDULED,
       date: interviewSchedules.length > 0 ? interviewSchedules[0].scheduledAt : null,
     },
     {
@@ -57,7 +48,6 @@ export default function ApplicationDetailsTimeline({
     },
   ];
 
-  // Filter out Interview Stage if no interviews and status is PENDING/REVIEWED
   const filteredTimelineSteps = timelineSteps.filter(step => {
 
     if (step.name === 'Test Stage') {
@@ -76,12 +66,12 @@ export default function ApplicationDetailsTimeline({
   });
 
   const getStepVisualState = (
-    stepTargetStatus: ApplicationStatus | null, // The status this timeline step represents
+    stepTargetStatus: ApplicationStatus | null,
     currentAppStatus: ApplicationStatus
   ): 'completed' | 'current' | 'upcoming' | 'skipped' => {
     if (currentAppStatus === ApplicationStatus.WITHDRAWN) {
         if (stepTargetStatus === ApplicationStatus.PENDING) return 'completed';
-        return 'upcoming'; // or 'skipped'
+        return 'upcoming';
     }
 
     const stepTargetStatusIndex = stepTargetStatus ? statusOrder.indexOf(stepTargetStatus) : -1;
@@ -92,11 +82,11 @@ export default function ApplicationDetailsTimeline({
       if (stepTargetStatus === ApplicationStatus.ACCEPTED) return 'skipped'; 
       if (stepTargetStatus && stepTargetStatusIndex < statusOrder.indexOf(ApplicationStatus.REJECTED)) {
         if (stepTargetStatus === ApplicationStatus.INTERVIEW_SCHEDULED || stepTargetStatus === ApplicationStatus.INTERVIEW_COMPLETED) {
-          return interviewSchedules.length > 0 ? 'completed' : 'skipped'; // Skipped if no interview happened
+          return interviewSchedules.length > 0 ? 'completed' : 'skipped';
         }
-        return 'completed'; // PENDING, REVIEWED are completed
+        return 'completed';
       }
-      return 'upcoming'; // Should not be reached if timeline is structured well
+      return 'upcoming';
     }
 
     // Case 2: Application is ACCEPTED
@@ -152,7 +142,6 @@ export default function ApplicationDetailsTimeline({
     return 'upcoming'; 
   };
 
-  // Don't render timeline for withdrawn applications
   if (status === ApplicationStatus.WITHDRAWN) {
     return null;
   }
@@ -165,7 +154,7 @@ export default function ApplicationDetailsTimeline({
           const stepState = getStepVisualState(step.status, status);
           
           let IconComponent = Clock;
-          let iconClasses = 'bg-gray-200 text-gray-600'; // Upcoming
+          let iconClasses = 'bg-gray-200 text-gray-600'; 
           let titleClass = 'text-foreground';
 
           if (stepState === 'completed') {
@@ -202,7 +191,7 @@ export default function ApplicationDetailsTimeline({
               <h5 className={`font-medium text-sm ${titleClass}`}>
                 {stepName}
               </h5>
-              {step.date && stepState !== 'skipped' && ( // Hide date for skipped steps
+              {step.date && stepState !== 'skipped' && (
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {format(new Date(step.date), 'MMM d, yyyy, HH:mm')}
                 </p>

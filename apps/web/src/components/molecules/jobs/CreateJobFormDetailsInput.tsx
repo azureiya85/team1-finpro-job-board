@@ -1,11 +1,6 @@
 'use client';
 
-import { 
-  MapPin, 
-  DollarSign, 
-  Calendar,
-  FileText
-} from 'lucide-react';
+import { MapPin, DollarSign, Calendar, FileText } from 'lucide-react';
 import { CreateJobFormSection } from '@/components/molecules/jobs/CreateJobFormSection';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';

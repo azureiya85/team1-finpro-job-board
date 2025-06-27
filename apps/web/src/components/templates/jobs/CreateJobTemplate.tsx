@@ -24,7 +24,6 @@ export function CreateJobTemplate({ jobId, isEditing }: CreateJobTemplateProps) 
           return;
         }
 
-        // Fetch user's company data
         const companyResponse = await fetch(`/api/users/${session.user.id}/company`);
         if (!companyResponse.ok) {
           throw new Error('Failed to fetch company data');

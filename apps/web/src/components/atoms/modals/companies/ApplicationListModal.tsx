@@ -31,8 +31,6 @@ export default function ApplicantListModal() {
   const [showFullCvPreview, setShowFullCvPreview] = useState<string | null>(null);
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
   const [pendingRejection, setPendingRejection] = useState<{ applicationId: string; status: ApplicationStatus } | null>(null);
-  
-  // State untuk modal interview
   const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<{
     applicationId: string;
@@ -174,7 +172,7 @@ export default function ApplicantListModal() {
         notes: scheduleData.notes || '',
         createdAt: new Date(),
         updatedAt: new Date(),
-        reminderSent: false // Menambahkan properti wajib yang sebelumnya hilang
+        reminderSent: false
       } : undefined
     });
     setIsInterviewModalOpen(true);

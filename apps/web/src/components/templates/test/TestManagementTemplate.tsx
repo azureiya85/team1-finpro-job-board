@@ -32,7 +32,6 @@ export function TestManagementTemplate() {
 
   const handleDeleteTest = async (testId: string) => {
   try {
-    // Tambahkan konfirmasi
     if (!confirm('Are you sure you want to delete this test?')) {
       return;
     }
@@ -51,7 +50,6 @@ export function TestManagementTemplate() {
     
     toast.success('Test deleted successfully');
     
-    // Refresh test list
     const updatedTests = await fetchTests(jobId);
     setTests(updatedTests);
   } catch (error) {

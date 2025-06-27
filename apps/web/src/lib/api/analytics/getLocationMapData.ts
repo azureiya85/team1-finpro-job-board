@@ -10,7 +10,6 @@ export async function getLocationMapData(filters: AnalyticsFilters) {
     params.append('end', filters.dateRange.end.toISOString());
   }
 
-  // ✅ Pastikan location adalah objek sebelum akses id
   if (typeof filters.location === 'object' && filters.location !== null) {
     params.append('cityId', filters.location.id);
   }

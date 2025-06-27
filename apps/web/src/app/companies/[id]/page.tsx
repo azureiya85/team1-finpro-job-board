@@ -6,15 +6,14 @@ import type { Metadata } from 'next';
 
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
-// Create axios instance with proper configuration
 const apiClient = axios.create({
   baseURL: EXPRESS_API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true, // Important for CORS
+  withCredentials: true,
 });
 
 async function getCompanyData(companyId: string): Promise<CompanyDetailed | null> { 
@@ -43,10 +42,8 @@ async function getCompanyData(companyId: string): Promise<CompanyDetailed | null
       if (error.code === 'NETWORK_ERR' || error.message === 'Network Error') {
         console.error(`[getCompanyData] Network error for company ${companyId}:`, error.message);
       } else if (error.response) {
-        // Server responded with error status
         console.error(`[getCompanyData] Server error for company ${companyId}: ${error.response.status} ${error.response.statusText}`, error.response.data);
       } else if (error.request) {
-        // Request was made but no response received
         console.error(`[getCompanyData] No response received for company ${companyId}:`, error.request);
       }
     }
