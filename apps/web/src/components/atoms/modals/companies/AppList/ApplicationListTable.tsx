@@ -1,10 +1,11 @@
 import React from 'react';
+import Link from 'next/link';
 import cn from 'classnames';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { FileText, MoreHorizontal, Crown, Zap } from 'lucide-react';
+import { FileText, MoreHorizontal, Crown, Zap, ExternalLink } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ApplicationStatus } from '@prisma/client';
 import type { JobApplicationDetails } from '@/types/applicants';
@@ -57,7 +58,13 @@ export default function ApplicantTableRow({
       <TableCell>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-gray-900 truncate">{app.applicant.name}</p>
+            <Link 
+              href={`/profile/${app.applicant.id}`}
+              className="font-semibold text-gray-900 hover:text-blue-600 transition-colors underline decoration-transparent hover:decoration-current cursor-pointer truncate"
+              title="View applicant profile"
+            >
+              {app.applicant.name}
+            </Link>
             {app.isPriority && (
               <Badge 
                 variant="default"
@@ -68,7 +75,17 @@ export default function ApplicantTableRow({
               </Badge>
             )}
           </div>
-          <p className="text-sm text-gray-600 truncate">{app.applicant.email}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-gray-600 truncate">{app.applicant.email}</p>
+            <Link 
+              href={`/profile/${app.applicant.id}`}
+              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+              title="View full profile"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Profile
+            </Link>
+          </div>
         </div>
       </TableCell>
       <TableCell>
