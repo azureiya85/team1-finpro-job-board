@@ -23,24 +23,25 @@ export interface CVTemplateProps {
   professionalSummary: string;
   customSkills: string[];
   languages: { name: string; proficiency: string }[];
+  educationHistory: { startYear: string; endYear: string; universityName: string; degree: string }[];
 }
 
 // Simple HTML escape function for security
 function escapeHtml(text: string | null | undefined): string {
   if (!text) return '';
   const map: { [key: string]: string } = {
-    '&': '&',
-    '<': '<',
-    '>': '>',
-    '"': '"',
-    "'": ''
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
   };
   return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // ATS-friendly HTML template generator
 function generateCvHTML(props: CVTemplateProps): string {
-  const { user, workExperiences, certificates, skills, professionalSummary, customSkills, languages } = props;
+  const { user, workExperiences, certificates, skills, professionalSummary, customSkills, languages, educationHistory } = props;
 
   const fullLocation = [
     user.currentAddress,
@@ -48,6 +49,12 @@ function generateCvHTML(props: CVTemplateProps): string {
     user.province?.name,
     user.country
   ].filter(Boolean).join(', ');
+
+  // Combine all skills
+  const allSkills = [
+    ...skills.map(skill => `${skill.assessment.title} (Passed)`),
+    ...customSkills
+  ];
 
   return `
     <!DOCTYPE html>
@@ -71,6 +78,8 @@ function generateCvHTML(props: CVTemplateProps): string {
             ul { padding-left: 20px; margin-top: 5px; }
             li { margin-bottom: 5px; }
             .skills-list { list-style-type: none; padding: 0; column-count: 2; }
+            .skills-list li { break-inside: avoid; }
+            .last-education { font-weight: normal; margin-bottom: 10px; }
         </style>
     </head>
     <body>
@@ -98,26 +107,37 @@ function generateCvHTML(props: CVTemplateProps): string {
                 `).join('')}
             </section>
             
+            ${allSkills.length > 0 ? `
             <section class="section">
                 <h2>Skills</h2>
                 <ul class="skills-list">
-                    ${skills.map(skill => `<li>${escapeHtml(skill.assessment.title)} (Passed)</li>`).join('')}
-                    ${customSkills.map(skill => `<li>${escapeHtml(skill)}</li>`).join('')}
+                    ${allSkills.map(skill => `<li>${escapeHtml(skill)}</li>`).join('')}
                 </ul>
             </section>
+            ` : ''}
             
             <section class="section">
                 <h2>Education</h2>
-                <div class="item">
-                    <h3>${escapeHtml(user.lastEducation)}</h3>
+                <div class="last-education">
+                    <strong>Last Education:</strong> ${escapeHtml(user.lastEducation)}
                 </div>
+                ${educationHistory.length > 0 ? `
+                <div>
+                    <strong>Education History:</strong>
+                    <ul>
+                        ${educationHistory.map(edu => `
+                            <li>${escapeHtml(edu.startYear)} - ${escapeHtml(edu.endYear)}: ${escapeHtml(edu.universityName)}: ${escapeHtml(edu.degree)}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+                ` : ''}
             </section>
             
             ${languages.length > 0 ? `
             <section class="section">
                 <h2>Languages</h2>
                 <ul>
-                    ${languages.map(lang => `<li>${escapeHtml(lang.name)} - <i>${escapeHtml(lang. proficiency)}</i></li>`).join('')}
+                    ${languages.map(lang => `<li>${escapeHtml(lang.name)} - <i>${escapeHtml(lang.proficiency)}</i></li>`).join('')}
                 </ul>
             </section>
             ` : ''}

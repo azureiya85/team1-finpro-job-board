@@ -3,7 +3,7 @@ import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 
 interface RouteContext {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Streams a specific CV PDF for download
@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: RouteContext) {
   }
 
   try {
-    const { id } = params;
+    const { id } = await params; 
 
     // 1. Find the CV record and verify the user owns it
     const cvRecord = await prisma.generatedCv.findUnique({
