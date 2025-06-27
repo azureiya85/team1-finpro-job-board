@@ -22,7 +22,6 @@ export default function DemographicChart({ chartData }: DemographicChartProps) {
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
-      <h2 className="text-lg font-semibold mb-4">Applicant Demographics</h2>
       <ChartWrapper
         type="doughnut"
         data={chart.data}

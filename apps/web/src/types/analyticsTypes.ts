@@ -1,4 +1,5 @@
 import { ChartType, ChartData, ChartOptions } from 'chart.js';
+import { JobCategory } from '@prisma/client';
 
 export interface ChartProps {
   type: ChartType;
@@ -20,12 +21,13 @@ export interface SalaryTrendChartData {
 export interface InterestChartData {
   label: string;
   count: number;
+  category: JobCategory;
 }
 
 export interface MapData {
   city: string;
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   count: number;
 }
 
@@ -35,14 +37,15 @@ export interface TrendChartData {
 }
 
 export interface LocationData {
+  cityId: string;
   city: string;
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   count: number;
 }
 
 export interface StatCardItem {
-  label: string;
+  title: string;
   value: number | string;
   change?: number;
   positive?: boolean;
@@ -50,8 +53,9 @@ export interface StatCardItem {
 }
 
 export interface AnalyticsFilters {
-  startDate?: Date;
-  endDate?: Date;
-  companyId?: string;
-  period?: string;
+  location: { id: string; name: string } | 'all';
+  dateRange: {
+    start: Date;
+    end: Date;
+  } | null
 }

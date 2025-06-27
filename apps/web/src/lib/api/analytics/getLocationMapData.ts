@@ -1,43 +1,22 @@
-import prisma from '@/lib/prisma';
 import { AnalyticsFilters } from '@/types/analyticsTypes';
 
-export async function getLocationMapData(filters?: AnalyticsFilters) {
-  const where: any = {
-    jobApplications: {
-      some: {},
-    },
-  };
+export async function getLocationMapData(filters: AnalyticsFilters) {
+  const params = new URLSearchParams();
 
-  if (filters?.startDate && filters?.endDate) {
-    where.jobApplications.some.createdAt = {
-      gte: filters.startDate,
-      lte: filters.endDate,
-    };
+  if (filters.dateRange?.start) {
+    params.append('start', filters.dateRange.start.toISOString());
+  }
+  if (filters.dateRange?.end) {
+    params.append('end', filters.dateRange.end.toISOString());
   }
 
-  const result = await prisma.city.findMany({
-    where: {
-      users: {
-        some: where,
-      },
-    },
-    select: {
-      name: true,
-      latitude: true,
-      longitude: true,
-      users: {
-        where: where,
-        select: {
-          id: true,
-        },
-      },
-    },
-  });
+  // ✅ Pastikan location adalah objek sebelum akses id
+  if (typeof filters.location === 'object' && filters.location !== null) {
+    params.append('cityId', filters.location.id);
+  }
 
-  return result.map((city) => ({
-    city: city.name,
-    lat: city.latitude || 0,
-    lng: city.longitude || 0,
-    count: city.users.length,
-  }));
+  const res = await fetch(`/api/analytics/location-map?${params.toString()}`);
+  if (!res.ok) throw new Error('Failed to fetch location data');
+
+  return res.json();
 }

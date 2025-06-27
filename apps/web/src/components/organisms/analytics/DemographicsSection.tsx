@@ -6,18 +6,14 @@ import { useDemographicChart } from '@/hooks/analytics/useDemographicChart';
 
 export default function DemographicsSection() {
   const { filters } = useAnalyticsFilters();
-  const { data, isLoading, error } = useDemographicChart({
-    location: filters.location,
-    dateRange: filters.dateRange,
-  });
+  const { location, dateRange } = filters;
+
+  const { data, isLoading, error } = useDemographicChart({ location, dateRange });
 
   return (
     <section className="bg-white dark:bg-gray-900 rounded-xl shadow p-6 space-y-4">
       <div>
-        <h2 className="text-xl font-semibold">Applicant Demographics</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Breakdown of applicant genders based on selected filters.
-        </p>
+        <h2 className="text-xl font-semibold">Breakdown of applicant genders based on selected filters.</h2>
       </div>
 
       {isLoading ? (

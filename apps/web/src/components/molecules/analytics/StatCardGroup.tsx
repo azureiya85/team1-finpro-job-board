@@ -1,24 +1,27 @@
 'use client';
 
 import StatCard from '@/components/atoms/analytics/StatCard';
-import { StatCardItem } from '@/types/analyticsTypes';
+import { useAnalyticsSummary } from '@/hooks/analytics/useAnalyticsSummary';
+import { formatStatCards } from '@/lib/analytics/utils/formatAnalyticsData';
+import { AnalyticsFilters } from '@/types/analyticsTypes';
 
-interface StatCardGroupProps {
-  stats: StatCardItem[];
+interface Props {
+  filters: AnalyticsFilters;
 }
 
-export default function StatCardGroup({ stats }: StatCardGroupProps) {
+export default function StatCardGroup({ filters }: Props) {
+  const { current, previous, isLoading } = useAnalyticsSummary();
+
+  if (isLoading || !current) {
+    return <div className="grid grid-cols-2 md:grid-cols-4 gap-4">Loading...</div>;
+  }
+
+  const stats = formatStatCards(current, previous);
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {stats.map((stat, index) => (
-        <StatCard
-          key={index}
-          label={stat.label}
-          value={stat.value}
-          change={stat.change}
-          positive={stat.positive}
-          icon={stat.icon}
-        />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {stats.map((item, idx) => (
+        <StatCard key={idx} {...item} />
       ))}
     </div>
   );

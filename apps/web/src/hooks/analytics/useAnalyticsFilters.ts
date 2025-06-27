@@ -1,35 +1,8 @@
-import { useState } from 'react';
-
-export interface AnalyticsFilters {
-  location: string;
-  dateRange: {
-    start: Date;
-    end: Date;
-  } | null;
-}
+import { useContext } from 'react';
+import { AnalyticsFilterContext } from '@/context/AnalyticsFilterProvider';
 
 export function useAnalyticsFilters() {
-  const [filters, setFilters] = useState<AnalyticsFilters>({
-    location: 'all',
-    dateRange: null,
-  });
-
-  const setLocation = (location: string) =>
-    setFilters((prev) => ({ ...prev, location }));
-
-  const setDateRange = (start: Date, end: Date) =>
-    setFilters((prev) => ({ ...prev, dateRange: { start, end } }));
-
-  const resetFilters = () =>
-    setFilters({
-      location: 'all',
-      dateRange: null,
-    });
-
-  return {
-    filters,
-    setLocation,
-    setDateRange,
-    resetFilters,
-  };
+  const ctx = useContext(AnalyticsFilterContext);
+  if (!ctx) throw new Error('useAnalyticsFilters must be used within AnalyticsFilterProvider');
+  return ctx;
 }

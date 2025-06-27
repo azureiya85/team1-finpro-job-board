@@ -9,19 +9,12 @@ interface ApplicantInterestChartProps {
   data?: InterestChartData[];
 }
 
-const dummyData: InterestChartData[] = [
-  { label: 'Technology', count: 30 },
-  { label: 'Marketing', count: 20 },
-  { label: 'Finance', count: 15 },
-  { label: 'Other', count: 10 },
-];
-
-export default function ApplicantInterestChart({ data = dummyData }: ApplicantInterestChartProps) {
+export default function ApplicantInterestChart({ data = [] }: ApplicantInterestChartProps) {
   const chart = useMemo(() => getInterestChartData(data), [data]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
-      <h2 className="text-lg font-semibold mb-4">Applicant Interests</h2>
+      <h2 className="text-lg font-semibold mb-4">Applicant Interest by Job Category</h2>
       <ChartWrapper
         type="bar"
         data={chart.data}
