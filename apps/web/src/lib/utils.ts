@@ -274,3 +274,15 @@ export function calculateDistance(
 function deg2rad(deg: number): number {
   return deg * (Math.PI / 180);
 }
+
+export const formatEnumKey = (key: string): string => 
+  key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+export const DEFAULT_OPEN_SECTIONS = ["job-category", "employment-type", "date-posted"];
+
+export interface FilterGroupProps<T extends string> {
+  title: string;
+  items: Record<string, T>;
+  selectedItems: T[];
+  onChange: (selected: T[]) => void;
+}

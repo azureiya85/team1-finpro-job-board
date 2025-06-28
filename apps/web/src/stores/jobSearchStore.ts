@@ -4,12 +4,13 @@ import axios from 'axios';
 import { JobPostingFeatured, GetJobsParams, GetJobsResult } from '@/types'; 
 import { JobCategory, EmploymentType, ExperienceLevel, CompanySize } from '@prisma/client';
 import { subDays, subMonths } from 'date-fns';
+import { Province, City } from '@prisma/client';
 
 // Express API base URL
 const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
 
 // Types for the store
-export type SortByType = 'newest' | 'oldest';
+export type SortByType = 'newest' | 'oldest' | 'company_asc' | 'company_desc';
 export type DatePostedType = 'all' | 'last7days' | 'lastmonth' | 'custom';
 
 export interface JobSearchState { 
@@ -17,6 +18,9 @@ export interface JobSearchState {
   searchTermInput: string;      
   locationSearchInput: string;
   companySearchInput: string;  
+  companyLocationInput: string; 
+  allLocations: ProvinceWithCities[];
+  isLocationsLoading: boolean;
 
   // Filter States 
   categories?: JobCategory[];
@@ -58,11 +62,16 @@ export interface JobSearchActions {
   setStartDate: (date?: Date) => void;
   setEndDate: (date?: Date) => void;
   setDateRange: (start?: Date, end?: Date) => void;
-
+  setCompanyLocationInput: (location: string) => void; 
+  fetchLocations: () => Promise<void>;
   setCurrentPage: (page: number) => void;
   setPageSize: (size: number) => void;
   fetchJobs: () => Promise<void>;
   resetFilters: () => void;
+}
+
+export interface ProvinceWithCities extends Province {
+  cities: City[];
 }
 
 // --- Initial State for the UI and Filters ---
@@ -70,6 +79,7 @@ const initialUiAndFilterState = {
   searchTermInput: '',
   locationSearchInput: '',
   companySearchInput: '',
+  companyLocationInput: '',
   categories: [],
   employmentTypes: [],
   experienceLevels: [],
@@ -94,6 +104,8 @@ const initialState: JobSearchState = {
   totalJobs: 0,
   hybridMode: 'loadmore',
   loadedJobsBuffer: [],
+  allLocations: [],
+  isLocationsLoading: false,
 };
 
 // --- API Fetching Logic ---
@@ -108,6 +120,7 @@ async function fetchJobsFromExpressApi(params: GetJobsParams): Promise<{jobs: Jo
     if (params.employmentTypes && params.employmentTypes.length > 0) queryParams.employmentTypes = params.employmentTypes;
     if (params.experienceLevels && params.experienceLevels.length > 0) queryParams.experienceLevels = params.experienceLevels;
     if (params.companySizes && params.companySizes.length > 0) queryParams.companySizes = params.companySizes;
+    if (params.companyLocationQuery) queryParams.companyLocationQuery = params.companyLocationQuery;
     if (typeof params.isRemote === 'boolean') queryParams.isRemote = params.isRemote; 
     if (params.take) queryParams.take = String(params.take);
     if (params.skip) queryParams.skip = String(params.skip);
@@ -162,6 +175,22 @@ export const useJobSearchStore = create<JobSearchState & JobSearchActions>()(
       setSearchTermInput: (term) => set({ searchTermInput: term }),
       setLocationSearchInput: (location) => set({ locationSearchInput: location }),
       setCompanySearchInput: (company) => set({ companySearchInput: company }),
+
+      fetchLocations: async () => {
+        set({ isLocationsLoading: true });
+        try {
+          const response = await axios.get<ProvinceWithCities[]>(`${EXPRESS_API_BASE_URL}/locations`);
+          set({ allLocations: response.data, isLocationsLoading: false });
+        } catch (error) {
+          console.error("Failed to fetch locations:", error);
+          set({ isLocationsLoading: false, allLocations: [] }); // Reset on error
+        }
+      },
+
+       setCompanyLocationInput: (location) => {
+        set({ companyLocationInput: location, currentPage: 1, skip: 0 });
+        get().fetchJobs();
+      },
       
       setCategories: (categories) => {
         set({ categories, currentPage: 1, skip: 0 }); 
@@ -216,7 +245,7 @@ export const useJobSearchStore = create<JobSearchState & JobSearchActions>()(
 
       fetchJobs: async () => {
         const { 
-          searchTermInput, locationSearchInput, companySearchInput, categories, employmentTypes, 
+          searchTermInput, locationSearchInput, companySearchInput, companyLocationInput,categories, employmentTypes, 
           experienceLevels, companySizes, isRemote, take, skip,
           sortBy, datePosted, startDate: customStartDate, endDate: customEndDate
         } = get();
@@ -243,6 +272,7 @@ export const useJobSearchStore = create<JobSearchState & JobSearchActions>()(
             employmentTypes: employmentTypes && employmentTypes.length > 0 ? employmentTypes : undefined,
             experienceLevels: experienceLevels && experienceLevels.length > 0 ? experienceLevels : undefined,
             companySizes: companySizes && companySizes.length > 0 ? companySizes : undefined,
+            companyLocationQuery: companyLocationInput || undefined,
             isRemote,
             take,
             skip,

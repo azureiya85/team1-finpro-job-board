@@ -25,6 +25,7 @@ export async function getAllJobs(req: Request, res: Response, next: NextFunction
       jobTitle: queryParams.jobTitle as string,
       locationQuery: queryParams.locationQuery as string,
       companyQuery: queryParams.companyQuery as string, 
+      companyLocationQuery: queryParams.companyLocationQuery as string,
       
       // Filters 
       categories: queryParams.categories as string[],

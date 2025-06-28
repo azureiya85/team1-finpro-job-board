@@ -1,5 +1,5 @@
 import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client'; 
-export type SortByType = 'newest' | 'oldest';
+export type SortByType = 'newest' | 'oldest' | 'company_asc' | 'company_desc';
 
 export type JobPostingFeatured = Pick<
   JobPosting,
@@ -63,7 +63,7 @@ export interface GetJobsParams {
   isRemote?: boolean | string;
   companyId?: string;
   
-  // Filter Tanggal Baru
+  companyLocationQuery?: string;
   companyQuery?: string;
   startDate?: string;
   endDate?: string;

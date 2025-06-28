@@ -21,6 +21,7 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
     jobTitle,
     locationQuery,
     companyQuery,
+    companyLocationQuery, 
     categories,
     employmentTypes,
     experienceLevels,
@@ -60,6 +61,8 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
       where.OR = locationConditions;
     }
   }
+
+   let companyFilter: Prisma.CompanyWhereInput = {};
   
   if (companyQuery) {
     where.company = {
@@ -68,6 +71,13 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
         name: { contains: companyQuery, mode: 'insensitive' },
       },
     };
+  }
+
+   if (companyLocationQuery) {
+    companyFilter.OR = [
+      { city: { name: { contains: companyLocationQuery, mode: 'insensitive' } } },
+      { province: { name: { contains: companyLocationQuery, mode: 'insensitive' } } },
+    ];
   }
 
   // --- Filter Logic with proper array handling ---
@@ -100,6 +110,12 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
     };
   }
 
+    if (Object.keys(companyFilter).length > 0) {
+    where.company = {
+      is: companyFilter
+    };
+  }
+
   if (startDate || endDate) {
     where.publishedAt = {};
     if (startDate) {
@@ -126,16 +142,30 @@ const buildOrderByClause = (sortBy?: SortByType): Prisma.JobPostingOrderByWithRe
     { publishedAt: 'desc' },
     { createdAt: 'desc' },
   ];
-
-  if (sortBy === 'oldest') {
-    return [
-      { isPriority: 'desc' },
-      { publishedAt: 'asc' },
-      { createdAt: 'asc' },
-    ];
-  }
   
-  return defaultSort;
+  switch (sortBy) {
+    case 'oldest':
+      return [
+        { isPriority: 'desc' },
+        { publishedAt: 'asc' },
+        { createdAt: 'asc' },
+      ];
+    case 'company_asc':
+      return [
+        { company: { name: 'asc' } },
+        { isPriority: 'desc' },
+        { publishedAt: 'desc' },
+      ];
+    case 'company_desc':
+      return [
+        { company: { name: 'desc' } },
+        { isPriority: 'desc' },
+        { publishedAt: 'desc' },
+      ];
+    case 'newest':
+    default:
+      return defaultSort;
+  }
 };
 
 export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingFeatured[] | GetJobsResult> {

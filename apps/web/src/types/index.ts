@@ -149,6 +149,7 @@ export interface GetJobsParams {
   companyId?: string;
 
   companyQuery?: string;
+  companyLocationQuery?: string;
   sortBy?: SortByType;   
   startDate?: string;    
   endDate?: string;      
