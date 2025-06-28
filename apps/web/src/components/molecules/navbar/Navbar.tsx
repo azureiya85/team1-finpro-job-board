@@ -33,28 +33,34 @@ export function Navbar() {
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex-shrink-0"
-          >
-            <Link href="/" className="flex items-center space-x-2 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-lg blur-md group-hover:blur-lg transition-all duration-300" />
-                <Cog className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-2xl font-bold text-white">
-                Work Vault
-              </span>
-            </Link>
-          </motion.div>
+          {/* Logo and Navigation - Left aligned */}
+          <div className="flex items-center space-x-8">
+            {/* Logo */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-shrink-0"
+            >
+              <Link href="/" className="flex items-center space-x-2 group">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-lg blur-md group-hover:blur-lg transition-all duration-300" />
+                  <Cog className="h-6 w-6 text-white relative z-10" />
+                </div>
+                <span className="text-2xl font-bold text-white">
+                  Work Vault
+                </span>
+              </Link>
+            </motion.div>
 
-          {/* Desktop Navigation & Auth */}
-          <NavbarDesktop />
+            {/* Desktop Navigation Links */}
+            <NavbarDesktop />
+          </div>
 
-          {/* Mobile Menu */}
-          <NavbarMobile />
+          {/* Right side - Auth and Mobile Menu */}
+          <div className="flex items-center">
+            {/* Mobile Menu Button */}
+            <NavbarMobile />
+          </div>
         </div>
       </nav>
     </motion.header>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { User, LogOut, Settings, Heart, FileText, Crown, Building2, Loader2 } from 'lucide-react';
+import { User, LogOut, Crown, Building2, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStores';
 import { useNavbarStore } from '@/stores/navbarStore';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,6 @@ export function NavbarDesktop() {
     
     startTransition(async () => {
       try {
-        // Clear the auth store first
         logout();
         
         // Call server action to clear NextAuth session
@@ -53,7 +52,7 @@ export function NavbarDesktop() {
   };
 
   // Helper function to get profile link based on user role
-const getProfileLink = () => {
+  const getProfileLink = () => {
     if (!user) return '/dashboard'; 
     
     switch (user.role) {
@@ -71,7 +70,7 @@ const getProfileLink = () => {
 
   return (
     <>
-      {/* Desktop Navigation */}
+      {/* Desktop Navigation Links */}
       <div className="hidden md:flex items-center space-x-8">
         {navigationItems
           .filter(item => !item.href.includes('analytics') || user?.role === 'Developer')
@@ -88,8 +87,8 @@ const getProfileLink = () => {
           ))}
       </div>
 
-      {/* Auth Section */}
-      <div className="hidden md:flex items-center space-x-4">
+      {/* Auth Section  */}
+      <div className="hidden md:flex items-center space-x-4 absolute right-24">
         {isAuthenticated && user ? (
           <div className="flex items-center space-x-4">
             {/* Role Badges */}
@@ -139,58 +138,23 @@ const getProfileLink = () => {
                 </div>
                 <DropdownMenuSeparator />
                 
-                {/* Profile Menu Item - Role-aware */}
+                {/* Dashboard Menu Item - Role-aware */}
                 <DropdownMenuItem asChild>
                   <Link href={getProfileLink()} className="flex items-center">
                     {user.role === 'COMPANY_ADMIN' ? (
                       <>
                         <Building2 className="mr-2 h-4 w-4" />
-                        Company Profile
+                        Company Dashboard
                       </>
                     ) : (
                       <>
                         <User className="mr-2 h-4 w-4" />
-                        Profile
+                        Dashboard
                       </>
                     )}
                   </Link>
                 </DropdownMenuItem>
 
-                {/* Role-specific menu items */}
-                {user.role === 'USER' && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/applications" className="flex items-center">
-                        <FileText className="mr-2 h-4 w-4" />
-                        My Applications
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard/saved-jobs" className="flex items-center">
-                        <Heart className="mr-2 h-4 w-4" />
-                        Saved Jobs
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-
-                {user.role === 'COMPANY_ADMIN' && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/companies/${user.companyId || 'manage'}/jobs`} className="flex items-center">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Job Management
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="flex items-center">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={handleLogout}

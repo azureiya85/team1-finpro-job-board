@@ -3,10 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Menu, X, LogOut } from 'lucide-react';
+import { User, Menu, X, LogOut, Building2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStores';
 import { useNavbarStore } from '@/stores/navbarStore';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
+import { useTransition } from 'react';
+import { logoutAction } from '@/lib/actions/authActions';
+import { toast } from 'sonner';
 
 export function NavbarMobile() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -16,23 +20,65 @@ export function NavbarMobile() {
     toggleMobileMenu, 
     closeMobileMenu 
   } = useNavbarStore();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleLogout = () => {
-    logout();
-    closeMobileMenu();
+    if (isPending) return;
+    
+    startTransition(async () => {
+      try {
+        logout();
+        const result = await logoutAction();
+        
+        if (result.success) {
+          toast.success('Logged out successfully');
+          window.location.href = '/';
+        } else {
+          toast.success('Logged out successfully');
+          router.push('/');
+          router.refresh();
+        }
+        closeMobileMenu();
+      } catch (error) {
+        console.error('NAVBAR: Error during logout:', error);
+        toast.error('Logout failed. Please try again.');
+        router.push('/');
+        router.refresh();
+        closeMobileMenu();
+      }
+    });
+  };
+
+  // Helper function to get profile link based on user role
+  const getProfileLink = () => {
+    if (!user) return '/dashboard'; 
+    
+    switch (user.role) {
+      case 'ADMIN':
+      case 'Developer': 
+        return '/dashboard/developer';
+      case 'COMPANY_ADMIN':
+        return user.companyId ? `/companies/${user.companyId}` : '/dashboard/company-redirect';
+      case 'USER':
+        return '/dashboard'; 
+      default:
+        return '/dashboard'; 
+    }
   };
 
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="md:hidden">
+      <div className="md:hidden flex items-center">
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleMobileMenu}
-          className="relative z-50 text-white hover:text-white"
+          className="relative z-50 text-white hover:text-white hover:bg-white/10 p-2"
+          aria-label="Toggle mobile menu"
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             {isMobileMenuOpen ? (
               <motion.div
                 key="close"
@@ -41,7 +87,7 @@ export function NavbarMobile() {
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <X className="h-6 w-6 text-white" />
+                <X className="h-6 w-6" />
               </motion.div>
             ) : (
               <motion.div
@@ -51,7 +97,7 @@ export function NavbarMobile() {
                 exit={{ rotate: -90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Menu className="h-6 w-6 text-white" />
+                <Menu className="h-6 w-6" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -70,7 +116,9 @@ export function NavbarMobile() {
           >
             <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
               {/* Navigation Items */}
-              {navigationItems.map((item, index) => (
+              {navigationItems
+                .filter(item => !item.href.includes('analytics') || user?.role === 'Developer')
+                .map((item, index) => (
                 <motion.div
                   key={item.href}
                   initial={{ x: -20, opacity: 0 }}
@@ -109,19 +157,30 @@ export function NavbarMobile() {
                       <div>
                         <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user.name || 'User'}</p>
                         <p className="text-xs text-muted-foreground">{user.email}</p>
+                        <p className="text-xs text-blue-600 font-medium">{user.role.replace('_', ' ')}</p>
                       </div>
                     </div>
                     <Link
-                      href="/dashboard"
+                      href={getProfileLink()}
                       onClick={closeMobileMenu}
                       className="flex items-center space-x-3 py-3 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200 text-gray-900 dark:text-gray-100"
                     >
-                      <User className="h-5 w-5 text-primary" />
-                      <span>Profile</span>
+                      {user.role === 'COMPANY_ADMIN' ? (
+                        <>
+                          <Building2 className="h-5 w-5 text-primary" />
+                          <span>Company Dashboard</span>
+                        </>
+                      ) : (
+                        <>
+                          <User className="h-5 w-5 text-primary" />
+                          <span>Dashboard</span>
+                        </>
+                      )}
                     </Link>
                     <Button
                       onClick={handleLogout}
                       variant="ghost"
+                      disabled={isPending}
                       className="flex items-center space-x-3 py-3 px-4 w-full justify-start text-red-600 hover:text-red-600 hover:bg-red-50"
                     >
                       <LogOut className="h-5 w-5" />
@@ -134,16 +193,14 @@ export function NavbarMobile() {
                       variant="ghost"
                       asChild
                       className="w-full justify-start text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
-                      onClick={closeMobileMenu}
                     >
-                      <Link href="/auth/login">Sign In</Link>
+                      <Link href="/auth/login" onClick={closeMobileMenu}>Sign In</Link>
                     </Button>
                     <Button
                       asChild
                       className="w-full bg-accent hover:bg-accent/90"
-                      onClick={closeMobileMenu}
                     >
-                      <Link href="/auth/register">Get Started</Link>
+                      <Link href="/auth/register" onClick={closeMobileMenu}>Get Started</Link>
                     </Button>
                   </div>
                 )}
