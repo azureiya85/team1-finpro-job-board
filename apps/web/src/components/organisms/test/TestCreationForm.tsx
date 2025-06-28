@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Question, Test } from '@/types/testTypes';
-import { validateQuestion, prepareTestData } from '@/lib/actions/testActions';
+import { Question } from '@/types/testTypes';
+import { validateQuestion } from '@/lib/actions/testActions';
 import { CreateTestData } from '@/types/testTypes';
+import { testSchema } from '@/lib/validations/zodTestValidation';
+import { z } from 'zod';
 
 interface TestCreationFormProps {
   onSubmit: (data: CreateTestData) => void;
@@ -27,6 +29,7 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
       isValid: true
     })) : []
   );
+  const [errors, setErrors] = useState<z.ZodError | null>(null);
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
@@ -57,7 +60,7 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
   };
 
   const handleSubmit = () => {
-    const testData: CreateTestData = {
+    const testData = {
       title,
       description: description || '',
       timeLimit,
@@ -71,13 +74,23 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
         optionD: q.optionD,
         correctAnswer: q.correctAnswer,
         explanation: q.explanation || '',
-        testId: ''
-      })),
+        testId: q.testId || ''
+      }))
+    };
+
+    const result = testSchema.safeParse(testData);
+    if (!result.success) {
+      setErrors(result.error);
+      return;
+    }
+
+    const finalTestData: CreateTestData = {
+      ...testData,
       isActive: true,
       companyId: ''
     };
     
-    onSubmit(testData);
+    onSubmit(finalTestData);
   };
 
   return (
@@ -91,6 +104,9 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter test title"
             />
+            {errors?.errors?.find(e => e.path[0] === 'title') && (
+              <p className="text-red-500 text-sm mt-1">{errors.errors.find(e => e.path[0] === 'title')?.message}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Description</label>
@@ -99,6 +115,9 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter test description"
             />
+            {errors?.errors?.find(e => e.path[0] === 'description') && (
+              <p className="text-red-500 text-sm mt-1">{errors.errors.find(e => e.path[0] === 'description')?.message}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Time Limit (minutes)</label>
@@ -108,6 +127,22 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
               onChange={(e) => setTimeLimit(Number(e.target.value))}
               min={1}
             />
+            {errors?.errors?.find(e => e.path[0] === 'timeLimit') && (
+              <p className="text-red-500 text-sm mt-1">{errors.errors.find(e => e.path[0] === 'timeLimit')?.message}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Passing Score</label>
+            <Input
+              type="number"
+              value={passingScore}
+              onChange={(e) => setPassingScore(Number(e.target.value))}
+              min={0}
+              max={100}
+            />
+            {errors?.errors?.find(e => e.path[0] === 'passingScore') && (
+              <p className="text-red-500 text-sm mt-1">{errors.errors.find(e => e.path[0] === 'passingScore')?.message}</p>
+            )}
           </div>
         </div>
       </Card>
@@ -123,8 +158,10 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
                   onChange={(e) => handleQuestionChange(index, 'question', e.target.value)}
                   placeholder="Enter question"
                 />
-                {q.errors?.question && (
-                  <p className="text-red-500 text-sm mt-1">{q.errors.question}</p>
+                {errors?.errors?.find(e => e.path[0] === 'questions' && e.path[1] === index && e.path[2] === 'question') && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.errors.find(e => e.path[0] === 'questions' && e.path[1] === index && e.path[2] === 'question')?.message}
+                  </p>
                 )}
               </div>
               {['A', 'B', 'C', 'D'].map((option) => (
@@ -135,28 +172,27 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
                     onChange={(e) => handleQuestionChange(index, `option${option}` as keyof Question, e.target.value)}
                     placeholder={`Enter option ${option}`}
                   />
+                  {errors?.errors?.find(e => e.path[0] === 'questions' && e.path[1] === index && e.path[2] === `option${option}`) && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.errors.find(e => e.path[0] === 'questions' && e.path[1] === index && e.path[2] === `option${option}`)?.message}
+                    </p>
+                  )}
                 </div>
               ))}
-              <div>
-                <label className="block text-sm font-medium mb-1">Correct Answer</label>
-                <select
-                  value={q.correctAnswer}
-                  onChange={(e) => handleQuestionChange(index, 'correctAnswer', e.target.value)}
-                  className="w-full border rounded-md p-2"
-                >
-                  {['A', 'B', 'C', 'D'].map((option) => (
-                    <option key={option} value={option}>Option {option}</option>
-                  ))}
-                </select>
-              </div>
             </div>
           </Card>
         ))}
       </div>
 
+      {errors?.errors?.find(e => e.path[0] === 'questions' && e.path.length === 1) && (
+        <p className="text-red-500 text-sm mt-1">
+          {errors.errors.find(e => e.path[0] === 'questions' && e.path.length === 1)?.message}
+        </p>
+      )}
+
       <div className="flex justify-between">
         <Button onClick={handleAddQuestion}>Add Question</Button>
-        <Button onClick={handleSubmit} disabled={!title || questions.length === 0}>Save Test</Button>
+        <Button onClick={handleSubmit}>Save Test</Button>
       </div>
     </div>
   );
