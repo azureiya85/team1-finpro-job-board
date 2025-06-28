@@ -6,22 +6,18 @@ import { useCompanySearchStore } from '@/stores/companySearchStore';
 
 export function useDebouncedCompanySearch(debounceMs: number = 500) {
   const searchInput = useCompanySearchStore((state) => state.searchInput);
-  const locationInput = useCompanySearchStore((state) => state.locationInput);
 
   const fetchCompanies = useCompanySearchStore((state) => state.fetchCompanies);
   const setSearchInput = useCompanySearchStore((state) => state.setSearchInput);
-  const setLocationInput = useCompanySearchStore((state) => state.setLocationInput);
 
-  // Debounce the text inputs
+  // Debounce the search input
   const [debouncedSearchInput] = useDebounce(searchInput, debounceMs);
-  const [debouncedLocationInput] = useDebounce(locationInput, debounceMs);
 
   useEffect(() => {
     fetchCompanies();
-  }, [debouncedSearchInput, debouncedLocationInput, fetchCompanies]);
+  }, [debouncedSearchInput, fetchCompanies]);
 
   return {
     setSearchInput,
-    setLocationInput,
   };
 }

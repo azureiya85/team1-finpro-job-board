@@ -29,7 +29,8 @@ export type SortByType = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 export interface CompanySearchState {
   // UI Input States
   searchInput: string;
-  locationInput: string;
+  selectedProvinceId: string;
+  selectedCityId: string;
   sortBy: SortByType;
 
   // Data States
@@ -45,7 +46,8 @@ export interface CompanySearchState {
 
 export interface CompanySearchActions {
   setSearchInput: (term: string) => void;
-  setLocationInput: (location: string) => void;
+  setSelectedProvinceId: (provinceId: string) => void;
+  setSelectedCityId: (cityId: string) => void;
   setSortBy: (sortBy: SortByType) => void;
   setCurrentPage: (page: number) => void;
   fetchCompanies: () => Promise<void>;
@@ -55,7 +57,8 @@ export interface CompanySearchActions {
 // --- Initial State ---
 const initialFilterState = {
   searchInput: '',
-  locationInput: '',
+  selectedProvinceId: '',
+  selectedCityId: '',
   sortBy: 'newest' as SortByType,
   currentPage: 1,
   pageSize: 9,
@@ -78,7 +81,8 @@ const initialState: CompanySearchState = {
 // --- API Fetching Logic ---
 async function fetchCompaniesFromApi(params: {
   name?: string;
-  locationQuery?: string;
+  provinceId?: string;
+  cityId?: string;
   sortBy?: SortByType;
   take: number;
   skip: number;
@@ -87,7 +91,8 @@ async function fetchCompaniesFromApi(params: {
     const queryParams = new URLSearchParams();
 
     if (params.name) queryParams.set('name', params.name);
-    if (params.locationQuery) queryParams.set('locationQuery', params.locationQuery);
+    if (params.provinceId) queryParams.set('provinceId', params.provinceId);
+    if (params.cityId) queryParams.set('cityId', params.cityId);
     if (params.sortBy) queryParams.set('sortBy', params.sortBy);
     queryParams.set('take', String(params.take));
     queryParams.set('skip', String(params.skip));
@@ -114,7 +119,14 @@ export const useCompanySearchStore = create<CompanySearchState & CompanySearchAc
       ...initialState,
 
       setSearchInput: (term) => set({ searchInput: term, currentPage: 1 }),
-      setLocationInput: (location) => set({ locationInput: location, currentPage: 1 }),
+      setSelectedProvinceId: (provinceId) => {
+        set({ selectedProvinceId: provinceId, currentPage: 1 });
+        get().fetchCompanies();
+      },
+      setSelectedCityId: (cityId) => {
+        set({ selectedCityId: cityId, currentPage: 1 });
+        get().fetchCompanies();
+      },
       setSortBy: (sortBy) => {
         set({ sortBy, currentPage: 1 });
         get().fetchCompanies(); // Fetch immediately on sort change
@@ -125,13 +137,14 @@ export const useCompanySearchStore = create<CompanySearchState & CompanySearchAc
       },
 
        fetchCompanies: async () => {
-        const { searchInput, locationInput, sortBy, currentPage, pageSize } = get();
+        const { searchInput, selectedProvinceId, selectedCityId, sortBy, currentPage, pageSize } = get();
         set({ isLoading: true, error: null });
 
         try {
           const apiParams = {
             name: searchInput,
-            locationQuery: locationInput,
+            provinceId: selectedProvinceId,
+            cityId: selectedCityId,
             sortBy,
             take: pageSize,
             skip: (currentPage - 1) * pageSize,
