@@ -13,7 +13,6 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Cek apakah user sudah pernah mengambil test ini
     const existingResult = await prisma.testResult.findFirst({
       where: {
         testId: params.testId,
@@ -62,7 +61,6 @@ export async function GET(
   }
 }
 
-// Endpoint untuk submit jawaban test
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string; testId: string } }
@@ -75,7 +73,6 @@ export async function POST(
 
     const { answers, timeSpent } = await request.json();
 
-    // Ambil test dan jawaban yang benar
     const test = await prisma.preSelectionTest.findUnique({
       where: {
         id: params.testId
@@ -99,12 +96,10 @@ export async function POST(
       return NextResponse.json({ error: 'Test not found' }, { status: 404 });
     }
 
-    // Hitung score
     let correctAnswers = 0;
     const totalQuestions = test.questions.length;
 
     test.questions.forEach(question => {
-      // Ubah format jawaban menjadi huruf saja (A, B, C, D)
       const userAnswer = answers[question.id]?.replace('option', '');
       const correctAnswer = question.correctAnswer?.replace('option', '');
       
@@ -116,7 +111,6 @@ export async function POST(
     const score = (correctAnswers / totalQuestions) * 100;
     const passed = score >= test.passingScore;
 
-    // Simpan hasil test
     const testResult = await prisma.testResult.create({
       data: {
         testId: params.testId,
@@ -128,7 +122,6 @@ export async function POST(
       }
     });
 
-    // Update status aplikasi berdasarkan hasil test
     const jobId = test.jobPostings[0]?.id;
     if (jobId) {
       const application = await prisma.jobApplication.findFirst({

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import cn from 'classnames';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -72,6 +73,8 @@ export default function ApplicantListContent({
     setSelectedInterview({ applicationId, jobId, candidateId, interview });
     setModalOpen(true);
   };
+
+  const router = useRouter()
 
   return (
     <div className="w-full">
@@ -161,9 +164,14 @@ export default function ApplicantListContent({
                 </TableCell>
                 <TableCell className="text-center">
                   {app.testResult ? (
-                    <span className={`text-sm font-medium ${app.testResult.passed ? 'text-green-600' : 'text-red-600'}`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => app.jobPosting?.id && app.testResult && router.push(`/jobs/${app.jobPosting.id}/test/${app.jobPosting.preSelectionTest?.id}/result`)}
+                      className={`text-sm font-medium ${app.testResult.passed ? 'text-green-600' : 'text-red-600'}`}
+                    >
                       {app.testResult.score}%
-                    </span>
+                    </Button>
                   ) : (
                     <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
                       Not taken

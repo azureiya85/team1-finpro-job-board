@@ -8,7 +8,6 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Question } from '@/types/testTypes';
-import { validateQuestion } from '@/lib/actions/testActions';
 import { useTestTimer } from '@/hooks/useTestTimer'
 
 interface TestFormProps {

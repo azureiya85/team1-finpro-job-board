@@ -90,6 +90,9 @@ export async function GET(
             title: true,
             salaryMin: true,
             salaryMax: true,
+            preSelectionTest: {
+              select: { id: true }
+            }
           },
         },
         testResult: {
@@ -104,6 +107,9 @@ export async function GET(
             scheduledAt: true,
             status: true,
             interviewType: true,
+            duration: true,
+            location: true,
+            notes: true    
           },
           orderBy: { scheduledAt: 'desc' },
           take: 1,

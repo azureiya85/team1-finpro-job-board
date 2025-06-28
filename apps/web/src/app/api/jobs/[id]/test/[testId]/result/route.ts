@@ -23,13 +23,33 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { testId } = await params;
+    const { id: jobId, testId } = params;
+    const userWithCompany = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        company: {
+          include: {
+            jobPostings: {
+              where: { id: jobId },
+              select: { id: true, companyId: true }
+            }
+          }
+        }
+      }
+    });
+
+    const isCompanyAdmin = Boolean(
+      userWithCompany?.company?.jobPostings &&
+      userWithCompany.company.jobPostings.length > 0 &&
+      userWithCompany.company.jobPostings[0].companyId === userWithCompany.company.id
+    );
+
+    const whereClause = isCompanyAdmin
+      ? { testId }
+      : { testId, userId: session.user.id };
 
     const testResult = await prisma.testResult.findFirst({
-      where: {
-        testId: testId,
-        userId: session.user.id
-      },
+      where: whereClause,
       include: {
         test: {
           select: {
@@ -59,11 +79,9 @@ export async function GET(
       );
     }
 
-    // Hitung jumlah jawaban yang benar
     const correctAnswers = testResult.test.questions.filter(
       (q: QuestionResult) => {
         const userAnswer = (testResult.answers as Record<string, string>)[q.id];
-        // Pastikan format jawaban sama (dengan 'option')
         const correctAnswer = `option${q.correctAnswer}`;
         return userAnswer === correctAnswer;
       }
@@ -87,7 +105,6 @@ export async function GET(
         questions: testResult.test.questions.map(q => ({
           ...q,
           userAnswer: (testResult.answers as Record<string, string>)[q.id],
-          // Pastikan format jawaban sama saat membandingkan
           correctAnswer: `option${q.correctAnswer}`,
           isCorrect: (testResult.answers as Record<string, string>)[q.id] === `option${q.correctAnswer}`
         }))

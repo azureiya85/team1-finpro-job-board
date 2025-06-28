@@ -43,7 +43,10 @@ export interface JobApplicationDetails {
     title: string;
     salaryMin?: number | null;
     salaryMax?: number | null;
-  } | null; 
+    preSelectionTest?: {
+      id: string;
+    } | null;
+  } | null;
   testResult?: {
     score: number;
     passed: boolean;

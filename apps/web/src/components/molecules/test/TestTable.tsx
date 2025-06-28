@@ -27,13 +27,13 @@ export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
     }
   };
 
-  // Handler untuk navigasi dengan validasi
-  const handleNavigation = (testId: string, action: 'edit' | 'view') => {
+
+  const handleNavigation = (testId: string) => {
     if (!testId) {
       console.error('Test ID is undefined');
       return;
     }
-    router.push(`/jobs/${jobId}/test/${testId}${action === 'edit' ? '/edit-test' : ''}`);
+    router.push(`/jobs/${jobId}/test/${testId}/edit-test`);
   };
 
   return (
@@ -76,16 +76,9 @@ export function TestTable({ tests, jobId, onDelete }: TestTableProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleNavigation(test.id, 'edit')}
+                    onClick={() => handleNavigation(test.id)}
                   >
                     Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNavigation(test.id, 'view')}
-                  >
-                    View
                   </Button>
                   <Button
                     variant="destructive"
