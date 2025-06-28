@@ -1,4 +1,5 @@
 import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client';
+import { SortByType } from '@/stores/jobSearchStore';
 
 // ============================================================================
 // JOB POSTING TYPES
@@ -127,7 +128,6 @@ export interface JobPostingSearchAndFilterParams {
 export interface GetJobsParams { 
   take?: number;
   skip?: number;
-  orderBy?: Prisma.JobPostingOrderByWithRelationInput | Prisma.JobPostingOrderByWithRelationInput[]; 
   
   // Search Parameters
   jobTitle?: string;
@@ -148,10 +148,14 @@ export interface GetJobsParams {
   isRemote?: boolean;  
   companyId?: string;
 
+  companyQuery?: string;
+  sortBy?: SortByType;   
+  startDate?: string;    
+  endDate?: string;      
+
   // Response options
   includePagination?: boolean; 
 }
-
 
 export interface GetJobsResult {
   jobs: JobPostingFeatured[]; 

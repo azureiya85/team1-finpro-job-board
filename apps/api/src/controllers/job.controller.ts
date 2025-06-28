@@ -1,38 +1,40 @@
 import { Request, Response, NextFunction } from 'express';
 import * as jobService from 'src/services/job.service';
-import { GetJobsParams } from 'src/types';
+import { GetJobsParams, SortByType } from 'src/types';
 
 export async function getAllJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const queryParams = req.query as any;
-        console.log('Raw query params:', queryParams);
+    const queryParams = req.query;
+    console.log('Raw query params from frontend:', queryParams);
 
-    // Handle includePagination parameter
-    let includePagination = true; // default
-    if (queryParams.includePagination !== undefined) {
-      includePagination = queryParams.includePagination === 'true';
-    }
-
-    // Convert string boolean parameters
     const isRemote = queryParams.isRemote === 'true' ? true : 
-                    queryParams.isRemote === 'false' ? false : 
-                    undefined;
+                     queryParams.isRemote === 'false' ? false : 
+                     undefined;
 
     const paramsForService: GetJobsParams = {
-      jobTitle: queryParams.jobTitle,
-      locationQuery: queryParams.locationQuery,
-      categories: queryParams.categories, 
-      employmentTypes: queryParams.employmentTypes,
-      experienceLevels: queryParams.experienceLevels,
-      companySizes: queryParams.companySizes,
-      isRemote,
+      // Pagination
       take: queryParams.take ? parseInt(queryParams.take as string, 10) : undefined,
       skip: queryParams.skip ? parseInt(queryParams.skip as string, 10) : undefined,
-      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      includePagination,
+      
+      // Sorting & Date Filters
+      sortBy: queryParams.sortBy as SortByType,
+      startDate: queryParams.startDate as string,
+      endDate: queryParams.endDate as string,
+      
+      // Search
+      jobTitle: queryParams.jobTitle as string,
+      locationQuery: queryParams.locationQuery as string,
+      companyQuery: queryParams.companyQuery as string, 
+      
+      // Filters 
+      categories: queryParams.categories as string[],
+      employmentTypes: queryParams.employmentTypes as string[],
+      experienceLevels: queryParams.experienceLevels as string[],
+      companySizes: queryParams.companySizes as string[],
+      isRemote: isRemote, 
     };
 
-    console.log('Params for service:', paramsForService);
+    console.log('Processed params being sent to service:', paramsForService);
 
     const jobsResult = await jobService.fetchJobs(paramsForService);
     res.json(jobsResult);
@@ -99,6 +101,7 @@ export async function getJobsByCompany(req: Request, res: Response, next: NextFu
     const cleanParams = {
       jobTitle: queryParams.jobTitle,
       locationQuery: queryParams.locationQuery,
+      companyQuery: queryParams.companyQuery,  
       categories: queryParams.categories,
       employmentTypes: queryParams.employmentTypes,
       experienceLevels: queryParams.experienceLevels,
