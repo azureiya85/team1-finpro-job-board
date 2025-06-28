@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Info,
   CheckCircle,
-  Gift,
   Calendar
 } from 'lucide-react';
 import { JobPostingFeatured } from '@/types';
@@ -29,9 +28,6 @@ export function JobDetailsContent({ job }: JobDetailsContentProps) {
             Job Description
           </h3>
           <div className="prose prose-lg max-w-none text-muted-foreground leading-relaxed">
-            {/* 
-              TODO: Markdown: Use react markdown
-            */}
             <p>{job.description}</p>
           </div>
         </CardContent>
