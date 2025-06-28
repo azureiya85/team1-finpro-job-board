@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CompanySize, JobCategory, EmploymentType, ExperienceLevel } from '@prisma/client'; 
 
-// Company Update Schema
+// Company Update Schema 
 export const updateCompanySchema = z.object({
   name: z.string().min(1, "Company name is required").max(100, "Company name must be less than 100 characters").optional(),
   description: z.string().min(10, "Description must be at least 10 characters").max(2000, "Description must be less than 2000 characters").optional(),
@@ -33,6 +33,11 @@ export const jobSearchParamsSchema = z.object({
   jobTitle: z.string().optional(),
   locationQuery: z.string().optional(),
   companyId: z.string().optional(),
+  
+  userLatitude: z.coerce.number().optional(),
+  userLongitude: z.coerce.number().optional(),
+  radiusKm: z.coerce.number().min(1).max(500).optional().default(25),
+
   categories: z.preprocess(
     (val) => (typeof val === 'string' ? val.split(',') : val),
     z.array(z.nativeEnum(JobCategory)).optional()
@@ -54,5 +59,14 @@ export const jobSearchParamsSchema = z.object({
     if (val === 'false') return false;
     return undefined; 
   }, z.boolean().optional()),
+})
+.refine(data => {
+    const hasLat = data.userLatitude !== undefined;
+    const hasLon = data.userLongitude !== undefined;
+    return (hasLat && hasLon) || (!hasLat && !hasLon);
+  }, {
+    message: "Both latitude and longitude must be provided together, or neither.",
+    path: ["userLatitude", "userLongitude"], 
 });
+
 export type JobSearchParamsData = z.infer<typeof jobSearchParamsSchema>;

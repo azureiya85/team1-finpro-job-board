@@ -1,4 +1,5 @@
 import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client'; 
+export type SortByType = 'newest' | 'oldest' | 'company_asc' | 'company_desc';
 
 export type JobPostingFeatured = Pick<
   JobPosting,
@@ -43,24 +44,33 @@ export interface JobPostingSearchAndFilterParams {
 }
 
 export interface GetJobsParams {
+  // Pagination
   take?: number;
   skip?: number;
-  orderBy?: Prisma.JobPostingOrderByWithRelationInput | Prisma.JobPostingOrderByWithRelationInput[];
   
+  // Sorting (menggantikan orderBy)
+  sortBy?: SortByType;
+
   // Search Parameters
   jobTitle?: string; 
   locationQuery?: string; 
 
   // Filter Parameters
-  categories?: JobCategory[];
-  employmentTypes?: EmploymentType[];
-  experienceLevels?: ExperienceLevel[];
-  companySizes?: CompanySize[]; 
-   isRemote?: boolean | string;
-  companyId?: string; // Filter by specific company
+  categories?: JobCategory[] | string | string[];
+  employmentTypes?: EmploymentType[] | string | string[];
+  experienceLevels?: ExperienceLevel[] | string | string[];
+  companySizes?: CompanySize[] | string | string[];
+  isRemote?: boolean | string;
+  companyId?: string;
   
+  companyLocationQuery?: string;
+  companyQuery?: string;
+  startDate?: string;
+  endDate?: string;
+
   // Response options
- includePagination?: string | boolean; 
+  includePagination?: string | boolean; 
+
 }
 
 export type JobPostingDetailed = JobPosting & {

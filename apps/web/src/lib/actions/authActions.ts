@@ -1,10 +1,11 @@
 'use server';
 
 import { signIn as nextAuthServerSignIn, signOut as nextAuthServerSignOut } from '@/auth';
-import { LoginFormData, RegisterFormData, CompanyRegisterFormData } from '@/lib/validations/zodAuthValidation';
+import { LoginFormData, RegisterFormData, CompanyRegisterFormData, DeveloperRegisterFormData } from '@/lib/validations/zodAuthValidation';
 import { AuthError } from 'next-auth';
 import { UserRole } from '@prisma/client';
 import { authHelpers, RegisterResult } from '@/lib/authHelpers';
+import { redirect } from 'next/navigation';
 
 export interface LoggedInUser {
   id: string;
@@ -110,6 +111,27 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
   }
 }
 
+export async function socialLoginAction(provider: 'google' | 'facebook' | 'twitter'): Promise<void> {
+  try {
+    await nextAuthServerSignIn(provider, { 
+      redirectTo: '/dashboard',
+    });
+  } catch (error) {
+    console.error(`${provider} login error:`, error);
+    
+    if (error instanceof AuthError) {
+      // Redirect to login page with error
+      redirect(`/auth/login?error=${encodeURIComponent(error.message || 'Social login failed')}`);
+    }
+    
+    // Redirect to login page with generic error
+    redirect('/auth/login?error=Social login failed. Please try again.');
+  }
+  
+  // This line should never be reached due to redirects above
+  redirect('/dashboard');
+}
+
 export async function logoutAction(): Promise<{ success: boolean }> {
   try {
     await nextAuthServerSignOut({ redirect: false });
@@ -157,6 +179,18 @@ export async function registerCompanyAdminAction(data: CompanyRegisterFormData):
     return {
       success: false,
       message: 'An unexpected server error occurred during company registration. Please try again.',
+    };
+  }
+}
+
+export async function registerDeveloperAction(data: DeveloperRegisterFormData): Promise<RegisterResult> {
+  try {
+    return await authHelpers.registerDeveloper(data);
+  } catch (error) {
+    console.error('Developer registration error:', error);
+    return {
+      success: false,
+      message: 'An unexpected server error occurred during developer registration. Please try again.',
     };
   }
 }

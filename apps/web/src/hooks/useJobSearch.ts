@@ -12,6 +12,7 @@ export function useDebouncedJobSearchActions(debounceMs: number = 500) {
   // --- Select individual state slices and actions ---
   const searchTermInput = useJobSearchStore((state: JobSearchState) => state.searchTermInput);
   const locationSearchInput = useJobSearchStore((state: JobSearchState) => state.locationSearchInput);
+  const companySearchInput = useJobSearchStore((state: JobSearchState) => state.companySearchInput);
   const categories = useJobSearchStore((state: JobSearchState) => state.categories);
   const employmentTypes = useJobSearchStore((state: JobSearchState) => state.employmentTypes);
   const experienceLevels = useJobSearchStore((state: JobSearchState) => state.experienceLevels);
@@ -22,17 +23,20 @@ export function useDebouncedJobSearchActions(debounceMs: number = 500) {
 
   const setSearchTermInput = useJobSearchStore((state: JobSearchActions) => state.setSearchTermInput);
   const setLocationSearchInput = useJobSearchStore((state: JobSearchActions) => state.setLocationSearchInput);
+  const setCompanySearchInput = useJobSearchStore((state: JobSearchActions) => state.setCompanySearchInput);
   const fetchJobs = useJobSearchStore((state: JobSearchActions) => state.fetchJobs);
 
   // Debounce the UI input state values that are directly typed by the user
   const [debouncedSearchTermInput] = useDebounce(searchTermInput, debounceMs);
   const [debouncedLocationSearchInput] = useDebounce(locationSearchInput, debounceMs);
+  const [debouncedCompanySearchInput] = useDebounce(companySearchInput, debounceMs);
 
   useEffect(() => {
     fetchJobs();
   }, [
     debouncedSearchTermInput,
     debouncedLocationSearchInput,
+    debouncedCompanySearchInput,
     categories,          
     employmentTypes,     
     experienceLevels,    
@@ -46,5 +50,6 @@ export function useDebouncedJobSearchActions(debounceMs: number = 500) {
   return {
     setSearchTermInput,
     setLocationSearchInput,
+    setCompanySearchInput,
   };
 }

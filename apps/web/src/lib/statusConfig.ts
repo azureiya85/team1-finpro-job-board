@@ -10,18 +10,25 @@ import {
   Eye,
   Calendar,
   LucideIcon,
+  AlertCircle,
+  CreditCard,
+  Smartphone,
+  Building,
+  QrCode,
   FileText
 } from 'lucide-react';
+import { SubscriptionStatus, PaymentMethod } from '@/types/subscription';
 
-export const statusConfig: Record<
-  ApplicationStatus,
-  {
-    variant: 'default' | 'secondary' | 'destructive' | 'outline';
-    className: string;
-    icon: LucideIcon;
-    text: string;
-  }
-> = {
+// Badge configuration type
+type BadgeConfig = {
+  variant: 'default' | 'secondary' | 'destructive' | 'outline';
+  className: string;
+  icon: LucideIcon;
+  text: string;
+};
+
+// Complete status configuration for badges and UI elements
+export const statusConfig: Record<ApplicationStatus, BadgeConfig> = {
   PENDING: {
     variant: 'secondary',
     className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
@@ -131,6 +138,7 @@ export const statusActionConfig: Record<ApplicationStatus, {
   }
 };
 
+// Helper function to get status action configuration
 export const getStatusAction = (status: ApplicationStatus) => {
   return statusActionConfig[status] || { 
     icon: Clock, 
@@ -139,6 +147,7 @@ export const getStatusAction = (status: ApplicationStatus) => {
   };
 };
 
+// Application status order for timeline progression
 export const statusOrder: ApplicationStatus[] = [
   ApplicationStatus.PENDING,
   ApplicationStatus.REVIEWED,
@@ -149,3 +158,59 @@ export const statusOrder: ApplicationStatus[] = [
   ApplicationStatus.ACCEPTED,
   ApplicationStatus.REJECTED,
 ];
+
+// Subscription status badge configuration - ensure all return same structure
+export const subscriptionStatusConfig: Record<SubscriptionStatus, BadgeConfig> = {
+  ACTIVE: {
+    variant: 'default',
+    className: 'bg-green-500',
+    icon: CheckCircle,
+    text: 'Active',
+  },
+  PENDING: {
+    variant: 'secondary',
+    className: 'bg-yellow-500',
+    icon: Clock,
+    text: 'Pending',
+  },
+  CANCELLED: {
+    variant: 'destructive',
+    className: 'bg-red-500',
+    icon: AlertCircle,
+    text: 'Cancelled',
+  },
+  EXPIRED: {
+    variant: 'outline',
+    className: 'bg-gray-500',
+    icon: XCircle,
+    text: 'Expired',
+  },
+};
+
+// Payment method icon configuration
+export const paymentMethodConfig: Record<PaymentMethod, LucideIcon> = {
+  BANK_TRANSFER: Building,
+  MIDTRANS_BCA_VA: Building,
+  MIDTRANS_QRIS: QrCode,
+  CREDIT_CARD: CreditCard,
+  E_WALLET: Smartphone,
+};
+
+// Helper function to get subscription status badge - now always returns BadgeConfig
+export const getSubscriptionStatusBadge = (status: string): BadgeConfig => {
+  const config = subscriptionStatusConfig[status as SubscriptionStatus];
+  if (!config) {
+    return { 
+      variant: 'outline', 
+      className: 'bg-gray-50 text-gray-700 border-gray-200', 
+      icon: AlertCircle, 
+      text: status 
+    };
+  }
+  return config;
+};
+
+// Helper function to get payment method icon
+export const getPaymentMethodIcon = (method: string) => {
+  return paymentMethodConfig[method as PaymentMethod] || CreditCard;
+};

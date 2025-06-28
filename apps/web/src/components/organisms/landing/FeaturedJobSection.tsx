@@ -1,19 +1,31 @@
 'use client'
 
-import { FeaturedJobCard } from '@/components/molecules/landing/FeaturedJobCard';
 import { JobPostingFeatured } from '@/types';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { Sparkles, Briefcase, TrendingUp } from 'lucide-react';
+import { Sparkles, TrendingUp, ListChecks, LocateFixed, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useFeaturedJobsStore } from '@/stores/featuredJobsStore';
+import { LatestJobSection } from './LatestJobSection';
+import { NearestJobSection } from './NearestJobSection';
 
 interface FeaturedJobSectionProps {
   jobs: JobPostingFeatured[];
 }
 
-export function FeaturedJobSection({ jobs }: FeaturedJobSectionProps) {
-  const [isHovered, setIsHovered] = useState(false);
+export function FeaturedJobSection({ jobs: latestJobs }: FeaturedJobSectionProps) {
+  const { 
+    activeTab, 
+    setActiveTab, 
+    isLoadingNearest, 
+    nearestJobs, 
+    userCoordinates 
+  } = useFeaturedJobsStore();
 
-  if (!jobs || jobs.length === 0) {
+  const isTabActive = (tab: 'latest' | 'nearest'): boolean => activeTab === tab;
+
+  // Early return if no jobs for initial "Latest Jobs" tab
+  if (isTabActive('latest') && (!latestJobs || latestJobs.length === 0) && !isLoadingNearest) {
     return (
       <section className="py-12 md:py-16 bg-background">
         <div className="container mx-auto px-4">
@@ -23,22 +35,36 @@ export function FeaturedJobSection({ jobs }: FeaturedJobSectionProps) {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h2 className="mb-8 text-3xl font-bold tracking-tight font-heading md:text-4xl text-foreground">
-              Newest Opportunities
+            <h2 className="mb-4 text-3xl font-bold tracking-tight font-heading md:text-4xl text-foreground">
+              Job Opportunities
             </h2>
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Briefcase className="h-5 w-5" />
-              <p>No job openings at the moment. Please check back later!</p>
+            {/* Tab Buttons */}
+            <div className="flex justify-center gap-4 mb-8">
+              <Button
+                variant={isTabActive('latest') ? 'default' : 'outline'}
+                onClick={() => setActiveTab('latest')}
+                className="gap-2"
+              >
+                <ListChecks className="h-4 w-4" /> Latest Jobs
+              </Button>
+              <Button
+                variant={isTabActive('nearest') ? 'default' : 'outline'}
+                onClick={() => setActiveTab('nearest')}
+                className="gap-2"
+              >
+                <LocateFixed className="h-4 w-4" /> Nearest Jobs
+              </Button>
             </div>
+            <LatestJobSection jobs={latestJobs} />
           </motion.div>
         </div>
       </section>
     );
   }
 
-  // Duplicate jobs to create seamless infinite loop
-  const duplicatedJobs = [...jobs, ...jobs, ...jobs];
-  
+  // Get jobs to display based on active tab
+  const jobsToDisplay = activeTab === 'latest' ? latestJobs : nearestJobs;
+
   return (
     <section 
       id="featured-jobs" 
@@ -48,31 +74,30 @@ export function FeaturedJobSection({ jobs }: FeaturedJobSectionProps) {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-tr from-secondary/10 to-transparent rounded-full blur-3xl"></div>
-        
-        {/* Floating sparkles */}
         {[
-          { left: 15, top: 20, duration: 4, delay: 0 },
-          { left: 75, top: 10, duration: 3.5, delay: 0.5 },
-          { left: 45, top: 80, duration: 5, delay: 1 },
-          { left: 85, top: 60, duration: 3, delay: 1.5 },
-          { left: 25, top: 45, duration: 4.5, delay: 0.8 },
-          { left: 65, top: 25, duration: 3.8, delay: 0.3 },
+          { top: '10%', left: '10%', delay: 0 },
+          { top: '20%', right: '20%', delay: 1 },
+          { bottom: '30%', left: '15%', delay: 2 },
+          { bottom: '20%', right: '10%', delay: 0.5 },
+          { top: '60%', left: '60%', delay: 1.5 },
         ].map((sparkle, i) => (
-          <motion.div
+          <motion.div 
             key={i}
             className="absolute"
-            style={{
-              left: `${sparkle.left}%`,
-              top: `${sparkle.top}%`,
+            style={{ 
+              [sparkle.top ? 'top' : 'bottom']: sparkle.top || sparkle.bottom, 
+              [sparkle.left ? 'left' : 'right']: sparkle.left || sparkle.right 
             }}
-            animate={{
-              y: [-20, 20, -20],
-              opacity: [0.3, 0.8, 0.3],
+            animate={{ 
+              opacity: [0.3, 0.7, 0.3], 
+              scale: [1, 1.2, 1],
+              rotate: [0, 180, 360] 
             }}
-            transition={{
-              duration: sparkle.duration,
-              repeat: Infinity,
+            transition={{ 
+              duration: 4, 
+              repeat: Infinity, 
               delay: sparkle.delay,
+              ease: "easeInOut" 
             }}
           >
             <Sparkles className="h-4 w-4 text-primary/30" />
@@ -87,103 +112,84 @@ export function FeaturedJobSection({ jobs }: FeaturedJobSectionProps) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
             <TrendingUp className="h-4 w-4" />
             Hot Opportunities
           </div>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight font-heading mb-4 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
-            Latest Job Openings
+            {isTabActive('latest') ? 'Latest Job Openings' : 'Jobs Near You'}
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover exciting career opportunities from top companies. Fresh listings updated daily.
+            {isTabActive('latest') 
+              ? "Discover exciting career opportunities from top companies. Fresh listings updated daily."
+              : userCoordinates 
+                ? `Showing top jobs near your current location. (Lat: ${userCoordinates.latitude.toFixed(2)}, Lon: ${userCoordinates.longitude.toFixed(2)})`
+                : "Find relevant jobs based on your proximity."
+            }
           </p>
         </motion.div>
 
-        {/* Infinite Scrolling Carousel */}
-        <div className="relative">
-          <div 
-            className="overflow-hidden"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            <motion.div
-              className="flex gap-0"
-              animate={{
-                x: isHovered ? 0 : `-${(jobs.length * 344)}px`, // 344px = 320px width + 24px gap
-              }}
-              transition={{
-                duration: isHovered ? 0 : jobs.length * 8, // Slower animation
-                ease: "linear",
-                repeat: isHovered ? 0 : Infinity,
-              }}
-              style={{
-                width: `${duplicatedJobs.length * 344}px`,
-              }}
-            >
-              {duplicatedJobs.map((job, index) => (
-                <FeaturedJobCard
-                  key={`${job.id}-${Math.floor(index / jobs.length)}`}
-                  job={job}
-                  index={index % jobs.length}
-                />
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Gradient overlays for fade effect */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-surface-500 to-transparent dark:from-secondary-800 dark:to-transparent pointer-events-none z-10"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-surface-500 to-transparent dark:from-secondary-800 dark:to-transparent pointer-events-none z-10"></div>
-        </div>
-
-        {/* Hover instruction */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.5 }}
-          className="text-center mt-8"
+        {/* Tab Buttons */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="flex justify-center gap-3 md:gap-4 mb-10 md:mb-12"
         >
-          <p className="text-sm text-muted-foreground/70 flex items-center justify-center gap-2">
-            <motion.span
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              ✨
-            </motion.span>
-            Hover to pause and explore
-            <motion.span
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-            >
-              ✨
-            </motion.span>
-          </p>
+          <Button
+            size="lg"
+            variant={isTabActive('latest') ? 'default' : 'outline'}
+            onClick={() => setActiveTab('latest')}
+            className={cn(
+              "transition-all duration-300 ease-in-out transform hover:scale-105",
+              isTabActive('latest') ? "shadow-lg" : "hover:bg-primary/10"
+            )}
+          >
+            <ListChecks className="mr-2 h-5 w-5" /> Latest Jobs
+          </Button>
+          <Button
+            size="lg"
+            variant={isTabActive('nearest') ? 'default' : 'outline'}
+            onClick={() => setActiveTab('nearest')}
+            disabled={isLoadingNearest}
+            className={cn(
+              "transition-all duration-300 ease-in-out transform hover:scale-105",
+              isTabActive('nearest') ? "shadow-lg" : "hover:bg-primary/10"
+            )}
+          >
+            {isLoadingNearest ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <LocateFixed className="mr-2 h-5 w-5" />
+            )}
+            Nearest Jobs
+          </Button>
         </motion.div>
 
-        {/* Call to action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center mt-12"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+        {/* Tab Content */}
+        {isTabActive('latest') ? (
+          <LatestJobSection jobs={latestJobs} />
+        ) : (
+          <NearestJobSection />
+        )}
+        
+        {/* Hover instruction - only show if there are jobs to scroll */}
+        {jobsToDisplay.length > 1 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.5 }}
+            className="text-center mt-8"
           >
-            <Briefcase className="h-5 w-5" />
-            Explore All Opportunities
-            <motion.span
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              →
-            </motion.span>
-          </motion.button>
-        </motion.div>
+            <p className="text-sm text-muted-foreground/70 flex items-center justify-center gap-2">
+              <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity }}>✨</motion.span>
+              Hover to pause and explore
+              <motion.span animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 2, repeat: Infinity, delay: 1 }}>✨</motion.span>
+            </p>
+          </motion.div>
+        )}
       </div>
     </section>
   );

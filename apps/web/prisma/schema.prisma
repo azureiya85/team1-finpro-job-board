@@ -62,9 +62,11 @@ model User {
   skillAssessments   UserSkillAssessment[]
   certificates       Certificate[]
   companyReviews     CompanyReview[]
+  workExperiences WorkExperience[] 
   interviewSchedules InterviewSchedule[]
   notifications      Notification[]
   TestResult         TestResult[]
+  generatedCvs       GeneratedCv[]
 
   @@map("users")
 }
@@ -158,9 +160,25 @@ model Company {
 
   jobPostings       JobPosting[]
   companyReviews    CompanyReview[]
+  employeeRecords WorkExperience[] 
   preSelectionTests PreSelectionTest[]
 
   @@map("companies")
+}
+
+model GeneratedCv {
+  id        String   @id @default(cuid())
+  url       String 
+  template  String   @default("ATS_DEFAULT") 
+  fileName  String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("generated_cvs")
 }
 
 // ============================================
@@ -407,21 +425,27 @@ model SubscriptionPlan {
 }
 
 model Subscription {
-  id        String             @id @default(cuid())
-  startDate DateTime           @default(now())
-  endDate   DateTime
-  status    SubscriptionStatus @default(ACTIVE)
-  autoRenew Boolean            @default(false)
+  id                String    @id @default(cuid())
+  startDate         DateTime  @default(now())
+  endDate           DateTime
+  status            SubscriptionStatus @default(ACTIVE)
+  autoRenew         Boolean   @default(false)
+  cancelledAt       DateTime? 
+  cancellationReason String?  
+  refundAmount      Float?    
+  refundStatus      RefundStatus? 
 
-  paymentMethod PaymentMethod
-  paymentProof  String? // URL to payment proof image
-  paymentStatus PaymentStatus @default(PENDING)
-  transactionId String?
+  paymentMethod     PaymentMethod
+  paymentProof      String?   
+  paymentStatus     PaymentStatus @default(PENDING)
+  transactionId     String?
+  lastExpiryNotificationSent DateTime? 
 
   userId String
   user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId String
   plan   SubscriptionPlan @relation(fields: [planId], references: [id])
+  userAssessments UserSkillAssessment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -495,6 +519,8 @@ model UserSkillAssessment {
   timeSpent     Int // Time spent in minutes
   badgeEarned   Boolean   @default(false)
   badgeIssuedAt DateTime?
+  subscriptionId String? 
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
 
   userId       String
   user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -554,6 +580,8 @@ model CompanyReview {
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  workExperienceId String?    @unique 
+  workExperience   WorkExperience? @relation(fields: [workExperienceId], references: [id], onDelete:SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -595,12 +623,43 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
   message   String
-  link      String? // Link to relevant page (e.g., job application, interview)
+  link      String? 
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
 
   @@map("notifications")
+}
+
+// ============================================
+// USER WORK HISTORY & VERIFICATION
+// ============================================
+
+model WorkExperience {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId          String
+  company            Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  jobTitle           String    
+  employmentStatus   EmploymentStatus 
+  startDate          DateTime
+  endDate            DateTime? 
+
+  // --- Verification Fields ---
+  isVerified         Boolean   @default(false) 
+  verificationMethod VerificationMethod? 
+  verificationProof  String?   
+  verifiedAt         DateTime? 
+  rejectionReason    String?   
+  review CompanyReview?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, companyId])
+  @@map("work_experiences")
 }
 
 // ============================================
@@ -612,6 +671,13 @@ enum UserRole {
   COMPANY_ADMIN // Company administrator
   ADMIN // Site administrator
   Developer // Platform configuration admin
+}
+
+enum VerificationMethod {
+  PAYSLIP
+  CONTRACT
+  COMPANY_EMAIL
+  ADMIN_MANUAL
 }
 
 enum AuthProvider {
@@ -735,7 +801,9 @@ enum PaymentMethod {
   BANK_TRANSFER
   CREDIT_CARD
   E_WALLET
-  PAYMENT_GATEWAY
+  PAYMENT_GATEWAY  
+  MIDTRANS_BCA_VA
+  MIDTRANS_QRIS
 }
 
 enum PaymentStatus {
@@ -767,4 +835,11 @@ enum NotificationType {
 enum CityType {
   CITY
   REGENCY
+}
+
+enum RefundStatus {
+  PENDING
+  APPROVED
+  COMPLETED
+  REJECTED
 }

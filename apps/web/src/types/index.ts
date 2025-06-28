@@ -1,4 +1,5 @@
 import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client';
+import { SortByType } from '@/stores/jobSearchStore';
 
 // ============================================================================
 // JOB POSTING TYPES
@@ -24,13 +25,18 @@ export type JobPostingFeatured = Pick<
   | 'requirements' 
   | 'applicationDeadline'
   | 'requiresCoverLetter'   
-  | 'preSelectionTestId'           
+  | 'preSelectionTestId'
+  | 'latitude'       
+  | 'longitude'       
 > & {
   company: Pick<Company, 'id' | 'name' | 'logo' | 'size'> | null;
-  city: Pick<City, 'name'> | null;
-  province: Pick<Province, 'name'> | null;
+  city: Pick<City, 'id' | 'name'> | null;            
+  province: Pick<Province, 'id' | 'name'> | null;  
+  _count?: {                                        
+    applications?: number;
+  };
+  distance?: number;
 };
-
 
 export type JobCompanyInfoForStore = Pick<Company, 'id' | 'name' | 'logo' | 'size'>;
 
@@ -93,9 +99,8 @@ export interface JobPostingInStore {
   _count?: {
     applications: number;
   };
+  distance?: number;
 }
-
-
 
 // Alias for JobManagementStore compatibility
 export type JobPostingWithApplicantCount = JobPostingInStore;
@@ -123,21 +128,38 @@ export interface JobPostingSearchAndFilterParams {
 export interface GetJobsParams { 
   take?: number;
   skip?: number;
-  orderBy?: Prisma.JobPostingOrderByWithRelationInput | Prisma.JobPostingOrderByWithRelationInput[]; 
   
+  // Search Parameters
   jobTitle?: string;
-  locationQuery?: string;
+  
+  // Location Parameters
+  locationQuery?: string; 
+  userLatitude?: number;  
+  userLongitude?: number; 
+  radiusKm?: number;      
+  cityId?: string;        
+  provinceId?: string;    
 
+  // Filter Parameters
   categories?: JobCategory[];
   employmentTypes?: EmploymentType[];
   experienceLevels?: ExperienceLevel[];
   companySizes?: CompanySize[];
   isRemote?: boolean;  
   companyId?: string;
+
+  companyQuery?: string;
+  companyLocationQuery?: string;
+  sortBy?: SortByType;   
+  startDate?: string;    
+  endDate?: string;      
+
+  // Response options
+  includePagination?: boolean; 
 }
 
 export interface GetJobsResult {
-  jobs: JobPostingFeatured[];
+  jobs: JobPostingFeatured[]; 
   pagination?: {
     total: number;
     page: number;

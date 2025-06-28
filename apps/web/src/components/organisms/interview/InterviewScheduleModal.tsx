@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { InterviewScheduleForm } from '@/components/molecules/interview/InterviewScheduleForm';
@@ -19,6 +19,14 @@ type InterviewSubmitData = InterviewFormData & {
   jobApplicationId: string;
   jobPostingId: string;
   candidateId: string;
+};
+
+type InitialInterviewData = Pick<
+  InterviewSchedule,
+  'id' | 'scheduledAt' | 'duration' | 'interviewType' | 'status'
+> & {
+  location?: string | null;
+  notes?: string | null;
 };
 
 interface InterviewScheduleModalProps {
@@ -43,17 +51,22 @@ export function InterviewScheduleModal({
   onInterviewUpdate
 }: InterviewScheduleModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentInterview, setCurrentInterview] = useState<InterviewSchedule | null>(interview || null);
+  const [currentInterview, setCurrentInterview] = useState<InterviewSchedule | InitialInterviewData | null>(interview || null);
 
   useEffect(() => {
     const fetchInterviewData = async () => {
       if (interview?.id && isOpen) {
-        const response = await fetch(
-          `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
-        );
-        const data = await response.json();
-        setCurrentInterview(data);
-        onInterviewUpdate?.(data);
+        try {
+          const response = await fetch(
+            `/api/companies/${companyId}/jobs/${jobId}/applicants/${applicationId}/interview/${interview.id}`
+          );
+          const data = await response.json();
+          setCurrentInterview(data);
+          onInterviewUpdate?.(data);
+        } catch (fetchError) {
+          console.error('Failed to fetch interview data:', fetchError);
+          toast.error('Failed to load interview data');
+        }
       }
     };
 
@@ -93,7 +106,8 @@ export function InterviewScheduleModal({
       onInterviewUpdate?.(responseData);
       toast.success(interview ? 'Interview rescheduled successfully' : 'Interview scheduled successfully');
       onClose();
-    } catch (error) {
+    } catch (submitError) {
+      console.error('Submit error:', submitError);
       toast.error('Failed to schedule interview');
     } finally {
       setIsSubmitting(false);
@@ -116,19 +130,21 @@ export function InterviewScheduleModal({
 
       toast.success('Interview deleted successfully');
       onClose();
-    } catch (error) {
+    } catch (deleteError) {
+      console.error('Delete error:', deleteError);
       toast.error('Failed to delete interview');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+
   const formDefaultValues: Partial<InterviewFormData> | undefined = currentInterview ? {
     scheduledAt: new Date(currentInterview.scheduledAt),
     duration: currentInterview.duration,
     interviewType: currentInterview.interviewType as 'ONLINE' | 'ONSITE',
-    location: currentInterview.location || undefined, // Konversi null ke undefined
-    notes: currentInterview.notes || undefined // Konversi null ke undefined
+    location: currentInterview.location || undefined,
+    notes: currentInterview.notes || undefined
   } : undefined;
 
   return (

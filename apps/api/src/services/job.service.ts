@@ -3,6 +3,7 @@ import {
   JobPostingFeatured,
   GetJobsParams,
   GetJobsResult,
+  SortByType,
 } from 'src/types';
 import { Prisma } from '@prisma/client';
 
@@ -19,16 +20,21 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
   const {
     jobTitle,
     locationQuery,
+    companyQuery,
+    companyLocationQuery, 
     categories,
     employmentTypes,
     experienceLevels,
     companySizes,
     isRemote,
     companyId,
+    startDate,
+    endDate,
   } = params;
 
   const where: Prisma.JobPostingWhereInput = {
     isActive: true, // Always filter for active jobs
+    publishedAt: { not: null },
   };
 
   // --- Search Logic ---
@@ -41,20 +47,8 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
 
   if (locationQuery) {
     const locationConditions: Prisma.JobPostingWhereInput[] = [
-      {
-        city: {
-          is: {
-            name: { contains: locationQuery, mode: 'insensitive' },
-          },
-        },
-      },
-      {
-        province: {
-          is: {
-            name: { contains: locationQuery, mode: 'insensitive' },
-          },
-        },
-      },
+      { city: { is: { name: { contains: locationQuery, mode: 'insensitive' } } } },
+      { province: { is: { name: { contains: locationQuery, mode: 'insensitive' } } } },
     ];
 
     if (where.OR) {
@@ -66,6 +60,24 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
     } else {
       where.OR = locationConditions;
     }
+  }
+
+   let companyFilter: Prisma.CompanyWhereInput = {};
+  
+  if (companyQuery) {
+    where.company = {
+      is: {
+        ...where.company?.is, 
+        name: { contains: companyQuery, mode: 'insensitive' },
+      },
+    };
+  }
+
+   if (companyLocationQuery) {
+    companyFilter.OR = [
+      { city: { name: { contains: companyLocationQuery, mode: 'insensitive' } } },
+      { province: { name: { contains: companyLocationQuery, mode: 'insensitive' } } },
+    ];
   }
 
   // --- Filter Logic with proper array handling ---
@@ -92,27 +104,75 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
   if (companySizesArray && companySizesArray.length > 0) {
     where.company = {
       is: {
+        ...where.company?.is,
         size: { in: companySizesArray as any },
       },
     };
+  }
+
+    if (Object.keys(companyFilter).length > 0) {
+    where.company = {
+      is: companyFilter
+    };
+  }
+
+  if (startDate || endDate) {
+    where.publishedAt = {};
+    if (startDate) {
+      where.publishedAt.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      where.publishedAt.lte = endOfDay;
+    }
   }
 
   if (companyId) {
     where.companyId = companyId;
   }
 
-  // Debug log the where clause
   console.log('Built where clause:', JSON.stringify(where, null, 2));
-
   return where;
+};
+
+const buildOrderByClause = (sortBy?: SortByType): Prisma.JobPostingOrderByWithRelationInput[] => {
+  const defaultSort: Prisma.JobPostingOrderByWithRelationInput[] = [
+    { isPriority: 'desc' },
+    { publishedAt: 'desc' },
+    { createdAt: 'desc' },
+  ];
+  
+  switch (sortBy) {
+    case 'oldest':
+      return [
+        { isPriority: 'desc' },
+        { publishedAt: 'asc' },
+        { createdAt: 'asc' },
+      ];
+    case 'company_asc':
+      return [
+        { company: { name: 'asc' } },
+        { isPriority: 'desc' },
+        { publishedAt: 'desc' },
+      ];
+    case 'company_desc':
+      return [
+        { company: { name: 'desc' } },
+        { isPriority: 'desc' },
+        { publishedAt: 'desc' },
+      ];
+    case 'newest':
+    default:
+      return defaultSort;
+  }
 };
 
 export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingFeatured[] | GetJobsResult> {
   const takeParam = params.take !== undefined ? parseInt(String(params.take), 10) : 3000;
   const skipParam = params.skip !== undefined ? parseInt(String(params.skip), 10) : 0;
 
-  let includePaginationParam: boolean;
-
+   let includePaginationParam: boolean;
   if (typeof params.includePagination === 'string') {
     includePaginationParam = params.includePagination.toLowerCase() === 'true';
   } else if (typeof params.includePagination === 'boolean') {
@@ -121,14 +181,7 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
     includePaginationParam = true;
   }
 
-  if (isNaN(takeParam) || takeParam < 0) {
-    throw new Error("Invalid 'take' parameter: must be a non-negative number.");
-  }
-  if (isNaN(skipParam) || skipParam < 0) {
-    throw new Error("Invalid 'skip' parameter: must be a non-negative number.");
-  }
-
-  const effectiveOrderBy = params.orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
+  const orderBy = buildOrderByClause(params.sortBy);
   const where = buildWhereClause(params);
 
   try {
@@ -136,7 +189,7 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
       const [jobs, totalCount] = await prisma.$transaction([
         prisma.jobPosting.findMany({
           where,
-          orderBy: effectiveOrderBy,
+          orderBy: orderBy, 
           take: takeParam, 
           skip: skipParam, 
           select: { 
@@ -169,7 +222,7 @@ export async function fetchJobs(params: GetJobsParams = {}): Promise<JobPostingF
     } else {
       const jobs = await prisma.jobPosting.findMany({
         where,
-        orderBy: effectiveOrderBy,
+        orderBy: orderBy,
         take: takeParam, 
         skip: skipParam,
         select: {
@@ -229,7 +282,7 @@ export async function fetchJobById(id: string): Promise<JobPostingFeatured | nul
 export async function fetchLatestFeaturedJobs(count: number = 5): Promise<JobPostingFeatured[]> {
   const result = await fetchJobs({
     take: count,
-    orderBy: [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+    sortBy: 'newest',
     includePagination: false,
   });
   return result as JobPostingFeatured[];

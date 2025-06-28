@@ -4,8 +4,9 @@ import { auth } from '@/auth';
 import { buildFilterQuery, calculateAge } from '@/lib/applicants/applicationStatsHelper';
 import { searchParamsToFilters, validateFilters } from '@/lib/applicants/filterValidationHelper';
 import type {
-  RouteAndPaginationFilters, 
+  RouteAndPaginationFilters,
   JobApplicationDetails,
+  SubscriptionPlanFeatures, 
 } from '@/types/applicants';
 
 const prisma = new PrismaClient();
@@ -21,33 +22,32 @@ export async function GET(
     }
 
     const resolvedParams = await context.params;
-    const { id: companyIdFromPath, jobsId: jobIdFromPath } = resolvedParams; 
+    const { id: companyIdFromPath, jobsId: jobIdFromPath } = resolvedParams;
     const { searchParams } = new URL(request.url);
 
     const baseClientFilters = searchParamsToFilters(searchParams);
-    
+
     const routeFilters: Omit<RouteAndPaginationFilters, 'jobPostingId'> & { page?: number; limit?: number } = {
       ...baseClientFilters,
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : 20,
     };
 
-    const { isValid, errors: validationErrors } = validateFilters(routeFilters); // Pass without jobPostingId if it expects it
+    const { isValid, errors: validationErrors } = validateFilters(routeFilters);
     if (!isValid) {
-      return NextResponse.json({ 
-        message: "Invalid filter parameters", 
-        errors: validationErrors 
+      return NextResponse.json({
+        message: "Invalid filter parameters",
+        errors: validationErrors
       }, { status: 400 });
     }
 
     const company = await prisma.company.findFirst({
-      where: { id: companyIdFromPath, adminId: session.user.id }, // Ensure admin owns this company
+      where: { id: companyIdFromPath, adminId: session.user.id },
     });
     if (!company) {
       return NextResponse.json({ error: 'Company not found or unauthorized for this company' }, { status: 404 });
     }
 
-    // Verify the job posting belongs to this company (important!)
     const jobPosting = await prisma.jobPosting.findUnique({
         where: { id: jobIdFromPath },
         select: { companyId: true }
@@ -60,9 +60,9 @@ export async function GET(
 
     const finalWhereClause: Prisma.JobApplicationWhereInput = {
       jobPostingId: jobIdFromPath,
-      ...dynamicWhereFromHelper, 
+      ...dynamicWhereFromHelper,
     };
-    
+
     const skip = (routeFilters.page! - 1) * routeFilters.limit!;
     const take = routeFilters.limit!;
 
@@ -82,9 +82,23 @@ export async function GET(
             currentAddress: true,
             province: { select: { name: true } },
             city: { select: { name: true } },
+            subscriptions: {
+              where: {
+                status: 'ACTIVE',
+                endDate: { gt: new Date() }
+              },
+              include: {
+                plan: {
+                  select: {
+                    name: true,
+                    features: true
+                  }
+                }
+              }
+            }
           },
         },
-        jobPosting: { 
+        jobPosting: {
           select: {
             id: true,
             title: true,
@@ -109,7 +123,7 @@ export async function GET(
             interviewType: true,
             duration: true,
             location: true,
-            notes: true    
+            notes: true,
           },
           orderBy: { scheduledAt: 'desc' },
           take: 1,
@@ -124,10 +138,16 @@ export async function GET(
       where: finalWhereClause,
     });
 
-    const transformedApplications: JobApplicationDetails[] = applications.map((app) => {
+    const transformedApplications: (JobApplicationDetails & { isPriority: boolean })[] = applications.map((app) => {
       const user = app.user;
       const age = user.dateOfBirth ? calculateAge(new Date(user.dateOfBirth)) : null;
       const location = [user.city?.name, user.province?.name].filter(Boolean).join(', ');
+
+      const hasPriority = user.subscriptions.some(sub => {
+        const features = sub.plan.features as SubscriptionPlanFeatures;
+        return sub.plan.name === 'PROFESSIONAL' && features?.priorityCvReview === true;
+      });
+
       return {
         id: app.id,
         status: app.status,
@@ -158,11 +178,18 @@ export async function GET(
           location,
           currentAddress: user.currentAddress,
         },
+        isPriority: hasPriority,
       };
     });
 
+    const sortedApplications = transformedApplications.sort((a, b) => {
+      if (a.isPriority && !b.isPriority) return -1;
+      if (!a.isPriority && b.isPriority) return 1;
+      return 0;
+    });
+
     const response = {
-      applications: transformedApplications,
+      applications: sortedApplications,
       pagination: {
         page: routeFilters.page,
         limit: routeFilters.limit,
@@ -171,7 +198,7 @@ export async function GET(
         hasNext: routeFilters.page! * routeFilters.limit! < totalCount,
         hasPrev: routeFilters.page! > 1,
       },
-      appliedFilters: routeFilters, 
+      appliedFilters: routeFilters,
     };
 
     return NextResponse.json(response);

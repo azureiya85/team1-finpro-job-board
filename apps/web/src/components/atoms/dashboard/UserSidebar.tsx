@@ -2,29 +2,44 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Cog, User, LogOut, Settings, Home, ChevronRight } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { Cog, User, LogOut, Settings, Home, ChevronRight, FileText, Award, ShoppingCart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useUserBadges } from '@/hooks/useUserBadges';
+import { logoutAction } from '@/lib/actions/authActions';
+import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStores';
 
 const navItems = [
-  { 
-    name: 'Dashboard', 
-    href: '/dashboard', 
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
     icon: Home,
     description: 'Track your job application'
   },
-  { 
-    name: 'Profile', 
-    href: '/dashboard/profile', 
+  {
+    name: 'Assessments',
+    href: '/dashboard/assessments',
+    icon: FileText,
+    description: 'Take skill assessments'
+  },
+  {
+    name: 'Subscriptions',
+    href: '/dashboard/subscription',
+    icon: ShoppingCart,
+    description: 'Manage your plan',
+  },
+  {
+    name: 'Profile',
+    href: '/dashboard/profile',
     icon: User,
     description: 'Manage your profile'
   },
-  { 
-    name: 'Settings', 
-    href: '/dashboard/settings', 
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
     icon: Settings,
     description: 'Account preferences',
     comingSoon: true
@@ -33,10 +48,32 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { badges, isLoading: badgesLoading, error: badgesError } = useUserBadges();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    await signOut({ callbackUrl: '/auth/login' });
-  };
+ const handleLogout = async () => {
+  if (isLoggingOut) return; // Prevent multiple clicks
+  
+  try {
+    setIsLoggingOut(true);
+    const { logout: clearAuthStore } = useAuthStore.getState();
+    clearAuthStore();    
+    const result = await logoutAction();
+    
+    if (result.success) {
+      window.location.href = '/auth/login';
+    } else {
+      window.location.href = '/auth/login';
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    const { logout: clearAuthStore } = useAuthStore.getState();
+    clearAuthStore();
+    window.location.href = '/auth/login';
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
 
   return (
     <div className="w-64 bg-card border-r border-border min-h-screen flex flex-col fixed shadow-sm">
@@ -60,9 +97,9 @@ export default function Sidebar() {
             Navigation
           </h2>
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
             const IconComponent = item.icon;
-            
+
             return (
               <div key={item.name} className="relative">
                 <Link
@@ -93,7 +130,7 @@ export default function Sidebar() {
                       Soon
                     </Badge>
                   )}
-                  {isActive && (
+                  {isActive && item.href !== '/dashboard' && (
                     <ChevronRight className="w-4 h-4 text-primary-foreground" />
                   )}
                 </Link>
@@ -103,6 +140,46 @@ export default function Sidebar() {
         </div>
       </nav>
 
+      {/* Badges Section */}
+      <div className="p-4 border-t border-border/50">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
+          My Badges
+        </h2>
+        {badgesLoading ? (
+            <div className="flex justify-center items-center h-10">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+        ) : badgesError ? (
+            <p className="text-xs text-destructive px-3">Error loading badges.</p>
+        ) : badges && badges.length > 0 ? (
+          <>
+            <div className="flex flex-wrap gap-2 px-3">
+              {badges.slice(0, 5).map(badge => (
+                <div key={badge.id} title={`${badge.assessmentTitle}\nEarned: ${new Date(badge.earnedAt).toLocaleDateString()}`} className="cursor-default">
+                  <Badge variant="outline" className="p-1.5 text-lg border-yellow-400 text-yellow-600 bg-yellow-50">
+                    {badge.assessmentIcon ? (
+                      <span>{badge.assessmentIcon}</span>
+                    ) : (
+                      <Award className="w-4 h-4" />
+                    )}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+            {badges.length > 5 && (
+           <Link 
+    href="/dashboard/profile#badges" 
+    className="text-xs text-primary hover:underline px-3 mt-2 block"
+  >
+      View all badges...
+  </Link>
+            )}
+          </>
+        ) : (
+            <p className="text-xs text-muted-foreground px-3">No badges earned yet.</p>
+        )}
+      </div>
+
       {/* Footer */}
       <div className="p-4 border-t border-border/50 mt-auto">
         <div className="space-y-2">
@@ -111,14 +188,18 @@ export default function Sidebar() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
+            disabled={isLoggingOut}
             className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            {isLoggingOut ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )}
+            <span>{isLoggingOut ? 'Signing Out...' : 'Sign Out'}</span>
           </Button>
         </div>
-        
-        {/* Optional: User info section */}
+
         <div className="mt-4 p-3 bg-muted/50 rounded-lg">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">

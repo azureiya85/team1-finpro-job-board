@@ -10,7 +10,6 @@ const daysAgo = (days: number): Date => {
   return date;
 };
 
-
 export interface JobPostingMockData {
   id: string;
   title: string;
@@ -249,8 +248,6 @@ export const jobPostings: JobPostingMockData[] = [
     salaryMin: 13000000,
     salaryMax: 19000000,
     isRemote: true,
-    // For remote, we can still list a preferred or common timezone/region, or company HQ's city.
-    // Let's say they are hiring for someone who can work with clients in Jawa Barat region.
     provinceId: 'BANTEN', // Target candidate region or company branch
     cityId: 'Serang',       // Target candidate city or company branch
     applicationDeadline: new Date('2025-09-20T23:59:59Z'),
@@ -409,5 +406,81 @@ export const jobPostings: JobPostingMockData[] = [
   createdAt: daysAgo(7),
   updatedAt: daysAgo(7),
   publishedAt: daysAgo(7),
+},
+{
+  id: mockCuid('job', 16),
+  title: 'Retail Store Manager - Depok',
+  description: 'We are seeking an experienced Retail Store Manager to oversee our new flagship store in Depok. You will be responsible for daily operations, staff management, and achieving sales targets.',
+  category: JobCategory.SALES,
+  employmentType: EmploymentType.FULL_TIME,
+  experienceLevel: ExperienceLevel.MID_LEVEL,
+  salaryMin: 9000000,
+  salaryMax: 13000000,
+  salaryCurrency: 'IDR',
+  isRemote: false,
+  latitude: -6.402, // Depok
+  longitude: 106.82,
+  provinceId: 'JABAR',
+  cityId: 'Depok',
+  applicationDeadline: new Date('2025-09-01T23:59:59Z'),
+  isActive: true,
+  isPriority: false,
+  requirements: ['3+ years in retail management', 'Strong leadership skills', 'Experience with POS systems', 'Customer service oriented'],
+  benefits: ['Competitive salary', 'Sales commission', 'Health insurance', 'Staff discount'],
+  tags: ['retail', 'management', 'sales', 'depok', 'storemanager'],
+  companyId: mockCuid('company', 4), 
+  createdAt: daysAgo(2),
+  updatedAt: daysAgo(2),
+  publishedAt: daysAgo(2),
+},
+{
+  id: mockCuid('job', 17),
+  title: 'Logistics Coordinator',
+  description: 'Join our logistics team in Bogor. You will coordinate inbound and outbound shipments, manage inventory, and ensure timely delivery of goods from our agricultural hub.',
+  category: JobCategory.OPERATIONS,
+  employmentType: EmploymentType.FULL_TIME,
+  experienceLevel: ExperienceLevel.ENTRY_LEVEL,
+  salaryMin: 7000000,
+  salaryMax: 10000000,
+  salaryCurrency: 'IDR',
+  isRemote: false,
+  latitude: -6.595, // Bogor
+  longitude: 106.79,
+  provinceId: 'JABAR',
+  cityId: 'Bogor',
+  applicationDeadline: new Date('2025-08-30T23:59:59Z'),
+  isActive: true,
+  requirements: ['Degree in Logistics or Supply Chain preferred', 'Strong organizational skills', 'Proficient in MS Office', 'Fresh graduates are encouraged to apply'],
+  benefits: ['Career development', 'Supportive team', 'Health benefits', 'Overtime pay'],
+  tags: ['logistics', 'supplychain', 'bogor', 'entrylevel', 'operations'],
+  companyId: mockCuid('company', 3), // GreenGrow Farms (existing company)
+  createdAt: daysAgo(5),
+  updatedAt: daysAgo(5),
+  publishedAt: daysAgo(5),
+},
+{
+  id: mockCuid('job', 18),
+  title: 'IT Support Specialist - BSD',
+  description: 'Provide technical assistance and support for incoming queries and issues related to computer systems, software, and hardware in our Tangerang Selatan office. On-site support is critical.',
+  category: JobCategory.TECHNOLOGY,
+  employmentType: EmploymentType.CONTRACT,
+  experienceLevel: ExperienceLevel.MID_LEVEL,
+  salaryMin: 8000000,
+  salaryMax: 12000000,
+  salaryCurrency: 'IDR',
+  isRemote: false,
+  latitude: -6.301, // Tangerang Selatan (BSD)
+  longitude: 106.653,
+  provinceId: 'BANTEN',
+  cityId: 'Tangerang Selatan',
+  applicationDeadline: new Date('2025-09-20T23:59:59Z'),
+  isActive: true,
+  requirements: ['2+ years of IT Support experience', 'Knowledge of Windows/Mac OS', 'Network troubleshooting', 'Hardware maintenance'],
+  benefits: ['Potential for permanent position', 'Dynamic work environment', 'Gain experience with modern tech'],
+  tags: ['itsupport', 'helpdesk', 'bsd', 'tangerang', 'tech', 'contract'],
+  companyId: mockCuid('company', 1), // Tech Solutions Inc. (existing company)
+  createdAt: daysAgo(1),
+  updatedAt: daysAgo(1),
+  publishedAt: daysAgo(1),
 }
 ];

@@ -18,11 +18,6 @@ export async function GET(
     if (!authResult.isAuthenticated) {
         return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
-    // Add role check if only admins can view specific job details via this endpoint
-    // if (!authResult.isCompanyAdmin && !authResult.isOwner) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
-
 
     const jobPosting = await prisma.jobPosting.findFirst({
       where: {
@@ -55,12 +50,6 @@ export async function GET(
     if (!jobPosting) {
       return NextResponse.json({ error: 'Job posting not found or does not belong to this company' }, { status: 404 });
     }
-    
-    // Example: Further check if the authenticated user is the owner, if this endpoint is strictly for the owner
-    // if (authResult.isOwner && jobPosting.company.adminId !== authResult.user?.id) {
-    //     return NextResponse.json({ error: 'Unauthorized to view this job' }, { status: 403 });
-    // }
-
 
     return NextResponse.json(jobPosting);
 
@@ -126,7 +115,6 @@ export async function PUT(
     }
 
     if (authResult.isOwner && existingJob.company.adminId !== authResult.user?.id) {
-       // Similar to POST, adjust based on your exact `validateCompanyAccess` logic for owners.
     }
 
     if (updateData.preSelectionTestId) {
@@ -248,7 +236,6 @@ export async function DELETE(
     }
 
     if (authResult.isOwner && existingJob.company.adminId !== authResult.user?.id) {
-      // Similar to POST/PUT, adjust based on your `validateCompanyAccess` logic for owners.
     }
 
     if (existingJob._count.applications > 0) {

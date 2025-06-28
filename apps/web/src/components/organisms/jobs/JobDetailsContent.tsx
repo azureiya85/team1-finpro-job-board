@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Info,
   CheckCircle,
-  Gift,
   Calendar
 } from 'lucide-react';
 import { JobPostingFeatured } from '@/types';

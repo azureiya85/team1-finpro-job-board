@@ -13,11 +13,12 @@ import { useDebouncedJobSearchActions } from '@/hooks/useJobSearch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Search, MapPin } from 'lucide-react'; 
+import { Search, MapPin, Building2 } from 'lucide-react'; 
 
 const searchFormSchema = z.object({
   jobTitle: z.string().optional(),
   location: z.string().optional(),
+  company: z.string().optional(),
 });
 
 type SearchFormValues = z.infer<typeof searchFormSchema>;
@@ -26,11 +27,13 @@ export function SearchJobSection() {
   // Select individual state slices from Zustand 
   const storeSearchTerm = useJobSearchStore((state: JobSearchState) => state.searchTermInput);
   const storeLocationSearch = useJobSearchStore((state: JobSearchState) => state.locationSearchInput);
+  const storeCompanySearch = useJobSearchStore((state: JobSearchState) => state.companySearchInput);
 
-  // Get debounced setters from  custom hook
+  // Get debounced setters from custom hook
   const {
     setSearchTermInput: debouncedSetSearchTerm,
     setLocationSearchInput: debouncedSetLocationSearch,
+    setCompanySearchInput: debouncedSetCompanySearch,
   } = useDebouncedJobSearchActions();
 
   // Get direct fetchJobs action from Zustand
@@ -42,6 +45,7 @@ export function SearchJobSection() {
     defaultValues: {
       jobTitle: storeSearchTerm || '',
       location: storeLocationSearch || '',
+      company: storeCompanySearch || '',
     },
   });
 
@@ -54,9 +58,14 @@ export function SearchJobSection() {
     form.setValue('location', storeLocationSearch || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
   }, [storeLocationSearch, form.setValue, form]);
 
+  useEffect(() => {
+    form.setValue('company', storeCompanySearch || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
+  }, [storeCompanySearch, form.setValue, form]);
+
   // --- Sync form changes to Zustand store via debounced setters (one-way: form -> store) ---
   const jobTitleValue = form.watch('jobTitle');
   const locationValue = form.watch('location');
+  const companyValue = form.watch('company');
 
   useEffect(() => {
     debouncedSetSearchTerm(jobTitleValue === undefined ? '' : jobTitleValue);
@@ -65,6 +74,10 @@ export function SearchJobSection() {
   useEffect(() => {
     debouncedSetLocationSearch(locationValue === undefined ? '' : locationValue);
   }, [locationValue, debouncedSetLocationSearch]);
+
+  useEffect(() => {
+    debouncedSetCompanySearch(companyValue === undefined ? '' : companyValue);
+  }, [companyValue, debouncedSetCompanySearch]);
 
   // Handle form submission 
   const onSubmit = (values: SearchFormValues) => {
@@ -77,7 +90,7 @@ export function SearchJobSection() {
       <h2 className="text-xl font-bold font-heading text-foreground mb-4">Search Jobs</h2>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormField
               control={form.control}
               name="jobTitle"
@@ -104,6 +117,22 @@ export function SearchJobSection() {
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
                       <Input placeholder="e.g., Jakarta, Remote" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="company"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-semibold">By Company</FormLabel>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="e.g., Google, Microsoft" {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />

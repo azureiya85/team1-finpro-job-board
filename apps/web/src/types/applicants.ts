@@ -1,9 +1,9 @@
 import {
   ApplicationStatus,
   Education,
-  InterviewStatus, 
+  InterviewStatus,
   InterviewType,
-  Prisma, 
+  Prisma,
 } from '@prisma/client';
 
 // ========================================================================
@@ -12,24 +12,24 @@ import {
 
 export interface ApplicantProfile {
   id: string;
-  name: string; 
+  name: string;
   firstName?: string | null;
   lastName?: string | null;
   email: string;
   profileImage?: string | null;
-  age?: number | null; 
+  age?: number | null;
   education?: Education | null;
   phoneNumber?: string | null;
-  location?: string; 
+  location?: string;
   currentAddress?: string | null;
 }
 
 export interface JobApplicationDetails {
-  id:string;
+  id: string;
   status: ApplicationStatus;
   expectedSalary?: number | null;
   coverLetter?: string | null;
-  cvUrl: string; 
+  cvUrl: string;
   testScore?: number | null;
   testCompletedAt?: Date | null;
   rejectionReason?: string | null;
@@ -55,8 +55,8 @@ export interface JobApplicationDetails {
     id: string;
     scheduledAt: Date;
     duration: number;
-    status: InterviewStatus; 
-    interviewType: InterviewType; 
+    status: InterviewStatus;
+    interviewType: InterviewType;
     location?: string | null;
     notes?: string | null;
   } | null;
@@ -73,7 +73,7 @@ export interface ApplicationFilters {
   salaryMin?: number;
   salaryMax?: number;
   education?: string;
-  status?: ApplicationStatus 
+  status?: ApplicationStatus
   location?: string;
   hasCV?: boolean;
   hasCoverLetter?: boolean;
@@ -104,6 +104,12 @@ export interface ApplicationsPagination {
 // API & HELPER FUNCTION SIGNATURES/TYPES
 // ========================================================================
 
+// ADDED: A specific type for the subscription plan features JSON object.
+export interface SubscriptionPlanFeatures {
+  priorityCvReview?: boolean;
+  // Add other feature flags here as your application grows
+}
+
 export interface UpdateApplicationRequestBody {
   applicationId: string;
   status: ApplicationStatus;
@@ -121,14 +127,14 @@ export interface UpdateApplicationRequestBody {
 export interface StatusUpdateOptions {
   rejectionReason?: string;
   adminNotes?: string;
-  reviewedBy?: string; 
+  reviewedBy?: string;
 }
 
 export interface StatusUpdateResult {
   success: boolean;
   message: string;
-  application?: JobApplicationDetails; 
-  error?: string; 
+  application?: JobApplicationDetails;
+  error?: string;
 }
 
 export type ApplicationDatabaseUpdateData = {
@@ -163,14 +169,14 @@ export type ApplicationForStatusUpdate = Prisma.JobApplicationGetPayload<{
   };
 }>;
 
-export type ApplicationStatsWhereClause = Prisma.JobApplicationWhereInput & { 
-  jobPostingId?: string; 
+export type ApplicationStatsWhereClause = Prisma.JobApplicationWhereInput & {
+  jobPostingId?: string;
 };
 
 export interface StatusDisplayInfo {
   label: string;
-  color: string; 
-  bgColor: string; 
+  color: string;
+  bgColor: string;
   description: string;
 }
 
@@ -182,8 +188,8 @@ export interface ApplicationStatistics {
   total: number;
   byStatus: Record<ApplicationStatus, number>;
   byEducation: Record<string, number>;
-  ageRange: { min: number | null; max: number | null }; 
-  salaryRange: { min: number | null; max: number | null }; 
+  ageRange: { min: number | null; max: number | null };
+  salaryRange: { min: number | null; max: number | null };
   withCV: number;
   withCoverLetter: number;
   withTestScore: number;
@@ -194,12 +200,12 @@ export interface ApplicationsZustandState {
   selectedApplications: string[];
   currentApplication: JobApplicationDetails | null;
   pagination: ApplicationsPagination;
-  filters: ApplicationFilters; 
+  filters: ApplicationFilters;
   isLoading: boolean;
   error: string | null;
   isUpdating: boolean;
   statistics: ApplicationStatistics;
-  currentCompanyIdForStore?: string | null; 
+  currentCompanyIdForStore?: string | null;
   currentJobPostingIdForStore?: string | null;
 }
 
@@ -223,7 +229,7 @@ export interface ApplicationsZustandActions {
   clearSelection: () => void;
   bulkUpdateStatus: (
     companyId: string, // Pass companyId
-    status: ApplicationStatus, 
+    status: ApplicationStatus,
     options?: { rejectionReason?: string; adminNotes?: string }
   ) => Promise<boolean>;
   setFilters: (filters: Partial<ApplicationFilters>) => void;

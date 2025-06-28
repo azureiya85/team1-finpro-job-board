@@ -3,7 +3,7 @@
 import { ApplicationStatus, InterviewSchedule } from '@prisma/client';
 import { X, CheckCircle, Activity, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { statusConfig, statusOrder } from '@/components/atoms/modals/dashboard/AppDetails/statusConfig';
+import { statusConfig, statusOrder } from '@/lib/statusConfig';
 
 interface ApplicationDetailsTimelineProps {
   status: ApplicationStatus;

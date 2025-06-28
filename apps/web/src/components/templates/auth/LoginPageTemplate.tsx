@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { CredentialsLogin } from '@/components/organisms/auth/CredentialLogin';
-// import { SocialLogin } from '@/components/organisms/SocialLogin';
+import { SocialLogin } from '@/components/organisms/auth/SocialLogin';
 
 export function LoginPageTemplate() {
   return (
@@ -44,20 +44,19 @@ export function LoginPageTemplate() {
         >
           {/* Main credentials login */}
           <CredentialsLogin />
+          {/* Social login */}
+          <SocialLogin />
           
-          {/* Social login - commented out for now */}
-          {/* <div className="relative">
+          {/* Divider */}
+          <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-muted-foreground/20" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or
-              </span>
             </div>
           </div>
           
-          <SocialLogin /> */}
+       
         </motion.div>
 
         {/* Trust indicators */}
