@@ -48,12 +48,10 @@ export async function PUT(
     const data = await req.json();
     const { scheduledAt, duration, location, interviewType, notes } = data;
 
-    // Validasi field
     if (!scheduledAt || !duration || !interviewType) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Cek apakah interview ada
     const existingInterview = await prisma.interviewSchedule.findUnique({
       where: { id: interviewId },
       include: {
@@ -95,12 +93,12 @@ export async function PUT(
       },
     });
 
-    // Kirim email notifikasi reschedule
-    await interviewEmailService.sendInterviewScheduled(
+    await interviewEmailService.sendInterviewRescheduled(
       existingInterview.jobApplication.user.email,
       existingInterview.jobApplication.user.firstName || existingInterview.jobApplication.user.name || 'Candidate',
       existingInterview.jobApplication.jobPosting.title,
       existingInterview.jobApplication.jobPosting.company.name,
+      existingInterview.scheduledAt,
       new Date(scheduledAt),
       location,
       interviewType,
@@ -115,7 +113,6 @@ export async function PUT(
   }
 }
 
-// DELETE Interview
 export async function DELETE(
   req: Request,
   { params }: { params: { interviewId: string; applicantsId: string } }
@@ -123,12 +120,39 @@ export async function DELETE(
   const { interviewId, applicantsId } = params;
 
   try {
-    // Delete interview
+
+    const interview = await prisma.interviewSchedule.findUnique({
+      where: { id: interviewId },
+      include: {
+        jobApplication: {
+          include: {
+            user: true,
+            jobPosting: {
+              include: {
+                company: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!interview) {
+      return NextResponse.json({ error: 'Interview not found' }, { status: 404 });
+    }
+
+    await interviewEmailService.sendInterviewCancelled(
+      interview.jobApplication.user.email,
+      interview.jobApplication.user.firstName || interview.jobApplication.user.name || 'Candidate',
+      interview.jobApplication.jobPosting.title,
+      interview.jobApplication.jobPosting.company.name,
+      interview.scheduledAt
+    );
+
     await prisma.interviewSchedule.delete({
       where: { id: interviewId },
     });
 
-    // Update status aplikasi jadi TEST_COMPLETED
     await prisma.jobApplication.update({
       where: { id: applicantsId },
       data: { status: 'TEST_COMPLETED' },
