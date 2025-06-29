@@ -28,16 +28,18 @@ const SUSPICIOUS_PATTERNS = [
 const PROTECTED_ROUTES = {
   '/analytics': ['ADMIN', 'Developer'],
   '/dashboard/developer': ['Developer', 'ADMIN'],
-  '/dashboard/company-redirect': ['COMPANY_ADMIN', 'ADMIN'],
+  '/dashboard/company-redirect': ['COMPANY_ADMIN', 'ADMIN', 'Developer'],
 } as const;
 
 const PUBLIC_ROUTES = [
   '/',
   '/jobs',
   '/about',
-  '/contact',
+  '/privacy-policy',
   '/auth/login',
   '/auth/register',
+  '/auth/register-company',
+  '/auth/register-developer',
   '/auth/verify-email',
   '/companies', 
   '/auth/forgot-password',
@@ -125,7 +127,6 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_ROUTES.some(route => {
     if (route === pathname) return true;
     
-    // Handle companies with dynamic routes like /companies/[id]
     if (route === '/companies' && pathname.startsWith('/companies')) {
       return true;
     }
@@ -275,7 +276,6 @@ export async function middleware(request: NextRequest) {
     console.error('Middleware error:', error);
     logRequest(request, undefined, 'middleware_error');
     
-    // In case of error, allow the request to proceed
     return NextResponse.next();
   }
 }
