@@ -132,7 +132,6 @@ const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereInput =>
     where.companyId = companyId;
   }
 
-  console.log('Built where clause:', JSON.stringify(where, null, 2));
   return where;
 };
 

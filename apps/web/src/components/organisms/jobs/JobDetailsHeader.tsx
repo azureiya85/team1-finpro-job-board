@@ -7,7 +7,7 @@ import { toast } from 'sonner'; // Import toast
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Info, Users, Tag, ArrowRight, Star, TrendingUp, Bookmark, LogIn, 
+import { Briefcase, MapPin, Building, Clock, DollarSign, Wifi, Info, Users, Tag, ArrowRight, Star, TrendingUp, Bookmark, LogIn, BookmarkCheck, 
 } from 'lucide-react';
 import { JobPostingFeatured } from '@/types';
 import { formatRelativeDate, formatSalary, cn } from '@/lib/utils';

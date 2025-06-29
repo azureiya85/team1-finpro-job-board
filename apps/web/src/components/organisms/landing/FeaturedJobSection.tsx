@@ -175,7 +175,7 @@ export function FeaturedJobSection({ jobs: latestJobs }: FeaturedJobSectionProps
           <NearestJobSection />
         )}
         
-        {/* Hover instruction - only show if there are jobs to scroll */}
+        {/* Hover instruction */}
         {jobsToDisplay.length > 1 && (
           <motion.div
             initial={{ opacity: 0 }}

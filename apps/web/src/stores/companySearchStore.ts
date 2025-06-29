@@ -98,13 +98,42 @@ async function fetchCompaniesFromApi(params: {
     queryParams.set('skip', String(params.skip));
     
     const response = await axios.get(`/api/companies?${queryParams.toString()}`);
+    
+    // Validate response structure
+    if (!response.data || !response.data.companies || !response.data.pagination) {
+      throw new Error('Invalid response structure from API');
+    }
+    
     return response.data;
 
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      const errorMessage = error.response?.data?.error || `HTTP error! status: ${error.response?.status}`;
-      console.error("Axios error fetching companies:", errorMessage, error.response?.data);
-      throw new Error(`Failed to fetch companies: ${errorMessage}`);
+      const status = error.response?.status;
+      
+      // Handle different HTTP status codes
+      if (status === 401) {
+        console.error("Authentication required for companies API");
+        throw new Error("Authentication required. Please log in to view companies.");
+      } else if (status === 403) {
+        console.error("Access forbidden for companies API");
+        throw new Error("Access denied. You don't have permission to view companies.");
+      } else if (status && status >= 500) {
+        console.error("Server error fetching companies:", error.response?.data);
+        throw new Error("Server error. Please try again later.");
+      } else if (error.response) {
+        const errorMessage = error.response.data?.error || `HTTP error! status: ${status || 'unknown'}`;
+        console.error("API error fetching companies:", errorMessage, error.response.data);
+        throw new Error(`Failed to fetch companies: ${errorMessage}`);
+      } else if (error.request) {
+        console.error("Network error fetching companies:", error.request);
+        throw new Error("Network error. Please check your internet connection.");
+      } else {
+        console.error("Request setup error:", error.message);
+        throw new Error(`Request failed: ${error.message}`);
+      }
+    } else if (error instanceof Error) {
+      console.error("Error fetching companies:", error.message);
+      throw error;
     } else {
       console.error("Unknown error fetching companies:", error);
       throw new Error("An unknown error occurred while fetching companies.");
