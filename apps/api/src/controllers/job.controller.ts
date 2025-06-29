@@ -5,8 +5,6 @@ import { GetJobsParams, SortByType } from 'src/types';
 export async function getAllJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const queryParams = req.query;
-    console.log('Raw query params from frontend:', queryParams);
-
     const isRemote = queryParams.isRemote === 'true' ? true : 
                      queryParams.isRemote === 'false' ? false : 
                      undefined;
@@ -34,8 +32,6 @@ export async function getAllJobs(req: Request, res: Response, next: NextFunction
       companySizes: queryParams.companySizes as string[],
       isRemote: isRemote, 
     };
-
-    console.log('Processed params being sent to service:', paramsForService);
 
     const jobsResult = await jobService.fetchJobs(paramsForService);
     res.json(jobsResult);
