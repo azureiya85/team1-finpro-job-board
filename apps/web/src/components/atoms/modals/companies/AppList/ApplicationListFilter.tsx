@@ -53,7 +53,7 @@ export default function ApplicationListFilter({
     <div className="p-4 border-b bg-gray-50/50">
       <div className="w-full">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-medium text-gray-700">Search Name</label>
             <Input
               placeholder="Enter name..."
@@ -63,7 +63,7 @@ export default function ApplicationListFilter({
             />
           </div>
           
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-medium text-gray-700">Min Age</label>
             <Input
               type="number"
@@ -74,7 +74,7 @@ export default function ApplicationListFilter({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-medium text-gray-700">Max Age</label>
             <Input
               type="number"
@@ -85,7 +85,7 @@ export default function ApplicationListFilter({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-medium text-gray-700">Min Salary</label>
             <Input
               type="number"
@@ -96,7 +96,7 @@ export default function ApplicationListFilter({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-medium text-gray-700">Max Salary</label>
             <Input
               type="number"
@@ -107,7 +107,7 @@ export default function ApplicationListFilter({
             />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 xl:col-span-1">
             <label className="text-sm font-medium text-gray-700">Education</label>
             <Select
               value={localFilters.education || ALL_ITEMS_VALUE}
@@ -115,19 +115,21 @@ export default function ApplicationListFilter({
                 handleFilterChange('education', value === ALL_ITEMS_VALUE ? undefined : value);
               }}
             >
-              <SelectTrigger className="h-9">
+              <SelectTrigger className="h-9 w-full">
                 <SelectValue placeholder="Education" />
               </SelectTrigger>
               <SelectContent>
-               {educationLevels.map(level => (
-  <SelectItem key={level} value={level}>
-    {formatEducationLevel(level)}
-  </SelectItem>
-))}
+                <SelectItem value={ALL_ITEMS_VALUE}>All Education</SelectItem>
+                {educationLevels.map(level => (
+                  <SelectItem key={level} value={level}>
+                    {formatEducationLevel(level)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
