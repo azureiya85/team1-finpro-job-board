@@ -57,14 +57,6 @@ export const developerNavItems: NavItem[] = [
     mobileLabel: 'Home'
   },
   {
-    name: 'Profile',
-    href: '/dashboard/developer/profile',
-    icon: User,
-    description: 'Manage your developer profile',
-    comingSoon: false,
-    mobileLabel: 'Profile'
-  },
-  {
     name: 'Assessments Mgt.',
     href: '/dashboard/developer/assessment',
     icon: FileText,
