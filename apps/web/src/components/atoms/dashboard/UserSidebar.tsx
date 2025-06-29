@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Cog, User, LogOut, Settings, Home, ChevronRight, FileText, Award, ShoppingCart, Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { Cog, User, LogOut, ChevronRight, Award, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -11,72 +12,59 @@ import { useUserBadges } from '@/hooks/useUserBadges';
 import { logoutAction } from '@/lib/actions/authActions';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStores';
+import { useSidebarStore } from '@/stores/sidebarStores';
+import { userNavItems } from '@/lib/SidebarNavItems';
 
-const navItems = [
-  {
-    name: 'Dashboard',
-    href: '/dashboard',
-    icon: Home,
-    description: 'Track your job application'
-  },
-  {
-    name: 'Assessments',
-    href: '/dashboard/assessments',
-    icon: FileText,
-    description: 'Take skill assessments'
-  },
-  {
-    name: 'Subscriptions',
-    href: '/dashboard/subscription',
-    icon: ShoppingCart,
-    description: 'Manage your plan',
-  },
-  {
-    name: 'Profile',
-    href: '/dashboard/profile',
-    icon: User,
-    description: 'Manage your profile'
-  },
-  {
-    name: 'Settings',
-    href: '/dashboard/settings',
-    icon: Settings,
-    description: 'Account preferences',
-    comingSoon: true
-  },
-];
-
-export default function Sidebar() {
+export default function UserSidebar() {
   const pathname = usePathname();
   const { badges, isLoading: badgesLoading, error: badgesError } = useUserBadges();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { setActiveTab, setIsMobile } = useSidebarStore();
 
- const handleLogout = async () => {
-  if (isLoggingOut) return; // Prevent multiple clicks
-  
-  try {
-    setIsLoggingOut(true);
-    const { logout: clearAuthStore } = useAuthStore.getState();
-    clearAuthStore();    
-    const result = await logoutAction();
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [setIsMobile]);
+
+  useEffect(() => {
+    setActiveTab(pathname);
+  }, [pathname, setActiveTab]);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
     
-    if (result.success) {
+    try {
+      setIsLoggingOut(true);
+      const { logout: clearAuthStore } = useAuthStore.getState();
+      clearAuthStore();    
+      const result = await logoutAction();
+      
+      if (result.success) {
+        window.location.href = '/auth/login';
+      } else {
+        window.location.href = '/auth/login';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      const { logout: clearAuthStore } = useAuthStore.getState();
+      clearAuthStore();
       window.location.href = '/auth/login';
-    } else {
-      window.location.href = '/auth/login';
+    } finally {
+      setIsLoggingOut(false);
     }
-  } catch (error) {
-    console.error('Logout error:', error);
-    const { logout: clearAuthStore } = useAuthStore.getState();
-    clearAuthStore();
-    window.location.href = '/auth/login';
-  } finally {
-    setIsLoggingOut(false);
-  }
-};
+  };
+
+  const handleNavClick = (href: string) => {
+    setActiveTab(href);
+  };
 
   return (
-    <div className="w-64 bg-card border-r border-border min-h-screen flex flex-col fixed shadow-sm">
+    <div className="hidden md:flex w-64 bg-card border-r border-border min-h-screen flex-col fixed shadow-sm">
       {/* Header */}
       <div className="p-6 border-b border-border/50">
         <Link href="/" className="flex items-center gap-3 group">
@@ -96,7 +84,7 @@ export default function Sidebar() {
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
             Navigation
           </h2>
-          {navItems.map((item) => {
+          {userNavItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
             const IconComponent = item.icon;
 
@@ -104,6 +92,7 @@ export default function Sidebar() {
               <div key={item.name} className="relative">
                 <Link
                   href={item.comingSoon ? '#' : item.href}
+                  onClick={() => !item.comingSoon && handleNavClick(item.href)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                     isActive
@@ -111,7 +100,6 @@ export default function Sidebar() {
                       : "text-foreground hover:bg-accent hover:text-accent-foreground",
                     item.comingSoon && "cursor-not-allowed opacity-60"
                   )}
-                  onClick={item.comingSoon ? (e) => e.preventDefault() : undefined}
                 >
                   <IconComponent className={cn(
                     "w-4 h-4 shrink-0",
@@ -146,11 +134,11 @@ export default function Sidebar() {
           My Badges
         </h2>
         {badgesLoading ? (
-            <div className="flex justify-center items-center h-10">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
+          <div className="flex justify-center items-center h-10">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
         ) : badgesError ? (
-            <p className="text-xs text-destructive px-3">Error loading badges.</p>
+          <p className="text-xs text-destructive px-3">Error loading badges.</p>
         ) : badges && badges.length > 0 ? (
           <>
             <div className="flex flex-wrap gap-2 px-3">
@@ -167,16 +155,16 @@ export default function Sidebar() {
               ))}
             </div>
             {badges.length > 5 && (
-           <Link 
-    href="/dashboard/profile#badges" 
-    className="text-xs text-primary hover:underline px-3 mt-2 block"
-  >
-      View all badges...
-  </Link>
+              <Link 
+                href="/dashboard/profile#badges" 
+                className="text-xs text-primary hover:underline px-3 mt-2 block"
+              >
+                View all badges...
+              </Link>
             )}
           </>
         ) : (
-            <p className="text-xs text-muted-foreground px-3">No badges earned yet.</p>
+          <p className="text-xs text-muted-foreground px-3">No badges earned yet.</p>
         )}
       </div>
 

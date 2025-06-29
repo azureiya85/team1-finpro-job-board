@@ -6,6 +6,8 @@ import { UserRole } from '@prisma/client';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import UserSidebar from '@/components/atoms/dashboard/UserSidebar';
 import DeveloperSidebar from '@/components/atoms/dashboard/DeveloperSidebar'; 
+import UserSidebarMobile from '@/components/atoms/dashboard/UserSidebarMobile';
+import DeveloperSidebarMobile from '@/components/atoms/dashboard/DeveloperSidebarMobile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -82,15 +84,17 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen bg-muted/40 dark:bg-neutral-950">
         <DeveloperSidebar />
-        <main className="flex-1 p-6 md:p-8 ml-64">{children}</main>
+        <DeveloperSidebarMobile />
+        <main className="flex-1 p-6 md:p-8 md:ml-64 pb-20 md:pb-8">{children}</main>
       </div>
     );
   } else {
-
+    // User dashboard: Show User Sidebar
     return (
       <div className="flex min-h-screen bg-gray-100 dark:bg-neutral-900">
         <UserSidebar />
-        <main className="flex-1 p-6 md:p-8 ml-64">{children}</main>
+        <UserSidebarMobile />
+        <main className="flex-1 p-6 md:p-8 md:ml-64 pb-20 md:pb-8">{children}</main>
       </div>
     );
   }

@@ -31,7 +31,7 @@ export function Navbar() {
           : 'bg-primary'
       }`}
     >
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Navigation - Left aligned */}
           <div className="flex items-center space-x-8">

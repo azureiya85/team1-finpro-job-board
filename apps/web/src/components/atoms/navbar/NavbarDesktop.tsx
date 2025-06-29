@@ -88,7 +88,7 @@ export function NavbarDesktop() {
       </div>
 
       {/* Auth Section  */}
-      <div className="hidden md:flex items-center space-x-4 absolute right-24">
+      <div className="hidden md:flex items-center space-x-4 absolute right-8">
         {isAuthenticated && user ? (
           <div className="flex items-center space-x-4">
             {/* Role Badges */}

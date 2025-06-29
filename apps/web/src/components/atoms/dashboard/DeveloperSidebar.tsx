@@ -2,12 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 import { 
-  User, 
   LogOut, 
-  LayoutDashboard, 
-  FileText, 
-  ShoppingCart, 
   ShieldCheck,
   ChevronRight,
   Loader2
@@ -21,65 +18,56 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { logoutAction } from '@/lib/actions/authActions';
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStores';
-
-const developerNavItems = [
-  {
-    name: 'Overview',
-    href: '/dashboard/developer',
-    icon: LayoutDashboard,
-    description: 'Developer dashboard home'
-  },
-  {
-    name: 'Profile',
-    href: '/dashboard/developer/profile',
-    icon: User,
-    description: 'Manage your developer profile',
-    comingSoon: false
-  },
-  {
-    name: 'Assessments Mgt.',
-    href: '/dashboard/developer/assessment',
-    icon: FileText,
-    description: 'Manage skill assessments',
-    comingSoon: false
-  },
-  {
-    name: 'Subscriptions Mgt.',
-    href: '/dashboard/developer/subscription',
-    icon: ShoppingCart,
-    description: 'Manage user subscriptions',
-    comingSoon: false
-  },
-];
+import { useSidebarStore } from '@/stores/sidebarStores';
+import { developerNavItems } from '@/lib/SidebarNavItems';
 
 export default function DeveloperSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { setActiveTab, setIsMobile } = useSidebarStore();
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [setIsMobile]);
+
+  useEffect(() => {
+    setActiveTab(pathname);
+  }, [pathname, setActiveTab]);
 
   const handleLogout = async () => {
-  if (isLoggingOut) return; // Prevent multiple clicks
-  
-  try {
-    setIsLoggingOut(true);
-    const { logout: clearAuthStore } = useAuthStore.getState();
-    clearAuthStore();    
-    const result = await logoutAction();
+    if (isLoggingOut) return;
     
-    if (result.success) {
+    try {
+      setIsLoggingOut(true);
+      const { logout: clearAuthStore } = useAuthStore.getState();
+      clearAuthStore();    
+      const result = await logoutAction();
+      
+      if (result.success) {
+        window.location.href = '/auth/login';
+      } else {
+        window.location.href = '/auth/login';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      const { logout: clearAuthStore } = useAuthStore.getState();
+      clearAuthStore();
       window.location.href = '/auth/login';
-    } else {
-      window.location.href = '/auth/login';
+    } finally {
+      setIsLoggingOut(false);
     }
-  } catch (error) {
-    console.error('Logout error:', error);
-    const { logout: clearAuthStore } = useAuthStore.getState();
-    clearAuthStore();
-    window.location.href = '/auth/login';
-  } finally {
-    setIsLoggingOut(false);
-  }
-};
+  };
+
+  const handleNavClick = (href: string) => {
+    setActiveTab(href);
+  };
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'DV';
@@ -87,7 +75,7 @@ export default function DeveloperSidebar() {
   }
 
   return (
-    <div className="w-64 bg-card border-r border-border min-h-screen flex flex-col fixed shadow-sm">
+    <div className="hidden md:flex w-64 bg-card border-r border-border min-h-screen flex-col fixed shadow-sm">
       {/* Header */}
       <div className="p-6 border-b border-border/50">
         <Link href="/" className="flex items-center gap-3 group">
@@ -115,6 +103,7 @@ export default function DeveloperSidebar() {
               <div key={item.name} className="relative">
                 <Link
                   href={item.comingSoon ? '#' : item.href}
+                  onClick={() => !item.comingSoon && handleNavClick(item.href)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                     isActive
@@ -122,7 +111,6 @@ export default function DeveloperSidebar() {
                       : "text-foreground hover:bg-accent hover:text-accent-foreground",
                     item.comingSoon && "cursor-not-allowed opacity-60"
                   )}
-                  onClick={item.comingSoon ? (e) => e.preventDefault() : undefined}
                 >
                   <IconComponent className={cn(
                     "w-4 h-4 shrink-0",
