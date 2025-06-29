@@ -3,14 +3,14 @@
 import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
 import { getTrendLineChartData } from '@/lib/analytics/chartConfigs/salaryTrendChartConfig';
 import { useMemo } from 'react';
+import { TrendChartData } from '@/types/analyticsTypes';
 
-const dummyTrendData = {
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  values: [3800, 4000, 4200, 4100, 4300, 4400],
-};
+interface TrendLineChartProps {
+  data: TrendChartData;
+}
 
-export default function TrendLineChart() {
-  const chart = useMemo(() => getTrendLineChartData(dummyTrendData), []);
+export default function TrendLineChart({ data }: TrendLineChartProps) {
+  const chart = useMemo(() => getTrendLineChartData(data), [data]);
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">

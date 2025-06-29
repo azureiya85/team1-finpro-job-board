@@ -10,12 +10,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const where: any = {
-      salaryMin: { not: null },
-      salaryMax: { not: null },
+      salaryEstimate: { not: null },
     };
 
     if (location && location !== 'all') {
-      where.city = { name: location };
+      where.company = {
+        cityId: location
+      };
     }
 
     if (start && end) {
@@ -25,32 +26,35 @@ export async function GET(req: NextRequest) {
       };
     }
 
-    const postings = await prisma.jobPosting.findMany({
+    const reviews = await prisma.companyReview.findMany({
       where,
       select: {
-        salaryMin: true,
-        salaryMax: true,
+        salaryEstimate: true,
+        jobPosition: true,
         createdAt: true,
+        company: {
+          select: {
+            cityId: true
+          }
+        }
       },
     });
 
     const monthGroups: Record<string, number[]> = {};
 
-    for (const post of postings) {
-        if (post.salaryMin !== null && post.salaryMax !== null) {
-          const avg = (post.salaryMin + post.salaryMax) / 2;
-          const key = format(new Date(post.createdAt), 'MMM yyyy');
-          if (!monthGroups[key]) {
-            monthGroups[key] = [];
-          }
-          monthGroups[key].push(avg);
+    for (const review of reviews) {
+      if (review.salaryEstimate) {
+        const key = format(new Date(review.createdAt), 'MMM yyyy');
+        if (!monthGroups[key]) {
+          monthGroups[key] = [];
         }
+        monthGroups[key].push(review.salaryEstimate);
       }
+    }
 
     const result = Object.entries(monthGroups).map(([month, salaries]) => ({
       month,
-      avgSalary:
-        salaries.reduce((sum, val) => sum + val, 0) / salaries.length,
+      avgSalary: Math.round(salaries.reduce((sum, val) => sum + val, 0) / salaries.length)
     }));
 
     // Sort by date
@@ -59,7 +63,10 @@ export async function GET(req: NextRequest) {
         new Date(a.month + ' 01').getTime() - new Date(b.month + ' 01').getTime()
     );
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      labels: result.map(r => r.month),
+      values: result.map(r => r.avgSalary)
+    });
   } catch (err) {
     console.error('GET /api/analytics/salary-trends error:', err);
     return NextResponse.json({ error: 'Failed to load salary trends' }, { status: 500 });
