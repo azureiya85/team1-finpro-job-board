@@ -3,97 +3,47 @@ import { PrismaClient, ApplicationStatus, NotificationType, InterviewType } from
 import { auth } from '@/auth';
 import { updateApplicationStatus } from '@/lib/applicants/applicationStatusHelper';
 import { calculateAge } from '@/lib/applicants/applicationStatsHelper';
-import type {
-  JobApplicationDetails,
-  UpdateApplicationRequestBody,
-  SubscriptionPlanFeatures, 
-} from '@/types/applicants';
+import type { JobApplicationDetails, UpdateApplicationRequestBody, SubscriptionPlanFeatures } from '@/types/applicants';
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { id: string, jobsId: string, applicantsId: string } }
-) {
+export async function GET(req: NextRequest, context: { params: { id: string, jobsId: string, applicantsId: string } }) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { id: companyIdFromPath, jobsId: jobIdFromPath, applicantsId: applicationIdFromPath } = context.params;
+    const { id: companyId, jobsId: jobId, applicantsId: applicationId } = context.params;
 
     const company = await prisma.company.findFirst({
-      where: { id: companyIdFromPath, adminId: session.user.id },
+      where: { id: companyId, adminId: userId },
     });
-    if (!company) {
-      return NextResponse.json({ error: 'Company not found or unauthorized' }, { status: 404 });
-    }
+    if (!company) return NextResponse.json({ error: 'Company not found or unauthorized' }, { status: 404 });
 
     const application = await prisma.jobApplication.findFirst({
-      where: {
-        id: applicationIdFromPath,
-        jobPostingId: jobIdFromPath,
-        jobPosting: {
-          companyId: companyIdFromPath,
-        }
-      },
+      where: { id: applicationId, jobPostingId: jobId, jobPosting: { companyId } },
       include: {
         user: {
           select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-            profileImage: true,
-            dateOfBirth: true,
-            lastEducation: true,
-            phoneNumber: true,
-            currentAddress: true,
+            id: true, firstName: true, lastName: true, email: true, profileImage: true, dateOfBirth: true,
+            lastEducation: true, phoneNumber: true, currentAddress: true,
             province: { select: { name: true } },
             city: { select: { name: true } },
             subscriptions: {
-              where: {
-                status: 'ACTIVE',
-                endDate: { gt: new Date() }
-              },
-              include: {
-                plan: {
-                  select: {
-                    name: true,
-                    features: true
-                  }
-                }
-              }
+              where: { status: 'ACTIVE', endDate: { gt: new Date() } },
+              include: { plan: { select: { name: true, features: true } } },
             }
-          },
+          }
         },
-        jobPosting: {
-          select: {
-            id: true,
-            title: true,
-            salaryMin: true,
-            salaryMax: true,
-          },
-        },
+        jobPosting: { select: { id: true, title: true, salaryMin: true, salaryMax: true } },
         interviewSchedules: {
-          select: {
-            id: true,
-            scheduledAt: true,
-            status: true,
-            interviewType: true,
-            duration: true,
-            location: true,
-            notes: true
-          },
+          select: { id: true, scheduledAt: true, status: true, interviewType: true, duration: true, location: true, notes: true },
           orderBy: { scheduledAt: 'desc' },
         },
-      },
+      }
     });
 
-    if (!application) {
-      return NextResponse.json({ error: 'Application not found, or does not belong to this job/company' }, { status: 404 });
-    }
+    if (!application) return NextResponse.json({ error: 'Application not found' }, { status: 404 });
 
     const user = application.user;
     const age = user.dateOfBirth ? calculateAge(new Date(user.dateOfBirth)) : null;
@@ -101,10 +51,10 @@ export async function GET(
 
     const hasPriority = user.subscriptions.some(sub => {
       const features = sub.plan.features as SubscriptionPlanFeatures;
-      return sub.plan.name === 'PROFESSIONAL' && features?.priorityCvReview === true;
+      return sub.plan.name === 'PROFESSIONAL' && features?.priorityCvReview;
     });
 
-    const transformedApplication: JobApplicationDetails & { isPriority: boolean } = {
+    const result: JobApplicationDetails & { isPriority: boolean } = {
       id: application.id,
       status: application.status,
       expectedSalary: application.expectedSalary,
@@ -116,10 +66,10 @@ export async function GET(
       updatedAt: application.updatedAt,
       reviewedAt: application.reviewedAt,
       jobPosting: application.jobPosting,
-      latestInterview: application.interviewSchedules.length > 0 ? application.interviewSchedules[0] : null,
+      latestInterview: application.interviewSchedules[0] ?? null,
       applicant: {
         id: user.id,
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -133,107 +83,49 @@ export async function GET(
       isPriority: hasPriority,
     };
 
-    return NextResponse.json(transformedApplication);
-
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching applicant details:', error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('GET applicant error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
 }
 
-// PUT: Update status of a specific applicant for a specific job
-export async function PUT(
-  request: NextRequest,
- context: { params: { id: string, jobsId: string, applicantsId: string } }
-) {
+export async function PUT(req: NextRequest, context: { params: { id: string, jobsId: string, applicantsId: string } }) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id: companyId, jobsId: jobId, applicantsId: applicationId } = context.params;
+    const body = (await req.json()) as UpdateApplicationRequestBody;
+    const { status, rejectionReason, adminNotes, scheduleInterview } = body;
+
+    if (!status || !Object.values(ApplicationStatus).includes(status)) {
+      return NextResponse.json({ error: 'Invalid or missing application status' }, { status: 400 });
     }
 
-    const { id: companyIdFromPath, jobsId: jobIdFromPath, applicantsId: applicationIdFromPath } = context.params;
-    const body = (await request.json()) as UpdateApplicationRequestBody;
-
-    const {
-      status,
-      rejectionReason,
-      adminNotes,
-      scheduleInterview,
-    } = body;
-
-    if (!status) {
-      return NextResponse.json({
-        error: 'Status is required'
-      }, { status: 400 });
-    }
-
-    if (!Object.values(ApplicationStatus).includes(status)) {
-      return NextResponse.json({
-        error: 'Invalid application status value'
-      }, { status: 400 });
-    }
-
-    const company = await prisma.company.findFirst({
-      where: { id: companyIdFromPath, adminId: session.user.id },
-    });
-    if (!company) {
-      return NextResponse.json({
-        error: 'Company not found or unauthorized'
-      }, { status: 404 });
-    }
+    const company = await prisma.company.findFirst({ where: { id: companyId, adminId: userId } });
+    if (!company) return NextResponse.json({ error: 'Company not found or unauthorized' }, { status: 404 });
 
     const application = await prisma.jobApplication.findFirst({
-      where: {
-        id: applicationIdFromPath,
-        jobPostingId: jobIdFromPath,
-        jobPosting: { companyId: companyIdFromPath },
-      },
-      include: {
-        user: { select: { id: true, email: true, firstName: true, lastName: true } },
-        jobPosting: { select: { id: true, title: true } },
-      },
+      where: { id: applicationId, jobPostingId: jobId, jobPosting: { companyId } },
+      include: { user: true, jobPosting: true },
+    });
+    if (!application) return NextResponse.json({ error: 'Application not found' }, { status: 404 });
+
+    const updated = await updateApplicationStatus(applicationId, status, {
+      rejectionReason: rejectionReason || undefined,
+      adminNotes: adminNotes || undefined,
+      reviewedBy: userId,
     });
 
-      if (!application) {
-      return NextResponse.json({
-        error: 'Application not found or does not belong to this job/company'
-      }, { status: 404 });
-    }
-
-    const updatedApplication = await updateApplicationStatus(
-      applicationIdFromPath,
-      status,
-      {
-        rejectionReason: rejectionReason || undefined,
-        adminNotes: adminNotes || undefined,
-        reviewedBy: session.user.id,
-      }
-    );
-
     if (scheduleInterview && status === ApplicationStatus.INTERVIEW_SCHEDULED) {
-      const {
-        scheduledAt,
-        duration = 60,
-        location,
-        interviewType = InterviewType.ONLINE,
-        notes,
-      } = scheduleInterview;
+      const { scheduledAt, duration = 60, location, interviewType = InterviewType.ONLINE, notes } = scheduleInterview;
 
-      if (!scheduledAt) {
-        return NextResponse.json({
-          error: 'Interview scheduled date is required'
-        }, { status: 400 });
-      }
-
-      if (interviewType && !Object.values(InterviewType).includes(interviewType)) {
-        return NextResponse.json({
-          error: 'Invalid interview type value'
-        }, { status: 400 });
-      }
+      if (!scheduledAt) return NextResponse.json({ error: 'Interview date required' }, { status: 400 });
+      if (!Object.values(InterviewType).includes(interviewType)) return NextResponse.json({ error: 'Invalid interview type' }, { status: 400 });
 
       await prisma.interviewSchedule.create({
         data: {
@@ -242,8 +134,8 @@ export async function PUT(
           location: location || undefined,
           interviewType,
           notes: notes || undefined,
-           jobApplicationId: applicationIdFromPath,
-          jobPostingId: jobIdFromPath,
+          jobApplicationId: applicationId,
+          jobPostingId: jobId,
           candidateId: application.user.id,
         },
       });
@@ -253,20 +145,15 @@ export async function PUT(
       data: {
         userId: application.user.id,
         type: NotificationType.APPLICATION_STATUS_UPDATE,
-        message: `Your application for "${application.jobPosting.title}" has been ${status.toLowerCase().replace('_', ' ')}.`,
-       link: `/applications/${applicationIdFromPath}`,
+        message: `Your application for "${application.jobPosting.title}" has been ${status.replace('_', ' ').toLowerCase()}.`,
+        link: `/applications/${applicationId}`,
       },
     });
 
-    return NextResponse.json({
-      message: 'Application status updated successfully',
-      application: updatedApplication,
-    });
-
+    return NextResponse.json({ message: 'Application updated successfully', application: updated });
   } catch (error) {
-    console.error('Error updating application status:', error);
-    const message = error instanceof Error ? error.message : 'Internal server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('PUT applicant error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

@@ -179,6 +179,18 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
                   )}
                 </div>
               ))}
+              <div>
+                <label className="block text-sm font-medium mb-1">Correct Answer</label>
+                <select
+                  value={q.correctAnswer}
+                  onChange={(e) => handleQuestionChange(index, 'correctAnswer', e.target.value)}
+                  className="w-full border rounded-md p-2"
+                >
+                  {['A', 'B', 'C', 'D'].map((option) => (
+                    <option key={option} value={option}>Option {option}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </Card>
         ))}
