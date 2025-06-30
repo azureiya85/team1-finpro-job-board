@@ -7,12 +7,10 @@ import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
 
 export default function SalaryTrendsSection() {
   const { filters } = useAnalyticsFilters();
-  const { location, dateRange } = filters;
+  const { location } = filters;
 
   const { chartData, isLoading, isError } = useSalaryTrendChart({
-    location,
-    start: dateRange?.start,
-    end: dateRange?.end,
+    location
   });
 
   const chart = getTrendLineChartData(chartData || { labels: [], values: [] });

@@ -3,7 +3,7 @@
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { useEffect } from 'react';
-import { LocationData, AnalyticsFilters } from '@/types/analyticsTypes';
+import { LocationData, LocationFilter } from '@/types/analyticsTypes';
 import 'leaflet/dist/leaflet.css';
 
 const icon = L.divIcon({
@@ -20,10 +20,10 @@ L.Marker.prototype.options.icon = icon;
 
 interface LocationMapProps {
   data: LocationData[];
-  filters: AnalyticsFilters;
+  filters: LocationFilter;
 }
 
-function getLocationId(location: AnalyticsFilters['location']): string | null {
+function getLocationId(location: LocationFilter['location']): string | null {
   return typeof location !== 'string' ? location.id : null;
 }
 
