@@ -1,14 +1,8 @@
-import { AnalyticsFilters } from '@/types/analyticsTypes';
+import { LocationFilter } from '@/types/analyticsTypes';
 
-export async function getLocationMapData(filters: AnalyticsFilters) {
+export async function getLocationMapData(filters: LocationFilter) {
   const params = new URLSearchParams();
 
-  if (filters.dateRange?.start) {
-    params.append('start', filters.dateRange.start.toISOString());
-  }
-  if (filters.dateRange?.end) {
-    params.append('end', filters.dateRange.end.toISOString());
-  }
 
   if (typeof filters.location === 'object' && filters.location !== null) {
     params.append('cityId', filters.location.id);

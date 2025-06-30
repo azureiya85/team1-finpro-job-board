@@ -1,18 +1,5 @@
-interface ApplicantInterestParams {
-    location: string;
-    start?: string;
-    end?: string;
-  }
-  
-  export async function getApplicantInterests(params: ApplicantInterestParams) {
+export async function getApplicantInterests() {
     const query = new URLSearchParams();
-  
-    if (params.location && params.location !== 'all') {
-      query.append('location', params.location);
-    }
-  
-    if (params.start) query.append('start', params.start);
-    if (params.end) query.append('end', params.end);
   
     const res = await fetch(`/api/analytics/applicant-interests?${query.toString()}`);
   

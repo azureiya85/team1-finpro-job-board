@@ -16,7 +16,7 @@ export function useSalaryTrendChart({ location, start, end }: Params) {
 
   const { data, error, isLoading } = useSWR<SalaryTrendChartData>(
     ['salary-trends', locationId, startStr, endStr],
-    () => getSalaryTrends({ location: locationId, start: startStr, end: endStr })
+    () => getSalaryTrends()
   );
 
   return {

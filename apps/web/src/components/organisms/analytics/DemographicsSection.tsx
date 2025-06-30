@@ -1,6 +1,5 @@
 'use client';
 
-import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 import GenderDemographicChart from '@/components/molecules/analytics/GenderDemographicChart';
 import AgeDemographicChart from '@/components/molecules/analytics/AgeDemographicChart';
 import { useGenderDemographicChart } from '@/hooks/analytics/useGenderDemographicChart';
@@ -8,14 +7,12 @@ import { useAgeDemographicChart } from '@/hooks/analytics/useAgeDemographicChart
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DemographicsSection() {
-  const { filters } = useAnalyticsFilters();
-  const { location, dateRange } = filters;
 
   const {
     data: genderData,
     isLoading: genderLoading,
     error: genderError,
-  } = useGenderDemographicChart({ location, dateRange });
+  } = useGenderDemographicChart();
 
   const {
     data: ageData,

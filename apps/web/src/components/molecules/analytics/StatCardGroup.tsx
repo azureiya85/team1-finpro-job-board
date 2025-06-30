@@ -3,13 +3,8 @@
 import StatCard from '@/components/atoms/analytics/StatCard';
 import { useAnalyticsSummary } from '@/hooks/analytics/useAnalyticsSummary';
 import { formatStatCards } from '@/lib/analytics/utils/formatAnalyticsData';
-import { AnalyticsFilters } from '@/types/analyticsTypes';
 
-interface Props {
-  filters: AnalyticsFilters;
-}
-
-export default function StatCardGroup({ filters }: Props) {
+export default function StatCardGroup() {
   const { current, previous, isLoading } = useAnalyticsSummary();
 
   if (isLoading || !current) {
