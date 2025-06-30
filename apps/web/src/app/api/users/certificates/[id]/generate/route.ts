@@ -5,7 +5,11 @@ import { generateCertificatePdf } from '@/lib/server/pdfGenerator';
 import { uploadFileToCloudinary } from '@/lib/cloudinary';
 
 interface RouteContext {
-  params: Promise<{ id: string }>; // Updated to Promise in Next.js 15
+  params: Promise<{ id: string }>;
+}
+
+function sanitizeForFileName(text: string): string {
+    return text.replace(/[\s/\\?%*:|"<>]/g, '_');
 }
 
 // Generate and upload certificate PDF
@@ -23,7 +27,7 @@ export async function POST(request: Request, { params }: RouteContext) {
     const certificate = await prisma.certificate.findUnique({
       where: {
         certificateCode: certificateCode,
-        userId: session.user.id, // Ensures only the owner can generate it
+        userId: session.user.id,
       },
       include: {
         user: { select: { name: true, email: true } },
@@ -39,15 +43,19 @@ export async function POST(request: Request, { params }: RouteContext) {
       return NextResponse.json({ error: 'Certificate not found or you do not have permission.' }, { status: 404 });
     }
 
-    // 2. Check if the PDF URL already exists and is not a placeholder
+    // 2. Check if the PDF URL already exists
     if (certificate.certificateUrl && !certificate.certificateUrl.includes('placeholder')) {
       return NextResponse.json({ url: certificate.certificateUrl });
     }
+    
+    // Prepare user-friendly names
+    const userName = certificate.user.name || certificate.user.email || 'User';
+    const assessmentTitle = certificate.userAssessment.assessment.title;
 
     // 3. Prepare data for the PDF template
     const templateProps = {
-      userName: certificate.user.name || certificate.user.email || 'Valued User',
-      assessmentTitle: certificate.userAssessment.assessment.title,
+      userName: userName,
+      assessmentTitle: assessmentTitle,
       issueDate: certificate.issueDate.toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric',
       }),
@@ -57,8 +65,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     // 4. Generate the PDF buffer
     const pdfBuffer = await generateCertificatePdf(templateProps);
 
-    // 5. Upload the PDF to Cloudinary
-    const publicId = `job-portal/certificates/${certificate.certificateCode}`;
+    // 5. Create a clean filename and upload the PDF to Cloudinary
+    const fileName = `${sanitizeForFileName(userName)}_${sanitizeForFileName(assessmentTitle)}_${certificate.certificateCode}`;
+    const publicId = `job-portal/certificates/${fileName}`;
     const uploadResult = await uploadFileToCloudinary(pdfBuffer, publicId);
 
     if (!uploadResult?.secure_url) {

@@ -17,10 +17,7 @@ export default function TakeAssessmentPageTemplate() {
   const { user } = useAuthStore();
   const store = useAssessmentStore();
   
-  // --- FIX START ---
-  // Select only the 'reset' action. Zustand ensures actions are stable.
   const reset = useAssessmentStore((state) => state.reset);
-  // --- FIX END ---
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
