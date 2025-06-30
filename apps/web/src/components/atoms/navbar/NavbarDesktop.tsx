@@ -114,7 +114,7 @@ export function NavbarDesktop() {
             {/* User Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full text-white">
+                <Button variant="ghost" className="relative h-15 w-15 rounded-full text-white">
                   {user.avatar ? (
                     <Image
                       src={user.avatar}

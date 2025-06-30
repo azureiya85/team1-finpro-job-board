@@ -133,7 +133,7 @@ function generateCertificateHTML({
 <body>
     <div class="certificate-wrapper">
         <header class="header">
-            <div class="logo">YourApp Logo</div>
+            <div class="logo">Work Vault</div>
             <h1 class="title">Certificate of Completion</h1>
             <h2 class="subtitle">This certifies that</h2>
         </header>
