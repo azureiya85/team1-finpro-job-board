@@ -1,30 +1,36 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Pie } from 'react-chartjs-2';
 import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
-import { getGenderDemographicsChartData } from '@/lib/analytics/chartConfigs/genderDemographicsChartConfig';
 import { DemographicChartData } from '@/types/analyticsTypes';
 
-interface DemographicChartProps {
-  chartData?: DemographicChartData;
+interface GenderDemographicChartProps {
+  chartData: DemographicChartData
 }
 
-export default function DemographicChart({ chartData }: DemographicChartProps) {
-  const chart = useMemo(() => {
-    if (!chartData) return null;
-    return getGenderDemographicsChartData(chartData);
-  }, [chartData]);
+export default function GenderDemographicChart({ chartData }: GenderDemographicChartProps) {
+  const data = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        data: chartData.values,
+        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56'],
+      },
+    ],
+  };
 
-  if (!chart) return null;
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+    },
+  };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4" style={{ width: '500px', height: '350px' }}>
-      <ChartWrapper
-        type="doughnut"
-        data={chart.data}
-        options={chart.options}
-        height={300}
-      />
-    </div>
+    <ChartWrapper>
+      <Pie data={data} options={options} />
+    </ChartWrapper>
   );
 }

@@ -2,20 +2,10 @@ import useSWR from 'swr';
 import { getSalaryTrends } from '@/lib/api/analytics/getSalaryTrends';
 import { SalaryTrendChartData } from '@/types/analyticsTypes';
 
-interface Params {
-  location: { id: string; name: string } | 'all';
-  start?: Date;
-  end?: Date;
-}
 
-export function useSalaryTrendChart({ location, start, end }: Params) {
-  const locationId = typeof location === 'object' ? location.id : 'all';
-
-  const startStr = start?.toISOString().split('T')[0];
-  const endStr = end?.toISOString().split('T')[0];
-
+export function useSalaryTrendChart() {
   const { data, error, isLoading } = useSWR<SalaryTrendChartData>(
-    ['salary-trends', locationId, startStr, endStr],
+    ['salary-trends'],
     () => getSalaryTrends()
   );
 

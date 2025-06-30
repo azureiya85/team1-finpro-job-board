@@ -5,7 +5,7 @@ import AnalyticsTemplate from '@/components/templates/analytics/AnalyticsTemplat
 
 interface PageProps {
   params: Promise<{
-    period: 'salary' | 'demographics' | 'interests' | 'location';
+    period: 'salary' | 'demographics' | 'interests' | 'location' | 'applications';
   }>;
 }
 
@@ -17,6 +17,7 @@ export default function AnalyticsDetailPage({ params }: PageProps) {
     demographics: 'Applicant Demographics',
     interests: 'Applicant Interests',
     location: 'Location Distribution',
+    applications: 'Applications Per Job',
   };
 
   return (

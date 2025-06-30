@@ -1,10 +1,9 @@
-import { ChartType, ChartData, ChartOptions } from 'chart.js';
+import { ReactNode } from 'react';
 
 export interface ChartProps {
-  type: ChartType;
-  data: ChartData;
-  options?: ChartOptions;
-  height?: number;
+  children?: ReactNode;
+  loading?: boolean;
+  error?: boolean;
 }
 export interface AgeDemographicData {
   ageRange: string;
@@ -43,6 +42,12 @@ export interface LocationData {
   city: string;
   latitude: number;
   longitude: number;
+  count: number;
+}
+
+export interface ApplicationPerJobData {
+  label: string;  
+  subLabel: string;  
   count: number;
 }
 
