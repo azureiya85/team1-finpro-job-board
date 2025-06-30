@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import FilterGroup from '@/components/molecules/analytics/FilterGroup';
-import { useAnalyticsFilters } from '@/hooks/analytics/useAnalyticsFilters';
 import cn from 'classnames';
 
 const items = [
@@ -14,7 +12,6 @@ const items = [
 ];
 
 export default function AnalyticsSidebar() {
-  const { filters, setDateRange, setLocation } = useAnalyticsFilters();
   const pathname = usePathname();
 
   return (
@@ -39,12 +36,6 @@ export default function AnalyticsSidebar() {
           );
         })}
       </nav>
-
-      <h2 className="text-lg font-semibold mb-2">Filters</h2>
-      <FilterGroup
-        onDateChange={(start, end) => setDateRange(start, end)}
-        onLocationChange={(loc) => setLocation(loc)}
-      />
     </aside>
   );
 }

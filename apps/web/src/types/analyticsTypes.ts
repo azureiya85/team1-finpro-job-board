@@ -54,10 +54,6 @@ export interface StatCardItem {
   icon?: React.ReactNode;
 }
 
-export interface AnalyticsFilters {
+export interface LocationFilter {
   location: { id: string; name: string } | 'all';
-  dateRange: {
-    start: Date;
-    end: Date;
-  } | null
 }

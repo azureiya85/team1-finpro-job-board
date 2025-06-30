@@ -1,9 +1,9 @@
 import useSWR from 'swr';
 import { getLocationMapData } from '@/lib/api/analytics/getLocationMapData';
-import { AnalyticsFilters } from '@/types/analyticsTypes';
+import { LocationFilter } from '@/types/analyticsTypes';
 import { MapData } from '@/types/analyticsTypes';
 
-export function useLocationMapData(filters: AnalyticsFilters) {
+export function useLocationMapData(filters: LocationFilter) {
     const { data, error, isLoading } = useSWR<MapData[]>(['location-map', filters], () =>
       getLocationMapData(filters)
     );

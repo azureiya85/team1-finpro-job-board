@@ -10,7 +10,6 @@ export async function GET(req: NextRequest) {
   const startDate = start ? new Date(start) : null;
   const endDate = end ? new Date(end) : null;
 
-  // Ambil semua kota, tidak hanya yang punya applicant
   const cities = await prisma.city.findMany({
     where: cityId && cityId !== 'all' ? { id: cityId } : {},
     select: {
@@ -34,24 +33,26 @@ export async function GET(req: NextRequest) {
     },
   });
 
-  const result = cities.map((city) => {
-    const applicants = city.users.filter((user) => {
-      return user.jobApplications.some((app) => {
-        if (startDate && endDate) {
-          return app.createdAt >= startDate && app.createdAt <= endDate;
-        }
-        return true; // Tidak filter tanggal
+  const result = cities
+    .map((city) => {
+      const applicants = city.users.filter((user) => {
+        return user.jobApplications.some((app) => {
+          if (startDate && endDate) {
+            return app.createdAt >= startDate && app.createdAt <= endDate;
+          }
+          return true;
+        });
       });
-    });
 
-    return {
-      cityId: city.id,
-      city: city.name,
-      latitude: city.latitude ?? 0,
-      longitude: city.longitude ?? 0,
-      count: applicants.length,
-    };
-  });
+      return {
+        cityId: city.id,
+        city: city.name,
+        latitude: city.latitude ?? 0,
+        longitude: city.longitude ?? 0,
+        count: applicants.length,
+      };
+    })
+    .filter(city => city.count > 0); // Hanya tampilkan kota dengan applicant
 
   return NextResponse.json(result);
 }
