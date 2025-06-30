@@ -1,23 +1,14 @@
 "use client";
 
 import React, { useEffect, useCallback } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter, 
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { AlertCircle, Info, Ban } from "lucide-react";
+import Script from "next/script"; 
+import { AlertCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { subscriptionApi } from '@/services/subscription.service';
-import { getSubscriptionStatusBadge } from '@/lib/statusConfig';
 import { useSubscriptionStore } from '@/stores/subscriptionStores';
 import SubscriptionPagePlans from '@/components/organisms/dashboard/subscription/SubscriptionPagePlans';
 import SubscriptionPagePayment from '@/components/organisms/dashboard/subscription/SubscriptionPagePayment';
+import SubscriptionDetails from '@/components/organisms/dashboard/subscription/developer/SubscriptionDetails';
 
 export default function SubscriptionPageTemplate() {
   const {
@@ -28,8 +19,9 @@ export default function SubscriptionPageTemplate() {
     setSubscription,
     setLoading,
     setError,
+    setRenewalEligibility, 
   } = useSubscriptionStore();
-
+  
   // API calls with error handling
   const fetchPlans = useCallback(async () => {
     try {
@@ -55,11 +47,23 @@ export default function SubscriptionPageTemplate() {
     }
   }, [setSubscription, setError]);
 
-  // Initialize data
+  // Fetch renewal eligibility when a subscription exists
+  const fetchRenewalEligibility = useCallback(async (subscriptionId: string) => {
+    try {
+      const eligibilityData = await subscriptionApi.checkRenewalEligibility(subscriptionId);
+      setRenewalEligibility(eligibilityData);
+    } catch (err) {
+      console.error('Failed to check renewal eligibility:', err);
+      setRenewalEligibility(null);
+    }
+  }, [setRenewalEligibility]);
+
+  // Initialize data 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
+      setRenewalEligibility(null);
       
       try {
         await Promise.all([fetchPlans(), fetchSubscription()]);
@@ -69,44 +73,14 @@ export default function SubscriptionPageTemplate() {
     };
     
     loadData();
-  }, [fetchPlans, fetchSubscription, setLoading, setError]);
+  }, [fetchPlans, fetchSubscription, setLoading, setError, setRenewalEligibility]);
 
-   const handleCancelSubscription = async () => {
-    if (!subscription) return;
-
-    const isConfirmed = window.confirm(
-      "Are you sure you want to cancel this pending subscription?"
-    );
-
-    if (!isConfirmed) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      await subscriptionApi.cancelSubscription(subscription.id);
-      // Refresh subscription data to update the UI
-      await fetchSubscription();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred during cancellation.';
-      setError(errorMessage);
-      console.error("Cancellation failed:", err);
-    } finally {
-      setLoading(false);
+  // Effect to fetch eligibility data after subscription is loaded
+  useEffect(() => {
+    if (subscription?.id) {
+      fetchRenewalEligibility(subscription.id);
     }
-  };
-
-  // Render status badge helper
-  const renderStatusBadge = (status: string) => {
-    const config = getSubscriptionStatusBadge(status);
-    const IconComponent = config.icon;
-    
-    return (
-      <Badge variant={config.variant} className={config.className}>
-        <IconComponent className="w-3 h-3 mr-1" />
-        {config.text}
-      </Badge>
-    );
-  };
+  }, [subscription, fetchRenewalEligibility]);
 
   // Loading state
   if (loading) {
@@ -125,6 +99,13 @@ export default function SubscriptionPageTemplate() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
+      {/* Script for Midtrans */}
+      <Script 
+        src="https://app.sandbox.midtrans.com/snap/snap.js"
+        data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+        strategy="afterInteractive"
+      />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Subscription Plans</h1>
@@ -141,56 +122,10 @@ export default function SubscriptionPageTemplate() {
 
       {/* Current Subscription or No Subscription Message */}
       {subscription ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              Current Subscription
-              {renderStatusBadge(subscription.status)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Plan</Label>
-                <p className="text-lg font-semibold">{subscription?.plan.name}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Price</Label>
-                <p>IDR {subscription?.plan.price.toLocaleString()}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Start Date</Label>
-                <p>{new Date(subscription.startDate).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">End Date</Label>
-                <p>{new Date(subscription.endDate).toLocaleDateString()}</p>
-              </div>
-            </div>
-          </CardContent>
-            {subscription.status === 'PENDING' && (
-            <CardFooter className="border-t pt-4 mt-4">
-              <div className="w-full">
-                <div className="flex items-start space-x-3">
-                  <Ban className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
-                  <div>
-                    <h3 className="font-semibold">Cancel Pending Order</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      This subscription is awaiting payment or confirmation. If you&apos;ve changed your mind, you can cancel it now.
-                    </p>
-                    <Button
-                      variant="destructive"
-                      onClick={handleCancelSubscription}
-                      disabled={loading}
-                    >
-                      {loading ? 'Cancelling...' : 'Cancel Subscription'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardFooter>
-          )}
-        </Card>
+        <SubscriptionDetails 
+          subscription={subscription}
+          onRefreshSubscription={fetchSubscription}
+        />
       ) : (
         <Alert>
           <Info className="h-4 w-4" />
@@ -199,6 +134,7 @@ export default function SubscriptionPageTemplate() {
           </AlertDescription>
         </Alert>
       )}
+
       <SubscriptionPagePlans />
       <SubscriptionPagePayment onRefreshSubscription={fetchSubscription} />
     </div>

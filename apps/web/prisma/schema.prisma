@@ -440,6 +440,8 @@ model Subscription {
   paymentStatus     PaymentStatus @default(PENDING)
   transactionId     String?
   lastExpiryNotificationSent DateTime? 
+  isRenewal              Boolean   @default(false)
+  originalSubscriptionId String?
 
   userId String
   user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)

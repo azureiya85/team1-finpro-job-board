@@ -1,44 +1,14 @@
 import axios from 'axios';
 import axiosInstance from '@/lib/axios'; 
-import type { Plan, Subscription, PaymentMethod, MidtransResponse, PaymentDetails } from '@/types/subscription';
-
-// Request for creating a new subscription
-export interface CreateSubscriptionRequest {
-  planId: string;
-  paymentMethod: PaymentMethod;
-}
-
-// Request for renewing an existing subscription
-export interface RenewSubscriptionRequest {
-  subscriptionId: string;
-  paymentMethod: PaymentMethod;
-}
-
-// Universal response for both create and renew
-export interface SubscriptionActionResponse {
-  success?: boolean; 
-  message?: string;
-  midtrans?: MidtransResponse;
-  paymentDetails?: PaymentDetails;
-  url?: string;
-  renewalSubscriptionId?: string; 
-}
-
-export interface UploadProofRequest {
-  subscriptionId: string;
-  paymentProofUrl: string;
-}
-
-export interface RenewalEligibilityResponse {
-  subscription: Subscription;
-  renewalEligibility: {
-    canRenew: boolean;
-    reason: string | null;
-    daysUntilExpiry: number;
-    hasExistingPendingRenewal: boolean;
-    existingPendingRenewalId: string | null;
-  }
-}
+import type { 
+  Plan, 
+  Subscription, 
+  CreateSubscriptionRequest,
+  RenewSubscriptionRequest,
+  SubscriptionActionResponse,
+  UploadProofRequest,
+  RenewalEligibilityResponse
+} from '@/types/subscription';
 
 class SubscriptionApiService {
   private baseUrl = '/api/subscription';
@@ -63,12 +33,12 @@ class SubscriptionApiService {
   }
 
   // Create or renew subscription
- async createSubscription(request: CreateSubscriptionRequest): Promise<SubscriptionActionResponse> {
+  async createSubscription(request: CreateSubscriptionRequest): Promise<SubscriptionActionResponse> {
     const response = await axiosInstance.post(this.baseUrl, request);
     return response.data;
   }
   
-   // Renew an existing subscription
+  // Renew an existing subscription
   async renewSubscription(request: RenewSubscriptionRequest): Promise<SubscriptionActionResponse> {
     const { subscriptionId, paymentMethod } = request;
     const response = await axiosInstance.post(
@@ -79,7 +49,7 @@ class SubscriptionApiService {
   }
 
   // Cancel current subscription
-     async cancelSubscription(subscriptionId: string): Promise<{ success: boolean; message: string }> {
+  async cancelSubscription(subscriptionId: string): Promise<{ success: boolean; message: string }> {
     const response = await axiosInstance.post(`/api/subscription/${subscriptionId}/cancel`);
     return response.data;
   }
@@ -96,7 +66,7 @@ class SubscriptionApiService {
     return response.data;
   }
 
-   async uploadPaymentProof(request: UploadProofRequest): Promise<{ message: string; subscription: Subscription }> {
+  async uploadPaymentProof(request: UploadProofRequest): Promise<{ message: string; subscription: Subscription }> {
     const { subscriptionId, paymentProofUrl } = request;
     const response = await axiosInstance.post(
       `/api/subscription/${subscriptionId}/payment-proof`, 

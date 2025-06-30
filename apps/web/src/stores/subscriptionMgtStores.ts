@@ -1,75 +1,11 @@
 import { create } from 'zustand';
-
-// Types
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-}
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  duration: number;
-  description: string;
-  features: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Subscription {
-  id: string;
-  userId: string;
-  planId: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'EXPIRED';
-  paymentStatus: 'PENDING' | 'COMPLETED' | 'FAILED';
-  paymentMethod: 'BANK_TRANSFER' | 'CREDIT_CARD' | 'PAYPAL';
-  paymentProof?: string;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-  updatedAt: string;
-  user: User;
-  plan: SubscriptionPlan;
-}
-
-export interface SubscriptionListState {
-  subscriptions: Subscription[];
-  loading: boolean;
-  error: string | null;
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  filters: {
-    search?: string; 
-    status?: string;
-    userId?: string;
-    planId?: string;
-  };
-}
-
-export interface SubscriptionPaymentState {
-  pendingPayments: Subscription[];
-  loading: boolean;
-  error: string | null;
-  selectedPayment: Subscription | null;
-  approving: boolean;
-  rejecting: boolean;
-}
-
-export interface PlanManagementState {
-  plans: SubscriptionPlan[];
-  loading: boolean;
-  error: string | null;
-  selectedPlan: SubscriptionPlan | null;
-  isCreating: boolean;
-  isUpdating: boolean;
-  isDeleting: boolean;
-}
+import type {
+  SubscriptionPlan,
+  Subscription,
+  SubscriptionListState,
+  SubscriptionPaymentState,
+  PlanManagementState,
+} from '@/types/subscription';
 
 interface SubscriptionManagementStore extends SubscriptionListState, SubscriptionPaymentState, PlanManagementState {
   // Subscription List Actions

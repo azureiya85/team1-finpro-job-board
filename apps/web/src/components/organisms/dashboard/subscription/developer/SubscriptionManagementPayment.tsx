@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Loader2, CreditCard } from 'lucide-react';
-import { useSubscriptionManagementStore, Subscription } from '@/stores/subscriptionMgtStores';
+import { useSubscriptionManagementStore } from '@/stores/subscriptionMgtStores';
+import type { Subscription } from '@/types/subscription';
 
 import PaymentProofModal from '@/components/molecules/dashboard/Subscription/PaymentProofModal';
 import PendingPaymentsTable from '@/components/molecules/dashboard/Subscription/PendingPaymentsTable';
@@ -43,7 +44,6 @@ const SubscriptionManagementPayment: React.FC = () => {
   const handleApprove = async () => {
     if (!selectedPayment) return;
     await approvePayment(selectedPayment.id);
-    // Dialog closing and selectedPayment clearing is handled by useEffect and onOpenChange
   };
 
   const handleReject = async (reason?: string) => {

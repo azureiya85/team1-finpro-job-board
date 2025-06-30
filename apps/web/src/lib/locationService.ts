@@ -16,7 +16,7 @@ interface NominatimResult {
     suburb?: string;
     city_district?: string;
     city?: string;
-    ISO3166_2_lvl4?: string; // Province code like ID-JK
+    ISO3166_2_lvl4?: string; 
     postcode?: string;
     country?: string;
     country_code?: string;
@@ -48,10 +48,10 @@ export async function getCurrentDeviceLocation(): Promise<{ latitude: number; lo
 
 export async function geocodeLocationString(query: string): Promise<{ lat: number, lon: number, displayName: string } | null> {
   if (!query.trim()) return null;
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1&countrycodes=id`; // Limit to Indonesia
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=1&countrycodes=id`; 
 
   try {
-    const response = await fetch(url, { headers: { 'User-Agent': 'YourAppName/1.0 (your-email@example.com)' } }); // Be a good citizen
+    const response = await fetch(url, { headers: { 'User-Agent': 'YourAppName/1.0 (your-email@example.com)' } }); 
     if (!response.ok) {
       console.error(`Nominatim API error: ${response.status}`);
       return null;

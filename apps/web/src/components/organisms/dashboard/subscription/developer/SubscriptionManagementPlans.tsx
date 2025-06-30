@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Edit2, Trash2, Package, DollarSign, Calendar } from 'lucide-react';
-import { useSubscriptionManagementStore, SubscriptionPlan } from '@/stores/subscriptionMgtStores';
+import { Loader2, Plus, Edit2, Trash2, Package, Calendar } from 'lucide-react';
+import { useSubscriptionManagementStore } from '@/stores/subscriptionMgtStores';
+import type { SubscriptionPlan } from '@/types/subscription';
 import { format } from 'date-fns';
 
 import PlanFormModal, { PlanFormData } from '@/components/molecules/dashboard/Subscription/PlanFormModal';
@@ -137,7 +138,7 @@ const SubscriptionManagementPlans: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {plans.map((plan) => (
-                      <TableRow key={plan.id}>
+                     <TableRow key={plan.id}>
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">{plan.name}</span>
@@ -149,9 +150,9 @@ const SubscriptionManagementPlans: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="w-4 h-4" />
-                            <span className="font-medium">{plan.price.toFixed(2)}</span>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-sm font-semibold">IDR</span>
+                            <span className="font-medium">{plan.price.toLocaleString('id-ID')}</span>
                           </div>
                         </TableCell>
                         <TableCell>

@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Save, X, Package, DollarSign, Calendar, List } from 'lucide-react';
-import { SubscriptionPlan } from '@/stores/subscriptionMgtStores';
+import { Loader2, Plus, Save, X, Package, Calendar, List } from 'lucide-react';
+import { SubscriptionPlan } from '@/types/subscription';
 
 export interface PlanFormData {
   name: string;
@@ -51,7 +51,7 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
         features: [''],
       });
     }
-  }, [plan, mode, isOpen]); // Added isOpen to dependencies to reset form when modal reopens for create
+  }, [plan, mode, isOpen]); 
 
   const handleFeatureChange = (index: number, value: string) => {
     const newFeatures = [...formData.features];
@@ -109,20 +109,22 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
               />
             </div>
 
-            <div>
-              <Label htmlFor="price">Price (USD) *</Label>
+              <div>
+              <Label htmlFor="price">Price (IDR) *</Label>
               <div className="relative mt-1">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  IDR
+                </span>
                 <Input
                   id="price"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                  placeholder="0.00"
+                  onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value, 10) || 0 })}
+                  placeholder="50000"
                   required
-                  className="pl-10"
+                  className="pl-12"
                 />
               </div>
             </div>

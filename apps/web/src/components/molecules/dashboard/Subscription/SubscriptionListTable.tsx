@@ -2,16 +2,17 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, CreditCard } from 'lucide-react';
-import { type Subscription } from '@/stores/subscriptionMgtStores';
+import { type Subscription, SubscriptionStatus } from '@/types/subscription';
 import { formatDistanceToNow, format } from 'date-fns';
 
 interface SubscriptionTableProps {
   subscriptions: Subscription[];
 }
 
-const getStatusBadge = (status: Subscription['status']) => {
-  const statusConfig = {
+const getStatusBadge = (status: SubscriptionStatus) => {
+  const statusConfig: Record<SubscriptionStatus, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; color: string; }> = {
     ACTIVE: { variant: 'default' as const, color: 'bg-green-500 hover:bg-green-600' },
+    PENDING: { variant: 'secondary' as const, color: 'bg-yellow-500 hover:bg-yellow-600' }, 
     INACTIVE: { variant: 'secondary' as const, color: 'bg-gray-500 hover:bg-gray-600' },
     CANCELLED: { variant: 'destructive' as const, color: 'bg-red-500 hover:bg-red-600' },
     EXPIRED: { variant: 'outline' as const, color: 'bg-orange-500 hover:bg-orange-600 border-orange-500' },
@@ -34,6 +35,8 @@ const getPaymentStatusBadge = (status: Subscription['paymentStatus']) => {
       return <Badge className={`${baseClasses} bg-yellow-500 hover:bg-yellow-600`}>{status}</Badge>;
     case 'FAILED':
       return <Badge className={`${baseClasses} bg-red-500 hover:bg-red-600`}>{status}</Badge>;
+    case 'EXPIRED':
+       return <Badge className={`${baseClasses} bg-orange-500 hover:bg-orange-600`}>{status}</Badge>;
     default:
       return <Badge variant="secondary">{status}</Badge>;
   }
@@ -121,7 +124,7 @@ const SubscriptionTable: React.FC<SubscriptionTableProps> = ({ subscriptions }) 
                 <TableCell className="text-right">
               <span className="font-medium text-sm">
                 {typeof subscription.plan?.price === 'number'
-                  ? `$${subscription.plan.price.toFixed(2)}`
+                  ? `IDR ${subscription.plan.price.toLocaleString('id-ID')}` 
                   : 'N/A'}
               </span>
             </TableCell>

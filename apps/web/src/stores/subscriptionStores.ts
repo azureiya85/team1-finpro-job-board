@@ -4,13 +4,15 @@ import type {
   Subscription, 
   MidtransResponse, 
   PaymentDetails, 
-  PaymentMethod 
+  PaymentMethod,
+  RenewalEligibilityResponse 
 } from '@/types/subscription';
 
 interface SubscriptionState {
   // Data
   plans: Plan[];
   subscription: Subscription | null;
+  renewalEligibility: RenewalEligibilityResponse | null; 
   selectedPlan: string | null;
   paymentMethod: PaymentMethod;
   proofFile: File | null;
@@ -25,6 +27,7 @@ interface SubscriptionState {
   // Actions
   setPlans: (plans: Plan[]) => void;
   setSubscription: (subscription: Subscription | null) => void;
+  setRenewalEligibility: (eligibility: RenewalEligibilityResponse | null) => void; 
   setSelectedPlan: (planId: string | null) => void;
   setPaymentMethod: (method: PaymentMethod) => void;
   setProofFile: (file: File | null) => void;
@@ -43,6 +46,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   // Initial state
   plans: [],
   subscription: null,
+  renewalEligibility: null, 
   selectedPlan: null,
   paymentMethod: "BANK_TRANSFER",
   proofFile: null,
@@ -55,6 +59,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   // Actions
   setPlans: (plans) => set({ plans }),
   setSubscription: (subscription) => set({ subscription }),
+  setRenewalEligibility: (eligibility) => set({ renewalEligibility: eligibility }), 
   setSelectedPlan: (selectedPlan) => set({ selectedPlan }),
   setPaymentMethod: (paymentMethod) => set({ paymentMethod }),
   setProofFile: (proofFile) => set({ proofFile }),
@@ -74,6 +79,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   reset: () => set({
     plans: [],
     subscription: null,
+    renewalEligibility: null,
     selectedPlan: null,
     paymentMethod: "BANK_TRANSFER",
     proofFile: null,
