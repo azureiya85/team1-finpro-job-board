@@ -1,12 +1,8 @@
-import { 
-  FileText, 
-  AlertCircle, 
-  CheckCircle2
-} from 'lucide-react';
+import { FileText, AlertCircle, CheckCircle2} from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { UseFormRegister, FieldErrors, UseFormWatch } from 'react-hook-form';
-import { ExtendedGenerateCvPayload } from './GenerateCVModal';
+import { ExtendedGenerateCvPayload } from './GenerateCVModalForm';
 
 interface GenerateCVModalSummaryProps {
   register: UseFormRegister<ExtendedGenerateCvPayload>;

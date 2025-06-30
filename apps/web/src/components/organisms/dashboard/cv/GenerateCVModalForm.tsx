@@ -20,6 +20,7 @@ interface ApiErrorResponse {
 export interface ExtendedGenerateCvPayload {
   professionalSummary: string;
   customSkillsArray?: string[];
+  customWorkExperiencesArray?: Array<{ startYear: string; endYear: string; companyName: string; jobTitle: string }>;
   languagesArray?: Array<{ language: string; proficiency: string }>;
   educationHistoryArray?: Array<{ startYear: string; endYear: string; universityName: string; degree: string }>;
 }
@@ -37,9 +38,10 @@ export function useGenerateCVForm({ onSuccess, onClose }: UseGenerateCVFormProps
 
   const form = useForm<ExtendedGenerateCvPayload>({
     mode: 'onChange',
-    defaultValues: {
+   defaultValues: {
       professionalSummary: '',
       customSkillsArray: [],
+      customWorkExperiencesArray: [{ startYear: '', endYear: '', companyName: '', jobTitle: '' }],
       languagesArray: [{ language: '', proficiency: '' }],
       educationHistoryArray: [{ startYear: '', endYear: '', universityName: '', degree: '' }]
     }
@@ -52,6 +54,10 @@ export function useGenerateCVForm({ onSuccess, onClose }: UseGenerateCVFormProps
       languages: data.languagesArray
         ?.filter(lang => lang.language && lang.proficiency)
         .map(lang => `${lang.language.trim()}:${lang.proficiency.trim()}`)
+        .join(', ') || '',
+         customWorkExperiences: data.customWorkExperiencesArray
+        ?.filter(exp => exp.startYear && exp.endYear && exp.companyName && exp.jobTitle)
+        .map(exp => `${exp.startYear.trim()}:${exp.endYear.trim()}:${exp.companyName.trim()}:${exp.jobTitle.trim()}`)
         .join(', ') || '',
       educationHistory: data.educationHistoryArray
         ?.filter(edu => edu.startYear && edu.endYear && edu.universityName && edu.degree)
@@ -136,6 +142,7 @@ export function useGenerateCVForm({ onSuccess, onClose }: UseGenerateCVFormProps
     form.reset({
       professionalSummary: '',
       customSkillsArray: [],
+      customWorkExperiencesArray: [{ startYear: '', endYear: '', companyName: '', jobTitle: '' }],
       languagesArray: [{ language: '', proficiency: '' }],
       educationHistoryArray: [{ startYear: '', endYear: '', universityName: '', degree: '' }]
     });

@@ -1,7 +1,4 @@
-import { 
-  Loader2, 
-  FileText
-} from 'lucide-react';
+import { Loader2, FileText} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface GenerateCVModalActionProps {

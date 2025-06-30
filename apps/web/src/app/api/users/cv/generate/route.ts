@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { professionalSummary, customSkills, languages, educationHistory } = validationResult.data;
+    const { professionalSummary, customSkills, languages, customWorkExperiences, educationHistory } = validationResult.data;
 
     const activeSubscription = await prisma.subscription.findFirst({
       where: {
@@ -71,6 +71,13 @@ export async function POST(request: Request) {
       customSkills.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0) : 
       [];
 
+       const customWorkExperiencesArray = customWorkExperiences ?
+      customWorkExperiences.split(',').map(exp => {
+        const [startYear, endYear, companyName, jobTitle] = exp.split(':').map(part => part.trim());
+        return { startYear, endYear, companyName, jobTitle };
+      }).filter(exp => exp.startYear && exp.endYear && exp.companyName && exp.jobTitle) :
+      [];
+
     const languagesArray = languages ? 
       languages.split(',').map(lang => {
         const [name, proficiency] = lang.split(':').map(part => part.trim());
@@ -93,6 +100,7 @@ export async function POST(request: Request) {
       skills: userData.skillAssessments,
       professionalSummary,
       customSkills: customSkillsArray,
+      customWorkExperiences: customWorkExperiencesArray,
       languages: languagesArray,
       educationHistory: educationHistoryArray,
     };

@@ -1,16 +1,13 @@
 'use client';
 
-import { 
-  X, 
-  FileText, 
-  CheckCircle2
-} from 'lucide-react';
+import { X, FileText, CheckCircle2} from 'lucide-react';
 import GenerateCVModalSummary from './GenerateCVModalSummary';
 import GenerateCVModalSkills from './GenerateCVModalSkills';
 import GenerateCVModalLanguages from './GenerateCVModalLanguages';
 import GenerateCVModalEducationHistory from './GenerateCVModalEducationHistory';
 import GenerateCVModalAction from './GenerateCVModalAction';
 import { useGenerateCVForm } from './GenerateCVModalForm';
+import GenerateCVModalWorkExperience from './GenerateCVModalWorkExperience';
 
 interface GenerateCvModalProps {
   isOpen: boolean;
@@ -69,6 +66,11 @@ export default function GenerateCvModal({ isOpen, onClose, onSuccess }: Generate
               <GenerateCVModalSkills 
                 watch={watch}
                 setValue={setValue}
+              />
+
+               <GenerateCVModalWorkExperience 
+                control={control}
+                register={register}
               />
 
               <GenerateCVModalLanguages 

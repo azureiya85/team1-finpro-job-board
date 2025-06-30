@@ -1,10 +1,6 @@
 import { useFieldArray } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { 
-  Globe,
-  Plus,
-  Minus
-} from 'lucide-react';
+import { Globe, Plus, Minus} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
