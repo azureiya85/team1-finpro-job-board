@@ -10,9 +10,9 @@ const STRICT_MAX_REQUESTS = 20;
 // In-memory rate limit store (use Redis for production)
 const rateLimitStore = new Map<string, { count: number; windowStart: number }>();
 
-// Bot detection patterns
+// Bot detection patterns (probably add back CURL?)
 const BOT_USER_AGENTS = [
-  /bot/i, /crawler/i, /spider/i, /scraper/i, /curl/i, /wget/i, /python/i
+  /bot/i, /crawler/i, /spider/i, /scraper/i, /wget/i, /python/i
 ];
 
 // Suspicious patterns
@@ -155,6 +155,7 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/_next/') ||
       pathname.startsWith('/api/auth/') ||
       pathname.startsWith('/api/companies') ||
+      pathname.startsWith('/api/cron/') ||
       pathname.startsWith('/api/jobs') ||
       pathname.includes('.')
     ) {
@@ -282,6 +283,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/auth|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
+    '/((?!api/|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)',
   ],
 };
