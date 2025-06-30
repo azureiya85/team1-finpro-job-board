@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { 
-  Home, 
+  Briefcase, 
   Building, 
   LucideIcon,
   BarChart3
@@ -28,7 +28,7 @@ export const useNavbarStore = create<NavbarState>((set) => ({
   isScrolled: false,
   isMobileMenuOpen: false,
   navigationItems: [
-    { href: '/', label: 'Home', icon: Home },
+    { href: '/', label: 'Jobs', icon: Briefcase },
     { href: '/companies', label: 'Companies', icon: Building },
     {
       href: '/analytics/salary',

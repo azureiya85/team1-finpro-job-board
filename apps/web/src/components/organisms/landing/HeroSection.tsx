@@ -50,7 +50,7 @@ export function HeroSection() {
               className="font-heading text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight"
             >
               Discover A Vault Full Of{' '}
-              <span className="text-amber-400 font-black border-b-4 border-amber-400 pb-1">
+              <span className="text-amber-200 font-black border-b-4 border-amber-200 pb-1">
                 Career
               </span>{' '}
               Opportunities
