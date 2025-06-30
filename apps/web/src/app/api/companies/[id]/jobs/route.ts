@@ -5,14 +5,13 @@ import { createJobSchema, companyJobsSchema } from '@/lib/validations/zodJobVali
 
 const prisma = new PrismaClient();
 
-// GET: List job postings for a company
 export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
   try {
     const resolvedParams = await context.params;
-    const { id: companyId } = resolvedParams;  // Get companyId from path
+    const { id: companyId } = resolvedParams;
     const { searchParams } = request.nextUrl;
     const paramsObject = Object.fromEntries(searchParams.entries());
 
@@ -37,7 +36,7 @@ export async function GET(
     }
 
     const where = {
-      companyId: companyId, // Use companyId from path
+      companyId: companyId,
       isActive: true,
       ...(search && {
         OR: [
@@ -55,22 +54,11 @@ export async function GET(
         where,
         include: {
           company: {
-            select: {
-              id: true,
-              name: true,
-              logo: true,
-              industry: true,
-            }
-          },
+            select: { id: true, name: true, logo: true, industry: true } },
           province: { select: { id: true, name: true, code: true } },
           city: { select: { id: true, name: true, type: true } },
           preSelectionTest: {
-            select: {
-              id: true,
-              title: true,
-              isActive: true,
-            }
-          },
+            select: { id: true, title: true, isActive: true } },
           _count: { select: { applications: true } }
         },
         orderBy: [
@@ -100,14 +88,13 @@ export async function GET(
   }
 }
 
-// POST: Create a new job posting for a company
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }// Updated context
+  context: { params: { id: string } }
 ) {
   try {
     const resolvedParams = await context.params;
-    const { id: companyId } = resolvedParams;  // Get companyId from path
+    const { id: companyId } = resolvedParams;
 
     if (!companyId) { 
       return NextResponse.json(
@@ -153,7 +140,6 @@ export async function POST(
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
-    // Double-check ownership if adminId is relevant (or use authResult.isOwner)
     if (authResult.isOwner && company.adminId !== authResult.user?.id) {
     }
 
@@ -187,13 +173,7 @@ export async function POST(
       data: createData,
       include: {
         company: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-            industry: true,
-          }
-        },
+          select: { id: true, name: true, logo: true, industry: true } },
         province: { select: { id: true, name: true, code: true } },
         city: { select: { id: true, name: true, type: true } },
         preSelectionTest: {

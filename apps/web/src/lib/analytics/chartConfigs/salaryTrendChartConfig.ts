@@ -5,6 +5,15 @@ export function getTrendLineChartData(data: TrendChartData): {
   data: ChartData<'line'>;
   options: ChartOptions<'line'>;
 } {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return {
     data: {
       labels: data.labels,
@@ -26,7 +35,7 @@ export function getTrendLineChartData(data: TrendChartData): {
         y: {
           beginAtZero: false,
           ticks: {
-            callback: (value) => `$${value}`,
+            callback: (value) => formatCurrency(value as number),
           },
         },
       },
@@ -38,7 +47,7 @@ export function getTrendLineChartData(data: TrendChartData): {
         tooltip: {
           callbacks: {
             label: (context) => {
-              return `$${context.raw}`;
+              return formatCurrency(context.raw as number);
             },
           },
         },

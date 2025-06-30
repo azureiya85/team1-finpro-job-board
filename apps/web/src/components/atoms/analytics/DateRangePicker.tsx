@@ -19,26 +19,31 @@ export default function DateRangePicker({ onChange }: DateRangePickerProps) {
   };
 
   return (
-    <div className="flex items-center gap-1">
-      <input
-        type="date"
-        value={start}
-        onChange={(e) => {
-          setStart(e.target.value);
-          handleChange();
-        }}
-        className="border rounded px-2 py-1 text-sm"
-      />
-      <span>to</span>
-      <input
-        type="date"
-        value={end}
-        onChange={(e) => {
-          setEnd(e.target.value);
-          handleChange();
-        }}
-        className="border rounded px-2 py-1 text-sm"
-      />
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <label className="text-sm text-gray-600">Start Date</label>
+        <input
+          type="date"
+          value={start}
+          onChange={(e) => {
+            setStart(e.target.value);
+            handleChange();
+          }}
+          className="border rounded px-2 py-1 text-sm w-full"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-sm text-gray-600">End Date</label>
+        <input
+          type="date"
+          value={end}
+          onChange={(e) => {
+            setEnd(e.target.value);
+            handleChange();
+          }}
+          className="border rounded px-2 py-1 text-sm w-full"
+        />
+      </div>
     </div>
   );
 }

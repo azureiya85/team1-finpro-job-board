@@ -15,6 +15,7 @@ interface InterviewActionButtonProps {
   applicationId: string;
   jobId: string;
   candidateId: string;
+  companyId: string;
   onComplete: () => Promise<void>;
   onCancel: () => Promise<void>;
   onReschedule?: () => void;
@@ -27,6 +28,7 @@ export function InterviewActionButton({
   applicationId,
   jobId,
   candidateId,
+  companyId,
   onComplete,
   onCancel,
   onReschedule,
@@ -87,6 +89,7 @@ export function InterviewActionButton({
           applicationId={applicationId}
           jobId={jobId}
           candidateId={candidateId}
+          companyId={companyId}
         />
       )}
     </>

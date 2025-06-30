@@ -3,11 +3,7 @@ import { PrismaClient, Prisma } from '@prisma/client';
 import { auth } from '@/auth';
 import { buildFilterQuery, calculateAge } from '@/lib/applicants/applicationStatsHelper';
 import { searchParamsToFilters, validateFilters } from '@/lib/applicants/filterValidationHelper';
-import type {
-  RouteAndPaginationFilters,
-  JobApplicationDetails,
-  SubscriptionPlanFeatures, 
-} from '@/types/applicants';
+import type { RouteAndPaginationFilters, JobApplicationDetails, SubscriptionPlanFeatures } from '@/types/applicants';
 
 const prisma = new PrismaClient();
 
@@ -24,9 +20,7 @@ export async function GET(
     const resolvedParams = await context.params;
     const { id: companyIdFromPath, jobsId: jobIdFromPath } = resolvedParams;
     const { searchParams } = new URL(request.url);
-
     const baseClientFilters = searchParamsToFilters(searchParams);
-
     const routeFilters: Omit<RouteAndPaginationFilters, 'jobPostingId'> & { page?: number; limit?: number } = {
       ...baseClientFilters,
       page: searchParams.get('page') ? parseInt(searchParams.get('page')!, 10) : 1,
@@ -57,7 +51,6 @@ export async function GET(
     }
 
     const { where: dynamicWhereFromHelper, orderBy: orderByFromHelper } = buildFilterQuery(routeFilters);
-
     const finalWhereClause: Prisma.JobApplicationWhereInput = {
       jobPostingId: jobIdFromPath,
       ...dynamicWhereFromHelper,
@@ -65,7 +58,6 @@ export async function GET(
 
     const skip = (routeFilters.page! - 1) * routeFilters.limit!;
     const take = routeFilters.limit!;
-
     const applications = await prisma.jobApplication.findMany({
       where: finalWhereClause,
       include: {
@@ -89,10 +81,7 @@ export async function GET(
               },
               include: {
                 plan: {
-                  select: {
-                    name: true,
-                    features: true
-                  }
+                  select: { name: true, features: true }
                 }
               }
             }
@@ -110,11 +99,7 @@ export async function GET(
           },
         },
         testResult: {
-          select: {
-            score: true,
-            passed: true
-          }
-        },
+          select: { score: true, passed: true } },
         interviewSchedules: {
           select: {
             id: true,
@@ -137,12 +122,10 @@ export async function GET(
     const totalCount = await prisma.jobApplication.count({
       where: finalWhereClause,
     });
-
     const transformedApplications: (JobApplicationDetails & { isPriority: boolean })[] = applications.map((app) => {
       const user = app.user;
       const age = user.dateOfBirth ? calculateAge(new Date(user.dateOfBirth)) : null;
       const location = [user.city?.name, user.province?.name].filter(Boolean).join(', ');
-
       const hasPriority = user.subscriptions.some(sub => {
         const features = sub.plan.features as SubscriptionPlanFeatures;
         return sub.plan.name === 'PROFESSIONAL' && features?.priorityCvReview === true;
@@ -187,7 +170,6 @@ export async function GET(
       if (!a.isPriority && b.isPriority) return 1;
       return 0;
     });
-
     const response = {
       applications: sortedApplications,
       pagination: {
