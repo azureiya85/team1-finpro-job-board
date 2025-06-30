@@ -1,35 +1,39 @@
 import { useFieldArray } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { GraduationCap, Plus, Minus} from 'lucide-react';
+import { 
+  Briefcase,
+  Plus,
+  Minus
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Control, UseFormRegister } from 'react-hook-form';
 import { ExtendedGenerateCvPayload } from './GenerateCVModalForm';
 
-interface GenerateCVModalEducationHistoryProps {
+interface GenerateCVModalWorkExperienceProps {
   control: Control<ExtendedGenerateCvPayload>;
   register: UseFormRegister<ExtendedGenerateCvPayload>;
 }
 
-export default function GenerateCVModalEducationHistory({ 
+export default function GenerateCVModalWorkExperience({ 
   control, 
   register
-}: GenerateCVModalEducationHistoryProps) {
-  const { fields: educationFields, append: appendEducation, remove: removeEducation } = useFieldArray({
+}: GenerateCVModalWorkExperienceProps) {
+  const { fields: experienceFields, append: appendExperience, remove: removeExperience } = useFieldArray({
     control,
-    name: 'educationHistoryArray'
+    name: 'customWorkExperiencesArray'
   });
 
-  const addEducation = () => {
-    if (educationFields.length < 10) {
-      appendEducation({ startYear: '', endYear: '', universityName: '', degree: '' });
+  const addExperience = () => {
+    if (experienceFields.length < 10) {
+      appendExperience({ startYear: '', endYear: '', companyName: '', jobTitle: '' });
     }
   };
 
-  const removeEducationField = (index: number) => {
-    if (educationFields.length > 1) {
-      removeEducation(index);
+  const removeExperienceField = (index: number) => {
+    if (experienceFields.length > 1) {
+      removeExperience(index);
     }
   };
 
@@ -39,23 +43,23 @@ export default function GenerateCVModalEducationHistory({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 }}
+      transition={{ delay: 0.1 }}
       className="space-y-4"
     >
       <div className="flex items-center gap-2">
-        <GraduationCap className="w-4 h-4 text-muted-foreground" />
+        <Briefcase className="w-4 h-4 text-muted-foreground" />
         <Label className="text-sm font-medium">
-          Education History
+          Custom Work Experience
           <span className="text-xs text-gray-500 font-normal ml-1">(optional)</span>
         </Label>
       </div>
       
       <p className="text-sm text-gray-600">
-        Add your educational background including degrees, universities, and years of study.
+        Add any work experience not recorded on this platform. This will appear on your generated CV.
       </p>
 
       <div className="space-y-3">
-        {educationFields.map((field, index) => (
+        {experienceFields.map((field, index) => (
           <motion.div
             key={field.id}
             initial={{ opacity: 0, x: -20 }}
@@ -64,13 +68,13 @@ export default function GenerateCVModalEducationHistory({
             className="grid grid-cols-1 lg:grid-cols-6 gap-3 items-end p-4 border rounded-lg"
           >
             <div>
-              <Label htmlFor={`startYear-${index}`} className="text-xs text-gray-600">
+              <Label htmlFor={`exp-startYear-${index}`} className="text-xs text-gray-600">
                 Start Year
               </Label>
               <Input
-                id={`startYear-${index}`}
-                {...register(`educationHistoryArray.${index}.startYear` as const)}
-                placeholder="2020"
+                id={`exp-startYear-${index}`}
+                {...register(`customWorkExperiencesArray.${index}.startYear` as const)}
+                placeholder="2018"
                 type="number"
                 min="1950"
                 max={currentYear}
@@ -79,13 +83,13 @@ export default function GenerateCVModalEducationHistory({
             </div>
             
             <div>
-              <Label htmlFor={`endYear-${index}`} className="text-xs text-gray-600">
+              <Label htmlFor={`exp-endYear-${index}`} className="text-xs text-gray-600">
                 End Year
               </Label>
               <Input
-                id={`endYear-${index}`}
-                {...register(`educationHistoryArray.${index}.endYear` as const)}
-                placeholder="2024"
+                id={`exp-endYear-${index}`}
+                {...register(`customWorkExperiencesArray.${index}.endYear` as const)}
+                placeholder="2022"
                 type="number"
                 min="1950"
                 max={currentYear + 10}
@@ -94,25 +98,25 @@ export default function GenerateCVModalEducationHistory({
             </div>
             
             <div className="lg:col-span-2">
-              <Label htmlFor={`universityName-${index}`} className="text-xs text-gray-600">
-                University Name
+              <Label htmlFor={`exp-companyName-${index}`} className="text-xs text-gray-600">
+                Company Name
               </Label>
               <Input
-                id={`universityName-${index}`}
-                {...register(`educationHistoryArray.${index}.universityName` as const)}
-                placeholder="University of Example"
+                id={`exp-companyName-${index}`}
+                {...register(`customWorkExperiencesArray.${index}.companyName` as const)}
+                placeholder="Acme Corporation"
                 className="mt-1"
               />
             </div>
             
             <div className="lg:col-span-1">
-              <Label htmlFor={`degree-${index}`} className="text-xs text-gray-600">
-                Degree
+              <Label htmlFor={`exp-jobTitle-${index}`} className="text-xs text-gray-600">
+                Job Title
               </Label>
               <Input
-                id={`degree-${index}`}
-                {...register(`educationHistoryArray.${index}.degree` as const)}
-                placeholder="Bachelor of Science"
+                id={`exp-jobTitle-${index}`}
+                {...register(`customWorkExperiencesArray.${index}.jobTitle` as const)}
+                placeholder="Software Engineer"
                 className="mt-1"
               />
             </div>
@@ -122,8 +126,8 @@ export default function GenerateCVModalEducationHistory({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={addEducation}
-                disabled={educationFields.length >= 10}
+                onClick={addExperience}
+                disabled={experienceFields.length >= 10}
                 className="h-9 w-9 p-0"
               >
                 <Plus className="h-4 w-4" />
@@ -132,8 +136,8 @@ export default function GenerateCVModalEducationHistory({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => removeEducationField(index)}
-                disabled={educationFields.length <= 1}
+                onClick={() => removeExperienceField(index)}
+                disabled={experienceFields.length <= 1}
                 className="h-9 w-9 p-0"
               >
                 <Minus className="h-4 w-4" />
@@ -144,9 +148,9 @@ export default function GenerateCVModalEducationHistory({
       </div>
 
       <div className="text-xs text-gray-500 flex justify-between items-center">
-        <span>Add up to 10 education entries</span>
-        <span className={educationFields.length >= 10 ? 'text-red-500 font-medium' : 'text-gray-500'}>
-          {educationFields.length}/10 entries
+        <span>Add up to 10 work experiences</span>
+        <span className={experienceFields.length >= 10 ? 'text-red-500 font-medium' : 'text-gray-500'}>
+          {experienceFields.length}/10 entries
         </span>
       </div>
     </motion.div>

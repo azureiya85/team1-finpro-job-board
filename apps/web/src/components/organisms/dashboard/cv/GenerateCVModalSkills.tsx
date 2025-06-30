@@ -1,16 +1,11 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  X, 
-  Users, 
-  Plus,
-  Tag
-} from 'lucide-react';
+import { X, Users, Plus,Tag} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { UseFormWatch, UseFormSetValue } from 'react-hook-form';
-import { ExtendedGenerateCvPayload } from './GenerateCVModal';
+import { ExtendedGenerateCvPayload } from './GenerateCVModalForm';
 
 interface GenerateCVModalSkillsProps {
   watch: UseFormWatch<ExtendedGenerateCvPayload>;

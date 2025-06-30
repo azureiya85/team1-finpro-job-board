@@ -1,12 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { BookOpen, CheckSquare, Clock, Info, FileDown, Trophy, Star } from 'lucide-react';
+import { BookOpen, CheckSquare, Clock, Info, FileDown, Trophy, Star, Loader2, } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ListedAssessment } from '@/types/assessments';
 import { UserSubscriptionDetails } from '@/lib/subscription';
+import { toast } from 'sonner';
+import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import axiosInstance from '@/lib/axios';
 
 type ExtendedListedAssessment = ListedAssessment & {
   userAssessment?: {
@@ -26,9 +30,41 @@ interface Props {
 }
 
 export default function AssessmentContent({ assessments, subscription }: Props) {
-  const handleCertificateDownload = (certificateUrl: string) => {
-    if (certificateUrl) {
-      window.open(certificateUrl, '_blank');
+  const { data: session } = useSession();
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+
+  const handleCertificateDownload = async (certificateCode: string, assessmentTitle: string) => {
+    if (generatingId) return;
+
+    setGeneratingId(certificateCode);
+    const toastId = toast.loading('Preparing your certificate...');
+
+    try {
+      const response = await axiosInstance.post<{ url: string }>(`/api/users/certificates/${certificateCode}/generate`);
+      const certificateUrl = response.data.url;
+
+      if (!certificateUrl) {
+        throw new Error('Failed to retrieve certificate URL.');
+      }
+
+      const userName = session?.user?.name?.replace(/\s+/g, '_') || 'User';
+      const sanitizedTitle = assessmentTitle.replace(/\s+/g, '_');
+      const fileName = `${userName}_${sanitizedTitle}_Certificate.pdf`;
+
+      const link = document.createElement('a');
+      link.href = certificateUrl;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Certificate download started!', { id: toastId });
+
+    } catch (error) {
+      console.error('Certificate generation failed:', error);
+      toast.error('Could not prepare certificate. Please try again later.', { id: toastId });
+    } finally {
+      setGeneratingId(null);
     }
   };
 
@@ -76,9 +112,13 @@ export default function AssessmentContent({ assessments, subscription }: Props) 
                 <h2 className="text-xl font-semibold text-gray-800">Completed Assessments</h2>
                 <Badge variant="secondary">{completedAssessments.length}</Badge>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {completedAssessments.map((assessment) => (
-                  <Card key={assessment.id} className="flex flex-col border-green-200 bg-green-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {completedAssessments.map((assessment) => {
+                  const certificateCode = assessment.userAssessment?.certificate?.certificateCode;
+                  const isGenerating = generatingId === certificateCode;
+
+                  return (
+                    <Card key={assessment.id} className="flex flex-col border-green-200 bg-green-50">
                     <CardHeader>
                       <div className="flex justify-between items-start mb-2">
                           <CardTitle className="text-xl">{assessment.title}</CardTitle>
@@ -86,19 +126,23 @@ export default function AssessmentContent({ assessments, subscription }: Props) 
                       </div>
                       <CardDescription className="text-sm line-clamp-3">{assessment.description || 'No description available.'}</CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-grow">
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-2"><CheckSquare className="w-4 h-4 text-primary" /><span>{assessment._count.questions} questions</span></div>
-                        <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /><span>{assessment.timeLimit} minutes time limit</span></div>
-                        {assessment.userAssessment?.score && (<div className="flex items-center gap-2"><Trophy className="w-4 h-4 text-green-600" /><span className="text-green-700 font-medium">Score: {assessment.userAssessment.score}%</span></div>)}
-                        {assessment.userAssessment?.completedAt && (<div className="text-xs text-muted-foreground">Completed: {new Date(assessment.userAssessment.completedAt).toLocaleDateString()}</div>)}
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleCertificateDownload(assessment.userAssessment?.certificate?.certificateUrl || '')} disabled={!assessment.userAssessment?.certificate?.certificateUrl}><FileDown className="w-4 h-4 mr-2" />Download Certificate</Button>
-                    </CardFooter>
-                  </Card>
-                ))}
+                           <CardFooter>
+                        <Button 
+                          className="w-full bg-green-600 hover:bg-green-700" 
+                          onClick={() => handleCertificateDownload(certificateCode!, assessment.title)} 
+                          disabled={!certificateCode || isGenerating}
+                        >
+                          {isGenerating ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <FileDown className="w-4 h-4 mr-2" />
+                          )}
+                          {isGenerating ? 'Preparing...' : 'Download Certificate'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}

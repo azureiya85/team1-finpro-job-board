@@ -10,6 +10,23 @@ export const generateCvSchema = z.object({
     .optional()
     .default(''),
   
+  customWorkExperiences: z.string()
+    .max(1500, { message: 'Work experiences list cannot exceed 1500 characters.' })
+    .optional()
+    .default('')
+    .refine(
+        (val) => {
+          if (!val || val.trim() === '') return true;
+          return val.split(',').every(part => {
+            const trimmedPart = part.trim();
+            if (trimmedPart === '') return true;
+            const segments = trimmedPart.split(':');
+            return segments.length === 4 && segments.every(seg => seg.trim().length > 0);
+          });
+        },
+        { message: 'Work experiences must follow the "StartYear:EndYear:Company:JobTitle, ..." format.' }
+    ),
+
   languages: z.string()
     .max(500, { message: 'Languages list cannot exceed 500 characters.' })
     .optional()
@@ -35,7 +52,6 @@ export const generateCvSchema = z.object({
           return val.split(',').every(part => {
             const trimmedPart = part.trim();
             if (trimmedPart === '') return true;
-            // Format: "startYear:endYear:universityName:degree"
             const segments = trimmedPart.split(':');
             return segments.length === 4 && segments.every(seg => seg.trim().length > 0);
           });

@@ -46,7 +46,7 @@ export default function SubscriptionPagePayment({
     setPaymentDetails(null);
     setError(null);
 
-     try {
+    try {
       let response;
       if (subscriptionToRenew) {
         response = await subscriptionApi.renewSubscription({
@@ -81,7 +81,6 @@ export default function SubscriptionPagePayment({
     }
   };
 
-  // Render payment icon helper
   const renderPaymentIcon = (method: string) => {
     const IconComponent = getPaymentMethodIcon(method);
     return <IconComponent className="w-4 h-4" />;
@@ -92,7 +91,7 @@ export default function SubscriptionPagePayment({
 
   return (
     <Card>
-     <CardHeader>
+      <CardHeader>
         <CardTitle>{subscriptionToRenew ? 'Renew Subscription' : 'Payment Method'}</CardTitle>
         <CardDescription>
           {subscriptionToRenew 
@@ -127,6 +126,7 @@ export default function SubscriptionPagePayment({
                   QRIS
                 </div>
               </SelectItem>
+              {/*
               <SelectItem value="CREDIT_CARD">
                 <div className="flex items-center">
                   {renderPaymentIcon("CREDIT_CARD")}
@@ -139,6 +139,7 @@ export default function SubscriptionPagePayment({
                   <span className="ml-2">E-Wallet</span>
                 </div>
               </SelectItem>
+              */}
             </SelectContent>
           </Select>
         </div>
@@ -154,7 +155,7 @@ export default function SubscriptionPagePayment({
         )}
 
         {/* Purchase Button */}
-      <Button
+        <Button
           onClick={handlePurchaseOrRenew} 
           disabled={isPurchaseDisabled}
           className="w-full"
