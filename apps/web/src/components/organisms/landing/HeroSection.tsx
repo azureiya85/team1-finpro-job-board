@@ -147,7 +147,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
-              className="absolute top-20 right-4 w-32 h-44 md:top-40 md:right-8 md:w-48 md:h-64 bg-white rounded-xl shadow-xl overflow-hidden border-2 border-white z-10 hover:shadow-2xl transition-shadow duration-300"
+              className="absolute top-20 right-4 w-32 h-44 md:top-32 md:right-24 md:w-48 md:h-64 bg-white rounded-xl shadow-xl overflow-hidden border-2 border-white z-10 hover:shadow-2xl transition-shadow duration-300"
             >
               <Image
                 src="https://i.pinimg.com/1200x/5c/1a/1c/5c1a1c8ac126433c1c8588f0afaf456d.jpg"
