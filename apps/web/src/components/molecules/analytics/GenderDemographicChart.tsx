@@ -29,8 +29,8 @@ export default function GenderDemographicChart({ chartData }: GenderDemographicC
   };
 
   return (
-    <ChartWrapper>
-      <Pie data={data} options={options} />
-    </ChartWrapper>
+    <div style={{ height: '300px', width: '300px', marginTop: '15px' }}>
+        <Pie data={data} options={options} />
+      </div>
   );
 }

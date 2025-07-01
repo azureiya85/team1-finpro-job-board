@@ -8,8 +8,7 @@ export const educationLevels = [
   "DIPLOMA", 
   "BACHELOR", 
   "MASTER", 
-  "DOCTORATE", 
-  "VOCATIONAL", 
+  "DOCTORATE",
   "OTHER"
 ];
 
