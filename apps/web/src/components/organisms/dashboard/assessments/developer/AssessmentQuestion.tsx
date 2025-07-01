@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { useAssessmentStore, SkillAssessmentQuestion } from '@/stores/assessmentMgtStores';
+import { useAssessmentMgtStore } from '@/stores/assessmentMgtStores';
+import type { SkillAssessmentQuestion } from '@/types/zustandAdmin'; 
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -26,7 +27,7 @@ type CorrectAnswer = QuestionFormData['correctAnswer'];
 
 const QuestionForm: React.FC<{
   question?: SkillAssessmentQuestion;
-  onSubmit: (data: QuestionFormData) => Promise<void>;
+  onSubmit: (data: QuestionFormData) => Promise<void | boolean>;
   onCancel: () => void;
 }> = ({ question, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState<QuestionFormData>({
@@ -35,8 +36,8 @@ const QuestionForm: React.FC<{
     optionB: question?.optionB || '',
     optionC: question?.optionC || '',
     optionD: question?.optionD || '',
-    correctAnswer: question?.correctAnswer || 'A',
-    explanation: question?.explanation || '', 
+    correctAnswer: (question?.correctAnswer as CorrectAnswer) || 'A',
+    explanation: question?.explanation || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -77,15 +78,17 @@ const QuestionForm: React.FC<{
 };
 
 export function AssessmentQuestions() {
-  const { questions, selectedAssessment, fetchQuestions, createQuestion, updateQuestion, deleteQuestion } = useAssessmentStore();
+  const { questions, selectedAssessment, fetchQuestions, createQuestion, updateQuestion, deleteQuestion, clearQuestions } = useAssessmentMgtStore();
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<SkillAssessmentQuestion | null>(null);
 
   useEffect(() => {
     if (selectedAssessment) {
       fetchQuestions(selectedAssessment.id);
+    } else {
+        clearQuestions();
     }
-  }, [selectedAssessment, fetchQuestions]);
+  }, [selectedAssessment, fetchQuestions, clearQuestions]);
 
   const handleDeleteQuestion = async (question: SkillAssessmentQuestion) => {
     if (confirm("Are you sure you want to delete this question?")) {
@@ -100,7 +103,7 @@ export function AssessmentQuestions() {
 
     const submissionData = {
       ...data,
-      explanation: data.explanation || undefined,
+      explanation: data.explanation || null,
     };
 
     if (editingQuestion) {
@@ -109,8 +112,8 @@ export function AssessmentQuestions() {
       return createQuestion(selectedAssessment.id, submissionData);
     }
   };
-  
-  const questionCount = selectedAssessment?._count?.questions || 0;
+
+  const questionCount = questions.length;
   const canCreateQuestion = selectedAssessment && questionCount < 25;
 
   return (
@@ -152,7 +155,7 @@ export function AssessmentQuestions() {
 
       {selectedAssessment && (
         <div className="space-y-4">
-          {questions.map((question, index) => (
+          {questions.map((question: SkillAssessmentQuestion, index: number) => (
             <Card key={question.id}>
               <CardHeader className="p-4">
                 <div className="flex justify-between items-start gap-4">

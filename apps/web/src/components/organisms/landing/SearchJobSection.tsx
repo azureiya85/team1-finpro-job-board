@@ -4,16 +4,13 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  useJobSearchStore,
-  JobSearchState, 
-  JobSearchActions
-} from '@/stores/jobSearchStore';
-import { useDebouncedJobSearchActions } from '@/hooks/useJobSearch'; 
+import { useJobSearchStore } from '@/stores/jobSearchStore';
+import type { JobSearchStoreState } from '@/types/zustandSearch'; 
+import { useDebouncedJobSearchActions } from '@/hooks/useJobSearch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Search, MapPin, Building2 } from 'lucide-react'; 
+import { Search, MapPin, Building2 } from 'lucide-react';
 
 const searchFormSchema = z.object({
   jobTitle: z.string().optional(),
@@ -24,24 +21,20 @@ const searchFormSchema = z.object({
 type SearchFormValues = z.infer<typeof searchFormSchema>;
 
 export function SearchJobSection() {
-  // Select individual state slices from Zustand 
-  const storeSearchTerm = useJobSearchStore((state: JobSearchState) => state.searchTermInput);
-  const storeLocationSearch = useJobSearchStore((state: JobSearchState) => state.locationSearchInput);
-  const storeCompanySearch = useJobSearchStore((state: JobSearchState) => state.companySearchInput);
+const storeSearchTerm = useJobSearchStore((state) => state.searchTermInput);
+const storeLocationSearch = useJobSearchStore((state) => state.locationSearchInput);;
+  const storeCompanySearch = useJobSearchStore((state: JobSearchStoreState) => state.companySearchInput);
 
-  // Get debounced setters from custom hook
   const {
     setSearchTermInput: debouncedSetSearchTerm,
     setLocationSearchInput: debouncedSetLocationSearch,
     setCompanySearchInput: debouncedSetCompanySearch,
   } = useDebouncedJobSearchActions();
 
-  // Get direct fetchJobs action from Zustand
-  const fetchJobs = useJobSearchStore((state: JobSearchActions) => state.fetchJobs);
+const fetchJobs = useJobSearchStore((state) => state.fetchJobs);
 
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
-    // Initialize form with current store values
     defaultValues: {
       jobTitle: storeSearchTerm || '',
       location: storeLocationSearch || '',
@@ -49,20 +42,18 @@ export function SearchJobSection() {
     },
   });
 
-  // --- Sync react-hook-form with Zustand store (one-way: store -> form) ---
   useEffect(() => {
     form.setValue('jobTitle', storeSearchTerm || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-  }, [storeSearchTerm, form.setValue, form]);
+  }, [storeSearchTerm, form]); 
 
   useEffect(() => {
     form.setValue('location', storeLocationSearch || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-  }, [storeLocationSearch, form.setValue, form]);
+  }, [storeLocationSearch, form]);
 
   useEffect(() => {
     form.setValue('company', storeCompanySearch || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-  }, [storeCompanySearch, form.setValue, form]);
+  }, [storeCompanySearch, form]);
 
-  // --- Sync form changes to Zustand store via debounced setters (one-way: form -> store) ---
   const jobTitleValue = form.watch('jobTitle');
   const locationValue = form.watch('location');
   const companyValue = form.watch('company');
@@ -79,7 +70,6 @@ export function SearchJobSection() {
     debouncedSetCompanySearch(companyValue === undefined ? '' : companyValue);
   }, [companyValue, debouncedSetCompanySearch]);
 
-  // Handle form submission 
   const onSubmit = (values: SearchFormValues) => {
     console.log("Form submitted, triggering explicit fetch with current store state:", values);
     fetchJobs();

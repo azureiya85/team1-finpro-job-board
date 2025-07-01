@@ -35,6 +35,8 @@ const initialState: ApplicationsZustandState = {
       [ApplicationStatus.ACCEPTED]: 0,
       [ApplicationStatus.REJECTED]: 0,
       [ApplicationStatus.WITHDRAWN]: 0,
+      TEST_REQUIRED: 0,
+      TEST_COMPLETED: 0
     },
     byEducation: {},
     ageRange: { min: null, max: null },

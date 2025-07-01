@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import { useAssessmentStore, SkillAssessment } from '@/stores/assessmentMgtStores';
+import { useAssessmentMgtStore } from '@/stores/assessmentMgtStores';
+import type { SkillAssessment, SkillCategory } from '@/types/zustandAdmin'; 
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,13 +26,13 @@ type AssessmentFormData = {
 // Assessment Form Component
 const AssessmentForm: React.FC<{
   assessment?: SkillAssessment;
-  onSubmit: (data: AssessmentFormData) => Promise<void>;
+  onSubmit: (data: AssessmentFormData) => Promise<void | boolean>;
   onCancel: () => void;
 }> = ({ assessment, onSubmit, onCancel }) => {
-  const { categories } = useAssessmentStore();
-  const [formData, setFormData] = useState({
+  const { categories } = useAssessmentMgtStore();
+  const [formData, setFormData] = useState<AssessmentFormData>({
     title: assessment?.title || '',
-    description: assessment?.description || '',
+    description: assessment?.description ?? '',
     timeLimit: assessment?.timeLimit || 60,
     passingScore: assessment?.passingScore || 70,
     categoryId: assessment?.categoryId || '',
@@ -53,16 +54,16 @@ const AssessmentForm: React.FC<{
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2"><Label htmlFor="title">Assessment Title</Label><Input id="title" value={formData.title} onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))} required /></div>
-      <div className="space-y-2"><Label htmlFor="description">Description (Optional)</Label><Textarea id="description" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} rows={3} /></div>
+      <div className="space-y-2"><Label htmlFor="description">Description (Optional)</Label><Textarea id="description" value={formData.description ?? ''} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} rows={3} /></div>
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2"><Label htmlFor="timeLimit">Time Limit (minutes)</Label><Input id="timeLimit" type="number" min="1" value={formData.timeLimit} onChange={(e) => setFormData(p => ({ ...p, timeLimit: parseInt(e.target.value) }))} required /></div>
-        <div className="space-y-2"><Label htmlFor="passingScore">Passing Score (%)</Label><Input id="passingScore" type="number" min="0" max="100" value={formData.passingScore} onChange={(e) => setFormData(p => ({ ...p, passingScore: parseInt(e.target.value) }))} required /></div>
+        <div className="space-y-2"><Label htmlFor="timeLimit">Time Limit (minutes)</Label><Input id="timeLimit" type="number" min="1" value={formData.timeLimit} onChange={(e) => setFormData(p => ({ ...p, timeLimit: parseInt(e.target.value, 10) }))} required /></div>
+        <div className="space-y-2"><Label htmlFor="passingScore">Passing Score (%)</Label><Input id="passingScore" type="number" min="0" max="100" value={formData.passingScore} onChange={(e) => setFormData(p => ({ ...p, passingScore: parseInt(e.target.value, 10) }))} required /></div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="categoryId">Category</Label>
         <Select value={formData.categoryId} onValueChange={(v) => setFormData(p => ({ ...p, categoryId: v }))} required>
           <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-          <SelectContent>{categories.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}</SelectContent>
+          <SelectContent>{categories.map((c: SkillCategory) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}</SelectContent>
         </Select>
       </div>
       {assessment && (<div className="flex items-center space-x-2"><input type="checkbox" id="isActive" checked={formData.isActive} onChange={(e) => setFormData(p => ({ ...p, isActive: e.target.checked }))} /><Label htmlFor="isActive">Active</Label></div>)}
@@ -79,7 +80,7 @@ interface AssessmentListProps {
 }
 
 export function AssessmentList({ setActiveTab }: AssessmentListProps) {
-  const { categories, assessments, selectedAssessment, setSelectedAssessment, createAssessment, updateAssessment, deleteAssessment } = useAssessmentStore();
+  const { categories, assessments, selectedAssessment, selectAssessment, createAssessment, updateAssessment, deleteAssessment } = useAssessmentMgtStore();
   const [showAssessmentForm, setShowAssessmentForm] = useState(false);
   const [editingAssessment, setEditingAssessment] = useState<SkillAssessment | null>(null);
 
@@ -88,10 +89,19 @@ export function AssessmentList({ setActiveTab }: AssessmentListProps) {
       try {
         await deleteAssessment(assessment.id);
         if (selectedAssessment?.id === assessment.id) {
-          setSelectedAssessment(null);
+          selectAssessment(null);
         }
       } catch { /* Error handled in store */ }
     }
+  };
+
+  const handleFormSubmit = (data: AssessmentFormData) => {
+    if (editingAssessment) {
+      return updateAssessment(editingAssessment.id, data);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { isActive, ...createData } = data; 
+    return createAssessment(createData);
   };
 
   return (
@@ -109,7 +119,7 @@ export function AssessmentList({ setActiveTab }: AssessmentListProps) {
             </DialogHeader>
             <AssessmentForm
               assessment={editingAssessment || undefined}
-              onSubmit={editingAssessment ? (data) => updateAssessment(editingAssessment.id, data) : createAssessment}
+              onSubmit={handleFormSubmit}
               onCancel={() => { setShowAssessmentForm(false); setEditingAssessment(null); }}
             />
           </DialogContent>
@@ -121,13 +131,13 @@ export function AssessmentList({ setActiveTab }: AssessmentListProps) {
       )}
 
       <div className="grid gap-4">
-        {assessments.map((assessment) => (
+        {assessments.map((assessment: SkillAssessment) => (
           <Card key={assessment.id} className={selectedAssessment?.id === assessment.id ? 'ring-2 ring-primary' : ''}>
             <CardHeader className="p-4">
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <CardTitle className="text-lg cursor-pointer" onClick={() => { setSelectedAssessment(assessment); setActiveTab("questions"); }}>{assessment.title}</CardTitle>
+                    <CardTitle className="text-lg cursor-pointer" onClick={() => { selectAssessment(assessment); setActiveTab("questions"); }}>{assessment.title}</CardTitle>
                     <Badge variant={assessment.isActive ? "default" : "secondary"}>{assessment.isActive ? "Active" : "Inactive"}</Badge>
                   </div>
                   {assessment.description && <CardDescription className="mb-3">{assessment.description}</CardDescription>}
@@ -139,7 +149,7 @@ export function AssessmentList({ setActiveTab }: AssessmentListProps) {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button variant="outline" size="sm" onClick={() => { setSelectedAssessment(assessment); setActiveTab("questions"); }}>
+                  <Button variant="outline" size="sm" onClick={() => { selectAssessment(assessment); setActiveTab("questions"); }}>
                     <HelpCircle className="w-4 h-4 mr-1.5" />Manage Questions
                   </Button>
                   <div className='flex gap-2'>

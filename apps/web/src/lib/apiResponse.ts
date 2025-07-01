@@ -1,4 +1,3 @@
-// apps/web/src/lib/utils/apiResponse.ts
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -43,7 +42,6 @@ export class ApiResponse {
     }
 
     if (error instanceof Error) {
-      // Handle known business logic errors
       const businessErrors = [
         'Job posting not found',
         'This job posting is no longer active',

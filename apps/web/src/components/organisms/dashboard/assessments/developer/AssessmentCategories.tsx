@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import { useAssessmentStore, SkillCategory } from '@/stores/assessmentMgtStores';
+import { useAssessmentMgtStore } from '@/stores/assessmentMgtStores';
+import type { SkillCategory } from '@/types'; 
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,7 +14,7 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 // Category Form Component 
 const CategoryForm: React.FC<{
   category?: SkillCategory;
-  onSubmit: (data: { name: string; description?: string }) => Promise<void>;
+  onSubmit: (data: { name: string; description?: string }) => Promise<void | boolean>;
   onCancel: () => void;
 }> = ({ category, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -32,7 +33,6 @@ const CategoryForm: React.FC<{
       });
       onCancel();
     } catch {
-      // Error is handled in the store
     } finally {
       setIsSubmitting(false);
     }
@@ -46,7 +46,7 @@ const CategoryForm: React.FC<{
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Description (Optional)</Label>
-        <Textarea id="description" value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={3} />
+        <Textarea id="description" value={formData.description ?? ''} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={3} />
       </div>
       <div className="flex justify-end space-x-2">
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
@@ -58,7 +58,7 @@ const CategoryForm: React.FC<{
 
 // Main Component for the Categories Tab
 export function AssessmentCategories() {
-  const { categories, createCategory, updateCategory, deleteCategory } = useAssessmentStore();
+  const { categories, createCategory, updateCategory, deleteCategory } = useAssessmentMgtStore();
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<SkillCategory | null>(null);
 

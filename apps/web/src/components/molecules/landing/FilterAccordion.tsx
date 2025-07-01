@@ -1,63 +1,39 @@
 'use client';
 
-import {
-  useJobSearchStore,
-  JobSearchState,
-  JobSearchActions,
-  DatePostedType,
-} from '@/stores/jobSearchStore';
-import { JobCategory, EmploymentType, ExperienceLevel, CompanySize } from '@prisma/client';
-
+import { useJobSearchStore } from '@/stores/jobSearchStore';
+import type { DatePostedType } from '@/types/zustandSearch';
+import { JobCategory, EmploymentType, ExperienceLevel, CompanySize } from '@/types'; 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FilterGroup } from '@/components/molecules/landing/FilterGroup';
 import { DateRangeFilter } from './FilterDateRange';
 import { DEFAULT_OPEN_SECTIONS } from '@/lib/utils';
 
 export function FilterAccordion() {
-  // State extraction
-  const {
-    categories = [], 
-    employmentTypes = [], 
-    experienceLevels = [], 
-    companySizes = [],
-    isRemote, 
-    datePosted, 
-    startDate, 
-    endDate,
-    companyLocationInput,
-    allLocations,
-    isLocationsLoading,
-  } = useJobSearchStore((state: JobSearchState) => state);
-  
-  // Actions extraction
-  const {
-    setCategories, 
-    setEmploymentTypes, 
-    setExperienceLevels, 
-    setCompanySizes,
-    setIsRemote, 
-    setDatePosted, 
-    setDateRange,
-    setCompanyLocationInput,
-  } = useJobSearchStore((state: JobSearchActions) => state);
+  const categories = useJobSearchStore((state) => state.categories);
+  const employmentTypes = useJobSearchStore((state) => state.employmentTypes);
+  const experienceLevels = useJobSearchStore((state) => state.experienceLevels);
+  const companySizes = useJobSearchStore((state) => state.companySizes);
+  const isRemote = useJobSearchStore((state) => state.isRemote);
+  const datePosted = useJobSearchStore((state) => state.datePosted);
+  const startDate = useJobSearchStore((state) => state.startDate);
+  const endDate = useJobSearchStore((state) => state.endDate);
+  const companyLocationInput = useJobSearchStore((state) => state.companyLocationInput);
+  const allLocations = useJobSearchStore((state) => state.allLocations);
+  const isLocationsLoading = useJobSearchStore((state) => state.isLocationsLoading);
+
+  const setCategories = useJobSearchStore((state) => state.setCategories);
+  const setEmploymentTypes = useJobSearchStore((state) => state.setEmploymentTypes);
+  const setExperienceLevels = useJobSearchStore((state) => state.setExperienceLevels);
+  const setCompanySizes = useJobSearchStore((state) => state.setCompanySizes);
+  const setIsRemote = useJobSearchStore((state) => state.setIsRemote);
+  const setDatePosted = useJobSearchStore((state) => state.setDatePosted);
+  const setDateRange = useJobSearchStore((state) => state.setDateRange);
+  const setCompanyLocationInput = useJobSearchStore((state) => state.setCompanyLocationInput);
+
 
   // Event handlers
   const handleDatePostedChange = (value: string) => {
@@ -68,8 +44,12 @@ export function FilterAccordion() {
     setCompanyLocationInput(value === "all" ? "" : value);
   };
 
-  const handleRemoteFilterChange = (checked: boolean | 'indeterminate', isRemoteValue: boolean) => {
-    setIsRemote(checked === true ? isRemoteValue : undefined);
+  const handleRemoteChange = (checked: boolean | 'indeterminate') => {
+    setIsRemote(checked === true ? true : undefined);
+  };
+
+  const handleOfficeChange = (checked: boolean | 'indeterminate') => {
+    setIsRemote(checked === true ? false : undefined);
   };
 
   return (
@@ -106,16 +86,14 @@ export function FilterAccordion() {
         </AccordionContent>
       </AccordionItem>
 
-      {/* Job Category Filter */}
+     {/* Job Category Filter */}
       <AccordionItem value="job-category">
-        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
-          Job Category
-        </AccordionTrigger>
+        <AccordionTrigger>Job Category</AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Job Category"
             items={JobCategory}
-            selectedItems={categories}
+            selectedItems={categories ?? []}
             onChange={setCategories}
           />
         </AccordionContent>
@@ -123,14 +101,12 @@ export function FilterAccordion() {
       
       {/* Employment Type Filter */}
       <AccordionItem value="employment-type">
-        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
-          Employment Type
-        </AccordionTrigger>
+        <AccordionTrigger>Employment Type</AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Employment Type"
             items={EmploymentType}
-            selectedItems={employmentTypes}
+            selectedItems={employmentTypes ?? []}
             onChange={setEmploymentTypes}
           />
         </AccordionContent>
@@ -138,31 +114,24 @@ export function FilterAccordion() {
 
       {/* Experience Level Filter */}
       <AccordionItem value="experience-level">
-        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
-          Experience Level
-        </AccordionTrigger>
+        <AccordionTrigger>Experience Level</AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Experience Level"
             items={ExperienceLevel}
-            selectedItems={experienceLevels}
+            selectedItems={experienceLevels ?? []}
             onChange={setExperienceLevels}
           />
         </AccordionContent>
       </AccordionItem>
-
       {/* Company Location Filter */}
-      <AccordionItem value="company-location">
+       <AccordionItem value="company-location">
         <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
           Company Location
         </AccordionTrigger>
         <AccordionContent>
           <div className="py-2">
-            <Select
-              value={companyLocationInput}
-              onValueChange={handleLocationChange}
-              disabled={isLocationsLoading}
-            >
+            <Select value={companyLocationInput} onValueChange={handleLocationChange} disabled={isLocationsLoading}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder={isLocationsLoading ? "Loading..." : "Select a location"} />
               </SelectTrigger>
@@ -173,9 +142,7 @@ export function FilterAccordion() {
                     <SelectLabel>{province.name}</SelectLabel>
                     <SelectItem value={province.name}>{province.name} (All)</SelectItem> 
                     {province.cities.map((city) => (
-                      <SelectItem key={city.id} value={city.name}>
-                        {city.name}
-                      </SelectItem>
+                      <SelectItem key={city.id} value={city.name}>{city.name}</SelectItem>
                     ))}
                   </SelectGroup>
                 ))}
@@ -187,42 +154,32 @@ export function FilterAccordion() {
 
       {/* Company Size Filter */}
       <AccordionItem value="company-size">
-        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
-          Company Size
-        </AccordionTrigger>
+        <AccordionTrigger>Company Size</AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Company Size"
             items={CompanySize}
-            selectedItems={companySizes}
+            selectedItems={companySizes ?? []}
             onChange={setCompanySizes}
           />
         </AccordionContent>
       </AccordionItem>
 
       {/* Work Arrangement Filter */}
-      <AccordionItem value="work-arrangement">
+        <AccordionItem value="work-arrangement">
         <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
           Work Arrangement
         </AccordionTrigger>
         <AccordionContent>
           <div className="space-y-2 py-2">
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isRemoteFilter"
-                checked={isRemote === true}
-                onCheckedChange={(checked) => handleRemoteFilterChange(checked, true)}
-              />
+              <Checkbox id="isRemoteFilter" checked={isRemote === true} onCheckedChange={handleRemoteChange} />
               <Label htmlFor="isRemoteFilter" className="font-normal text-sm text-foreground/80 cursor-pointer">
                 Remote Only
               </Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isOfficeFilter"
-                checked={isRemote === false}
-                onCheckedChange={(checked) => handleRemoteFilterChange(checked, false)}
-              />
+              <Checkbox id="isOfficeFilter" checked={isRemote === false} onCheckedChange={handleOfficeChange} />
               <Label htmlFor="isOfficeFilter" className="font-normal text-sm text-foreground/80 cursor-pointer">
                 Office-Based / On-Site
               </Label>

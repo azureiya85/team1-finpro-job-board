@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, FolderOpen, HelpCircle, AlertTriangle, X } from "lucide-react";
-
-import { useAssessmentStore } from '@/stores/assessmentMgtStores';
+import { useAssessmentMgtStore } from '@/stores/assessmentMgtStores'; 
 import { AssessmentCategories } from '@/components/organisms/dashboard/assessments/developer/AssessmentCategories';
 import { AssessmentList } from '@/components/organisms/dashboard/assessments/developer/AssessmentList';
 import { AssessmentQuestions } from '@/components/organisms/dashboard/assessments/developer/AssessmentQuestion';
@@ -16,15 +15,25 @@ export default function AssessmentManagementPageTemplate() {
   const {
     categories,
     assessments,
+    questions, 
     selectedAssessment,
-    error,
+    categoryError,
+    assessmentError,
+    questionError,
     fetchCategories,
     fetchAssessments,
-    setError,
-  } = useAssessmentStore();
+  } = useAssessmentMgtStore();
 
   const [activeTab, setActiveTab] = useState("categories");
-  const questionCount = selectedAssessment?._count?.questions || 0;
+  const [displayError, setDisplayError] = useState<string | null>(null);
+
+  // Sync store errors to the local display state
+  useEffect(() => {
+    const firstError = categoryError || assessmentError || questionError;
+    setDisplayError(firstError);
+  }, [categoryError, assessmentError, questionError]);
+
+  const questionCount = selectedAssessment ? questions.length : 0;
 
   useEffect(() => {
     fetchCategories();
@@ -44,12 +53,12 @@ export default function AssessmentManagementPageTemplate() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {error && (
+          {displayError && (
             <Alert variant="destructive" className="mb-4">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription className='flex items-center justify-between'>
-                {error}
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setError(null)}>
+                {displayError}
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setDisplayError(null)}>
                   <X className="h-4 w-4" />
                 </Button>
               </AlertDescription>

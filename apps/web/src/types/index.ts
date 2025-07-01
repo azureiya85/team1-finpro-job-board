@@ -1,5 +1,5 @@
 import { JobPosting, Company, City, Province, EmploymentType, ExperienceLevel, JobCategory, CompanySize, Prisma } from '@prisma/client';
-import { SortByType } from '@/stores/jobSearchStore';
+export * from '@prisma/client';
 
 // ============================================================================
 // JOB POSTING TYPES
@@ -109,6 +109,8 @@ export type JobPostingWithApplicantCount = JobPostingInStore;
 // SEARCH AND FILTER TYPES
 // ============================================================================
 
+export type SortByType = 'newest' | 'oldest' | 'company_asc' | 'company_desc';
+
 export interface JobPostingSearchAndFilterParams {
   take?: number;
   skip?: number;
@@ -141,10 +143,10 @@ export interface GetJobsParams {
   provinceId?: string;    
 
   // Filter Parameters
-  categories?: JobCategory[];
-  employmentTypes?: EmploymentType[];
-  experienceLevels?: ExperienceLevel[];
-  companySizes?: CompanySize[];
+  categories?: string;
+  employmentTypes?: string;
+  experienceLevels?: string;
+  companySizes?: string;
   isRemote?: boolean;  
   companyId?: string;
 

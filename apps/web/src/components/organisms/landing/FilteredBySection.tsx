@@ -1,29 +1,19 @@
 'use client';
 
 import { useEffect } from 'react';
-import {
-  useJobSearchStore,
-  JobSearchState,
-  JobSearchActions,
-  SortByType,
-} from '@/stores/jobSearchStore';
+import { useJobSearchStore } from '@/stores/jobSearchStore';
+import type { JobSearchStoreState } from '@/types/zustandSearch';
+import type { SortByType } from '@/types';
 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from '@/components/ui/label';
 import { FilterAccordion } from '@/components/molecules/landing/FilterAccordion';
 
 export function FilteredBySection() {
-  // State extraction
-  const {
-    sortBy,
-    allLocations,
-  } = useJobSearchStore((state: JobSearchState) => state);
-  
-  // Actions extraction
-  const {
-    setSortBy,
-    fetchLocations,
-  } = useJobSearchStore((state: JobSearchActions) => state);
+const sortBy = useJobSearchStore((state) => state.sortBy);
+  const allLocations = useJobSearchStore((state: JobSearchStoreState) => state.allLocations);
+const setSortBy = useJobSearchStore((state) => state.setSortBy);
+  const fetchLocations = useJobSearchStore((state: JobSearchStoreState) => state.fetchLocations);
 
   // Initialize locations on mount
   useEffect(() => {
