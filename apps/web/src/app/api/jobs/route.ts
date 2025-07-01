@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getJobs, GetJobsParams } from '@/lib/jobsUtils';
+import { getJobs } from '@/lib/jobsUtils';
+import { GetJobsParams } from '@/types/jobs';
 import { jobSearchParamsSchema } from '@/lib/validations/zodCompanyValidation';
 import { Prisma } from '@prisma/client';
 
@@ -79,14 +80,6 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    console.log('API: Fetching jobs with params:', {
-      userLatitude,
-      userLongitude,
-      radiusKm,
-      take,
-      hasCoordinates: userLatitude !== undefined && userLongitude !== undefined
-    });
-
     const jobs = await getJobs(paramsForDb);
     return NextResponse.json(jobs);
   } catch (error) {

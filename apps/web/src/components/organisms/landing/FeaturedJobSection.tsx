@@ -125,7 +125,7 @@ export function FeaturedJobSection({ jobs: latestJobs }: FeaturedJobSectionProps
             {isTabActive('latest') 
               ? "Discover exciting career opportunities from top companies. Fresh listings updated daily."
               : userCoordinates 
-                ? `Showing top jobs near your current location. (Lat: ${userCoordinates.latitude.toFixed(2)}, Lon: ${userCoordinates.longitude.toFixed(2)})`
+                ? `Showing top jobs near your current location.`
                 : "Find relevant jobs based on your proximity."
             }
           </p>
