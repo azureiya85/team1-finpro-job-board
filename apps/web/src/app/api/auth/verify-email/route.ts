@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authHelpers } from '@/lib/authHelpers';
+import { authHelpers } from '@/lib/auth/authHelpers';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { emailService } from '@/services/email.service';

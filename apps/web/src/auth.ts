@@ -46,7 +46,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         try {
-          const { authHelpers } = await import('@/lib/authHelpers');
+          const { authHelpers } = await import('@/lib/auth/authHelpers');
           const user = await authHelpers.verifyCredentials(
             credentials.email as string,
             credentials.password as string

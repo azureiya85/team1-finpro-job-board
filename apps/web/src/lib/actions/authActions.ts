@@ -4,24 +4,33 @@ import { signIn as nextAuthServerSignIn, signOut as nextAuthServerSignOut } from
 import { LoginFormData, RegisterFormData, CompanyRegisterFormData, DeveloperRegisterFormData } from '@/lib/validations/zodAuthValidation';
 import { AuthError } from 'next-auth';
 import { UserRole } from '@prisma/client';
-import { authHelpers, RegisterResult } from '@/lib/authHelpers';
 import { redirect } from 'next/navigation';
 
-export interface LoggedInUser {
-  id: string;
-  email: string;
-  name?: string;
-  role: UserRole;
-  avatar?: string;
-  isVerified: boolean;
-}
+import { 
+  LoggedInUser, 
+  LoginActionResult, 
+  RegisterResult, 
+  AuthHelperUser, 
+  ServiceResponse 
+} from '@/types/authTypes';
 
-interface LoginActionResult {
-  success: boolean;
-  error?: string;
-  errorType?: string;
-  user?: LoggedInUser;
-}
+import { 
+  verifyCredentials, 
+  updateLastLogin 
+} from '@/lib/auth/authUtils';
+
+import { 
+  register, 
+  registerCompanyAdmin, 
+  registerDeveloper 
+} from '@/lib/auth/authRegistration';
+
+import { 
+  verifyEmailToken, 
+  generatePasswordResetToken, 
+  resetPassword, 
+  resendVerificationEmail 
+} from '@/lib/auth/authVerification';
 
 const cleanupSession = async (): Promise<void> => {
   try {
@@ -30,15 +39,6 @@ const cleanupSession = async (): Promise<void> => {
     // Ignore cleanup errors
   }
 };
-
-interface AuthHelperUser {
-  id: string;
-  email: string;
-  name?: string;
-  role: string;
-  avatar?: string;
-  isVerified: boolean;
-}
 
 const mapToLoggedInUser = (user: AuthHelperUser): LoggedInUser => ({
   id: user.id,
@@ -69,7 +69,7 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
       };
     }
 
-    const user = await authHelpers.verifyCredentials(data.email, data.password);
+    const user = await verifyCredentials(data.email, data.password);
     
     if (!user) {
       return {
@@ -82,7 +82,7 @@ export async function loginWithCredentialsAction(data: LoginFormData): Promise<L
     const loggedInUser = mapToLoggedInUser(user);
     
     // Update last login time
-    await authHelpers.updateLastLogin(loggedInUser.id);
+    await updateLastLogin(loggedInUser.id);
 
     return { success: true, user: loggedInUser };
   } catch (error) {
@@ -144,7 +144,7 @@ export async function logoutAction(): Promise<{ success: boolean }> {
 
 export async function registerUserAction(data: RegisterFormData): Promise<RegisterResult> {
   try {
-    return await authHelpers.register(data);
+    return await register(data);
   } catch (error) {
     console.error('Registration error:', error);
     return {
@@ -154,25 +154,25 @@ export async function registerUserAction(data: RegisterFormData): Promise<Regist
   }
 }
 
-export async function verifyEmailTokenAction(token: string): Promise<{ success: boolean; message: string }> {
-  return authHelpers.verifyEmailToken(token);
+export async function verifyEmailTokenAction(token: string): Promise<ServiceResponse> {
+  return verifyEmailToken(token);
 }
 
-export async function generatePasswordResetTokenAction(email: string): Promise<{ success: boolean; message: string }> {
-  return authHelpers.generatePasswordResetToken(email);
+export async function generatePasswordResetTokenAction(email: string): Promise<ServiceResponse> {
+  return generatePasswordResetToken(email);
 }
 
-export async function resetPasswordAction(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-  return authHelpers.resetPassword(token, newPassword);
+export async function resetPasswordAction(token: string, newPassword: string): Promise<ServiceResponse> {
+  return resetPassword(token, newPassword);
 }
 
-export async function resendVerificationEmailAction(email: string): Promise<{ success: boolean; message: string }> {
-  return authHelpers.resendVerificationEmail(email);
+export async function resendVerificationEmailAction(email: string): Promise<ServiceResponse> {
+  return resendVerificationEmail(email);
 }
 
 export async function registerCompanyAdminAction(data: CompanyRegisterFormData): Promise<RegisterResult> {
   try {
-    const result = await authHelpers.registerCompanyAdmin(data);
+    const result = await registerCompanyAdmin(data);
     return result;
   } catch (error) {
     console.error('Unexpected error in registerCompanyAdminAction:', error);
@@ -185,7 +185,7 @@ export async function registerCompanyAdminAction(data: CompanyRegisterFormData):
 
 export async function registerDeveloperAction(data: DeveloperRegisterFormData): Promise<RegisterResult> {
   try {
-    return await authHelpers.registerDeveloper(data);
+    return await registerDeveloper(data);
   } catch (error) {
     console.error('Developer registration error:', error);
     return {

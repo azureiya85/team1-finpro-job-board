@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authHelpers } from '@/lib/authHelpers';
+import { authHelpers } from '@/lib/auth/authHelpers';
 import { resetPasswordSchema } from '@/lib/validations/zodAuthValidation'; 
 
 export async function POST(request: Request) {

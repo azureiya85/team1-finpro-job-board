@@ -1,44 +1,6 @@
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { UserRole } from '@prisma/client';
-
-export interface User {
-  id: string;
-  email: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  role: UserRole;
-  name?: string | null;
-  image?: string | null;
-  isEmailVerified: boolean;
-}
-
-export interface Company {
-  id: string;
-  name: string;
-  logo?: string | null;
-  adminId: string;
-  admin: {
-    id: string;
-    email: string | null;
-    firstName: string | null;
-    lastName: string | null;
-    role: UserRole;
-  };
-}
-
-export interface CompanyAuthResult {
-  isAuthenticated: boolean;
-  isCompanyAdmin: boolean;
-  isOwner: boolean;
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-    role: string;
-  } | null;
-  error?: string;
-}
+import { CompanyAuthResult } from '@/types/authTypes';
 
 export async function validateCompanyAccess(companyId: string): Promise<CompanyAuthResult> {
   try {

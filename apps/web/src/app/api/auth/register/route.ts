@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { registerSchema } from '@/lib/validations/zodAuthValidation';
-import { authHelpers } from '@/lib/authHelpers';
+import { authHelpers } from '@/lib/auth/authHelpers';
 
 export async function POST(request: Request) {
   try {
