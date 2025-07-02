@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Plus, Edit2, Trash2, Package, Calendar } from 'lucide-react';
 import { useSubscriptionManagementStore } from '@/stores/subscriptionMgtStores';
-import type { SubscriptionPlan } from '@/types/subscription';
+import type { SubscriptionPlan, PlanFeatures } from '@/types/subscription';
 import { format } from 'date-fns';
 
 import PlanFormModal, { PlanFormData } from '@/components/molecules/dashboard/Subscription/PlanFormModal';
@@ -36,6 +36,27 @@ const SubscriptionManagementPlans: React.FC = () => {
     fetchPlans();
   }, [fetchPlans]);
 
+  // Helper function to handle both old and new feature formats
+  const getDisplayableFeatures = (features: unknown): string[] => {
+    // Case 1: It's the legacy string array. Just return it.
+    if (Array.isArray(features)) {
+      return features as string[];
+    }
+    // Case 2: It's the new structured object. Convert it to a string array.
+    if (typeof features === 'object' && features !== null) {
+      const f = features as PlanFeatures; // Cast to our new type
+      const list: string[] = [];
+      
+      if (f.cvGenerator) list.push('CV Generator');
+      if (f.skillAssessmentLimit === 'unlimited') list.push('Unlimited Assessments');
+      else if (f.skillAssessmentLimit > 0) list.push(`${f.skillAssessmentLimit} Assessments`);
+      if (f.priorityReview) list.push('Priority Review');
+      
+      return list;
+    }    
+    return [];
+  };
+
   const handleCreatePlan = async (data: PlanFormData) => {
     const success = await createPlan(data);
     if (success) {
@@ -49,7 +70,7 @@ const SubscriptionManagementPlans: React.FC = () => {
     const success = await updatePlan(selectedPlan.id, data);
     if (success) {
       setEditModalOpen(false);
-      selectPlan(null); // Deselect plan after successful update
+      selectPlan(null);
     }
   };
 
@@ -59,7 +80,7 @@ const SubscriptionManagementPlans: React.FC = () => {
     const success = await deletePlan(selectedPlan.id);
     if (success) {
       setDeleteModalOpen(false);
-      selectPlan(null); // Deselect plan after successful deletion
+      selectPlan(null);
     }
   };
 
@@ -137,72 +158,76 @@ const SubscriptionManagementPlans: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {plans.map((plan) => (
-                     <TableRow key={plan.id}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{plan.name}</span>
-                            {plan.description && (
-                              <span className="text-sm text-gray-500 line-clamp-2" title={plan.description}>
-                                {plan.description}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-sm font-semibold">IDR</span>
-                            <span className="font-medium">{plan.price.toLocaleString('id-ID')}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>{plan.duration} days</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {plan.features.slice(0, 2).map((feature, index) => (
-                              <Badge key={index} variant="secondary" className="text-xs">
-                                {feature}
-                              </Badge>
-                            ))}
-                            {plan.features.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{plan.features.length - 2} more
-                              </Badge>
-                            )}
-                             {plan.features.length === 0 && (
-                              <span className="text-xs text-gray-500">No features</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">
-                            {format(new Date(plan.createdAt), 'MMM dd, yyyy')}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditModal(plan)}
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => openDeleteModal(plan)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {plans.map((plan) => {
+                      const featuresList = getDisplayableFeatures(plan.features);
+
+                      return (
+                        <TableRow key={plan.id}>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{plan.name}</span>
+                              {plan.description && (
+                                <span className="text-sm text-gray-500 line-clamp-2" title={plan.description}>
+                                  {plan.description}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-sm font-semibold">IDR</span>
+                              <span className="font-medium">{plan.price.toLocaleString('id-ID')}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>{plan.duration} days</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {featuresList.slice(0, 2).map((feature, index) => (
+                                <Badge key={index} variant="secondary" className="text-xs">
+                                  {feature}
+                                </Badge>
+                              ))}
+                              {featuresList.length > 2 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{featuresList.length - 2} more
+                                </Badge>
+                              )}
+                               {featuresList.length === 0 && (
+                                <span className="text-xs text-gray-500">No features</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {format(new Date(plan.createdAt), 'MMM dd, yyyy')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditModal(plan)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => openDeleteModal(plan)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -222,7 +247,7 @@ const SubscriptionManagementPlans: React.FC = () => {
           isOpen={editModalOpen}
           onClose={() => {
             setEditModalOpen(false);
-            selectPlan(null); // Deselect plan when closing edit modal
+            selectPlan(null);
           }}
           plan={selectedPlan}
           onSubmit={handleUpdatePlan}
@@ -234,7 +259,7 @@ const SubscriptionManagementPlans: React.FC = () => {
           isOpen={deleteModalOpen}
           onClose={() => {
             setDeleteModalOpen(false);
-            selectPlan(null); // Deselect plan when closing delete modal
+            selectPlan(null);
           }}
           plan={selectedPlan}
           onConfirm={handleDeletePlan}

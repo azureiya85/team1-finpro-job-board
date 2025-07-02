@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Trash2 } from 'lucide-react';
-import { SubscriptionPlan } from '@/stores/subscriptionMgtStores';
+import { SubscriptionPlan } from '@/types/subscription';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DeleteConfirmModalProps {

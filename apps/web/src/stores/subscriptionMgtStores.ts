@@ -5,6 +5,7 @@ import type {
   SubscriptionListState,
   SubscriptionPaymentState,
   PlanManagementState,
+  PlanFormData,
 } from '@/types/subscription';
 
 interface SubscriptionManagementStore extends SubscriptionListState, SubscriptionPaymentState, PlanManagementState {
@@ -21,8 +22,8 @@ interface SubscriptionManagementStore extends SubscriptionListState, Subscriptio
   // Plan Management Actions
   fetchPlans: () => Promise<void>;
   selectPlan: (plan: SubscriptionPlan | null) => void;
-  createPlan: (planData: Omit<SubscriptionPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
-  updatePlan: (planId: string, planData: Partial<SubscriptionPlan>) => Promise<boolean>;
+  createPlan: (planData: PlanFormData) => Promise<boolean>;
+  updatePlan: (planId: string, planData: Partial<PlanFormData>) => Promise<boolean>;
   deletePlan: (planId: string) => Promise<boolean>;
   
   // General Actions
@@ -166,7 +167,7 @@ export const useSubscriptionManagementStore = create<SubscriptionManagementStore
   },
 
   // Plan Management Actions
-  fetchPlans: async () => {
+   fetchPlans: async () => {
     set({ loading: true, error: null });
     try {
       const response = await fetch('/api/admin/subscription/plan');
@@ -205,7 +206,6 @@ export const useSubscriptionManagementStore = create<SubscriptionManagementStore
         throw new Error(errorData.error || 'Failed to create plan');
       }
       
-      // Refresh plans
       await get().fetchPlans();
       set({ isCreating: false });
       return true;
@@ -218,7 +218,7 @@ export const useSubscriptionManagementStore = create<SubscriptionManagementStore
     }
   },
 
-  updatePlan: async (planId: string, planData) => {
+  updatePlan: async (planId, planData) => {
     set({ isUpdating: true, error: null });
     try {
       const response = await fetch(`/api/admin/subscription/plan/${planId}`, {
@@ -234,7 +234,6 @@ export const useSubscriptionManagementStore = create<SubscriptionManagementStore
         throw new Error(errorData.error || 'Failed to update plan');
       }
       
-      // Refresh plans
       await get().fetchPlans();
       set({ isUpdating: false, selectedPlan: null });
       return true;

@@ -11,6 +11,12 @@ export interface User {
   name: string;
 }
 
+export interface PlanFeatures {
+  cvGenerator: boolean;
+  skillAssessmentLimit: number | 'unlimited';
+  priorityReview: boolean;
+}
+
 // Plan types
 export interface Plan {
   id: string;
@@ -18,43 +24,37 @@ export interface Plan {
   price: number;
   duration: number;
   description?: string;
-  features: {
-    cvGenerator?: boolean;
-    skillAssessmentLimit?: number | string;
-    priorityCvReview?: boolean;
-    [key: string]: boolean | number | string | undefined;
-  };
+  features: PlanFeatures;
 }
 
-// Specific Plan type for Admin Management
 export interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
   duration: number;
   description: string;
-  features: string[]; 
-  createdAt: string;
-  updatedAt: string;
+  features: PlanFeatures;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Subscription types
 export interface Subscription {
-  id: string;
+  id:string;
   userId: string;
   planId: string;
-  status: SubscriptionStatus; 
-  paymentStatus: 'PENDING' | 'COMPLETED' | 'FAILED' | 'EXPIRED'; 
+  status: SubscriptionStatus;
+  paymentStatus: 'PENDING' | 'COMPLETED' | 'FAILED' | 'EXPIRED';
   paymentMethod: PaymentMethod;
   paymentProof?: string;
   startDate: string;
   endDate: string;
-  isRenewal?: boolean; 
-  originalSubscriptionId?: string | null; 
+  isRenewal?: boolean;
+  originalSubscriptionId?: string | null;
   createdAt: string;
   updatedAt: string;
   user: User;
-  plan: Plan; 
+  plan: Plan;
 }
 
 // Payment types
@@ -84,7 +84,7 @@ export type PaymentMethod =
   | 'MIDTRANS_QRIS'
   | 'CREDIT_CARD'
   | 'E_WALLET'
-  | 'PAYMENT_GATEWAY' 
+  | 'PAYMENT_GATEWAY'
 
 export type SubscriptionStatus = 'ACTIVE' | 'PENDING' | 'CANCELLED' | 'EXPIRED' | 'INACTIVE';
 
@@ -127,6 +127,14 @@ export interface PlanManagementState {
 }
 
 // API request/response types
+export interface PlanFormData {
+  name: string;
+  price: number;
+  duration: number;
+  description: string;
+  features: PlanFeatures;
+}
+
 export interface CreateSubscriptionRequest {
   planId: string;
   paymentMethod: PaymentMethod;
@@ -144,7 +152,7 @@ export interface SubscriptionActionResponse {
   paymentDetails?: PaymentDetails;
   url?: string;
   renewalSubscriptionId?: string;
-  originalSubscriptionId?: string; 
+  originalSubscriptionId?: string;
 }
 
 export interface UploadProofRequest {

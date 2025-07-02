@@ -17,6 +17,7 @@ import {
 
 import { useDevDashboardOverviewStore, type TabValue } from "@/stores/devDashboardOverviewStores";
 import { DashboardData, DashboardStats, SubscriptionStatusData } from "@/types/devDashboard";
+import { PlanFeatures } from "@/types/subscription";
 
 interface DevDashboardOverviewDetailsProps {
   data: DashboardData;
@@ -30,6 +31,32 @@ export default function DevDashboardOverviewDetails({
   subscriptionStatusData 
 }: DevDashboardOverviewDetailsProps) {
   const { activeTab, setActiveTab } = useDevDashboardOverviewStore();
+
+ const getDisplayableFeatures = (features: unknown): string[] => {
+    // Case 1: It's the legacy string array. Just return it.
+    if (Array.isArray(features)) {
+      return features as string[];
+    }
+    // Case 2: It's the new structured object. Convert it to a string array.
+    if (typeof features === 'object' && features !== null) {
+      const f = features as PlanFeatures; 
+      const list: string[] = [];     
+      if (f.cvGenerator) {
+        list.push('AI CV Generator');
+      }
+      if (f.skillAssessmentLimit === 'unlimited') {
+        list.push('Unlimited Skill Assessments');
+      } else if (f.skillAssessmentLimit > 0) {
+        list.push(`${f.skillAssessmentLimit} Skill Assessment(s)`);
+      }
+      if (f.priorityReview) {
+        list.push('Priority CV Review');
+      }
+      return list;
+    }    
+    return [];
+  };
+
 
   return (
     <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="space-y-4">
@@ -95,37 +122,45 @@ export default function DevDashboardOverviewDetails({
         </Card>
       </TabsContent>
 
-      <TabsContent value="plans" className="space-y-4">
+        <TabsContent value="plans" className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data.plans.map((plan) => (
-            <Card key={plan.id} className="relative">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {plan.name}
-                  <Badge variant="outline">${plan.price}</Badge>
-                </CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center text-sm">
-                    <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                    {plan.duration} days duration
+          {data.plans.map((plan) => {
+            const featuresList = getDisplayableFeatures(plan.features);
+
+            return (
+              <Card key={plan.id} className="relative">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    {plan.name}
+                    <Badge variant="outline">IDR {plan.price.toLocaleString()}</Badge>
+                  </CardTitle>
+                  <CardDescription>{plan.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm">
+                      <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                      {plan.duration} days duration
+                    </div>
+                    <Separator />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Features:</p>
+                      {featuresList.length > 0 ? (
+                        featuresList.map((feature, index) => (
+                          <div key={index} className="flex items-center text-sm">
+                            <CheckCircle className="w-3 h-3 mr-2 text-green-500" />
+                            {feature}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No features enabled.</p>
+                      )}
+                    </div>
                   </div>
-                  <Separator />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Features:</p>
-                    {plan.features.map((feature, index) => (
-                      <div key={index} className="flex items-center text-sm">
-                        <CheckCircle className="w-3 h-3 mr-2 text-green-500" />
-                        {feature}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </TabsContent>
 

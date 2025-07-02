@@ -14,7 +14,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="mt-16 md:mt-12 relative min-h-[50vh] bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground overflow-hidden">
+    <section className="mt-16 md:mt-12 relative min-h-[52vh] bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-primary-foreground overflow-hidden">
       {/* Subtle background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-white/5 to-transparent rounded-full blur-3xl"></div>

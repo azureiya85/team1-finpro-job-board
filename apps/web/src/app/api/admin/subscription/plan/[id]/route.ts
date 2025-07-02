@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
-import { UpdateSubscriptionPlanSchema, UpdateSubscriptionPlanInput } from '@/lib/validations/zodSubscriptionValidation';
+import { UpdateSubscriptionPlanSchema, UpdateSubscriptionPlanInput, convertLegacyFeatures } from '@/lib/validations/zodSubscriptionValidation';
 import { UserRole } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: RouteContext) {
 
     const plan = {
       ...planFromDb,
-      features: Array.isArray(planFromDb.features) ? planFromDb.features : [],
+      features: convertLegacyFeatures(planFromDb.features),
     };
 
     return NextResponse.json(plan);

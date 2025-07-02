@@ -20,6 +20,36 @@ export type CreateSubscriptionPlanInput = z.infer<typeof CreateSubscriptionPlanS
 export const UpdateSubscriptionPlanSchema = CreateSubscriptionPlanSchema.partial();
 export type UpdateSubscriptionPlanInput = z.infer<typeof UpdateSubscriptionPlanSchema>;
 
+// Legacy feature conversion helper (for backward compatibility)
+export const convertLegacyFeatures = (features: unknown): z.infer<typeof SubscriptionPlanFeatureSchema> => {
+  if (Array.isArray(features)) {
+    return {
+      cvGenerator: features.includes('CV Generator') || features.includes('cvGenerator'),
+      skillAssessmentLimit: features.includes('Unlimited Skill Assessments') ? 'unlimited' : 
+                           features.includes('Limited Skill Assessments') ? 5 : 0,
+      priorityReview: features.includes('Priority CV Review') || features.includes('priorityReview'),
+    };
+  } else if (typeof features === 'object' && features !== null) {
+    const result = SubscriptionPlanFeatureSchema.safeParse(features);
+    if (result.success) {
+      return result.data;
+    }
+    const f = features as Partial<z.infer<typeof SubscriptionPlanFeatureSchema>>;
+    return {
+      cvGenerator: f.cvGenerator || false,
+      skillAssessmentLimit: f.skillAssessmentLimit || 0,
+      priorityReview: f.priorityReview || false,
+    };
+  }
+  
+  // Default features
+  return {
+    cvGenerator: false,
+    skillAssessmentLimit: 0,
+    priorityReview: false,
+  };
+};
+
 export const SubscriptionCheckoutSchema = z.object({
   planId: z.string().min(1, { message: "Plan ID is required" }), 
   paymentMethod: z.nativeEnum(PaymentMethod),

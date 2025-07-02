@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import  prisma  from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 import { auth } from '@/auth';
-import { CreateSubscriptionPlanSchema, CreateSubscriptionPlanInput } from '@/lib/validations/zodSubscriptionValidation';
+import { CreateSubscriptionPlanSchema, CreateSubscriptionPlanInput, convertLegacyFeatures } from '@/lib/validations/zodSubscriptionValidation';
 import { UserRole } from '@prisma/client';
 
 export async function POST(request: Request) {
@@ -13,8 +13,7 @@ export async function POST(request: Request) {
   let rawBody;
   try {
     rawBody = await request.json();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
@@ -39,7 +38,7 @@ export async function POST(request: Request) {
         price: data.price,
         duration: data.duration,
         description: data.description,
-        features: data.features, 
+        features: data.features,
       },
     });
     return NextResponse.json(newPlan, { status: 201 });
@@ -62,7 +61,7 @@ export async function GET() {
     
     const plans = plansFromDb.map(plan => ({
       ...plan,
-      features: Array.isArray(plan.features) ? plan.features : [],
+      features: convertLegacyFeatures(plan.features),
     }));
 
     return NextResponse.json(plans);

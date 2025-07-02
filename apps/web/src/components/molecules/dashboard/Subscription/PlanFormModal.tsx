@@ -4,15 +4,24 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Plus, Save, X, Package, Calendar, List } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Save, Package, Calendar, Settings, Zap, Target, Crown } from 'lucide-react';
 import { SubscriptionPlan } from '@/types/subscription';
+
+// Define the structured features interface
+export interface PlanFeatures {
+  cvGenerator: boolean;
+  skillAssessmentLimit: number | 'unlimited';
+  priorityReview: boolean;
+}
 
 export interface PlanFormData {
   name: string;
   price: number;
   duration: number;
   description: string;
-  features: string[];
+  features: PlanFeatures;
 }
 
 interface PlanFormModalProps {
@@ -24,13 +33,43 @@ interface PlanFormModalProps {
   mode: 'create' | 'edit';
 }
 
+// Helper function to convert legacy string array features to structured features
+const convertLegacyFeatures = (features: unknown): PlanFeatures => {
+  if (Array.isArray(features)) {
+    return {
+      cvGenerator: features.includes('CV Generator') || features.includes('cvGenerator'),
+      skillAssessmentLimit: features.includes('Unlimited Skill Assessments') ? 'unlimited' : 
+                           features.includes('Limited Skill Assessments') ? 5 : 0,
+      priorityReview: features.includes('Priority CV Review') || features.includes('priorityReview'),
+    };
+  } else if (typeof features === 'object' && features !== null) {
+    const f = features as Partial<PlanFeatures>;
+    return {
+      cvGenerator: f.cvGenerator || false,
+      skillAssessmentLimit: f.skillAssessmentLimit || 0,
+      priorityReview: f.priorityReview || false,
+    };
+  }
+  
+  // Default features
+  return {
+    cvGenerator: false,
+    skillAssessmentLimit: 0,
+    priorityReview: false,
+  };
+};
+
 const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, onSubmit, isSubmitting, mode }) => {
   const [formData, setFormData] = useState<PlanFormData>({
     name: '',
     price: 0,
     duration: 30,
     description: '',
-    features: [''],
+    features: {
+      cvGenerator: false,
+      skillAssessmentLimit: 0,
+      priorityReview: false,
+    },
   });
 
   useEffect(() => {
@@ -40,7 +79,7 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
         price: plan.price,
         duration: plan.duration,
         description: plan.description,
-        features: plan.features.length > 0 ? plan.features : [''],
+        features: convertLegacyFeatures(plan.features),
       });
     } else {
       setFormData({
@@ -48,40 +87,53 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
         price: 0,
         duration: 30,
         description: '',
-        features: [''],
+        features: {
+          cvGenerator: false,
+          skillAssessmentLimit: 0,
+          priorityReview: false,
+        },
       });
     }
-  }, [plan, mode, isOpen]); 
+  }, [plan, mode, isOpen]);
 
-  const handleFeatureChange = (index: number, value: string) => {
-    const newFeatures = [...formData.features];
-    newFeatures[index] = value;
-    setFormData({ ...formData, features: newFeatures });
+  const handleFeatureChange = (feature: keyof PlanFeatures, value: boolean | number | 'unlimited') => {
+    setFormData(prev => ({
+      ...prev,
+      features: {
+        ...prev.features,
+        [feature]: value,
+      },
+    }));
   };
 
-  const addFeature = () => {
-    setFormData({ ...formData, features: [...formData.features, ''] });
-  };
-
-  const removeFeature = (index: number) => {
-    if (formData.features.length > 1) {
-      const newFeatures = formData.features.filter((_, i) => i !== index);
-      setFormData({ ...formData, features: newFeatures });
-    }
+  const handleSkillAssessmentLimitChange = (value: string) => {
+    const numericValue = value === 'unlimited' ? 'unlimited' : parseInt(value, 10) || 0;
+    handleFeatureChange('skillAssessmentLimit', numericValue);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const filteredFeatures = formData.features.filter(feature => feature.trim() !== '');
-    onSubmit({
-      ...formData,
-      features: filteredFeatures,
-    });
+    onSubmit(formData);
+  };
+
+  const getFeatureSummary = () => {
+    const { features } = formData;
+    const summary = [];
+    
+    if (features.cvGenerator) summary.push('CV Generator');
+    if (features.skillAssessmentLimit === 'unlimited') {
+      summary.push('Unlimited Skill Assessments');
+    } else if (features.skillAssessmentLimit > 0) {
+      summary.push(`${features.skillAssessmentLimit} Skill Assessments`);
+    }
+    if (features.priorityReview) summary.push('Priority CV Review');
+    
+    return summary.length > 0 ? summary.join(', ') : 'No features enabled';
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
@@ -95,7 +147,8 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-6">
+          {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="name">Plan Name *</Label>
@@ -109,7 +162,7 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
               />
             </div>
 
-              <div>
+            <div>
               <Label htmlFor="price">Price (IDR) *</Label>
               <div className="relative mt-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
@@ -159,42 +212,76 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
             />
           </div>
 
-          <div>
-            <Label className="flex items-center gap-2 mb-3">
-              <List className="w-4 h-4" />
-              Features
-            </Label>
-            <div className="space-y-2">
-              {formData.features.map((feature, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={feature}
-                    onChange={(e) => handleFeatureChange(index, e.target.value)}
-                    placeholder={`Feature ${index + 1}`}
-                    className="flex-1"
-                  />
-                  {formData.features.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeFeature(index)}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+          {/* Features Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Settings className="w-5 h-5" />
+              <Label className="text-base font-semibold">Plan Features</Label>
+            </div>
+
+            {/* CV Generator Feature */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Zap className="w-5 h-5 text-blue-500" />
+                <div>
+                  <Label className="font-medium">CV Generator</Label>
+                  <p className="text-sm text-gray-500">Allow users to generate CV using AI</p>
                 </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addFeature}
-                className="w-full"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Feature
-              </Button>
+              </div>
+              <Switch
+                checked={formData.features.cvGenerator}
+                onCheckedChange={(checked) => handleFeatureChange('cvGenerator', checked)}
+              />
+            </div>
+
+            {/* Skill Assessment Limit Feature */}
+            <div className="p-4 border rounded-lg space-y-3">
+              <div className="flex items-center gap-3">
+                <Target className="w-5 h-5 text-green-500" />
+                <div>
+                  <Label className="font-medium">Skill Assessment Limit</Label>
+                  <p className="text-sm text-gray-500">Number of skill assessments allowed</p>
+                </div>
+              </div>
+              <div className="ml-8">
+                <Select
+                  value={formData.features.skillAssessmentLimit.toString()}
+                  onValueChange={handleSkillAssessmentLimitChange}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Disabled (0)</SelectItem>
+                    <SelectItem value="1">1 Assessment</SelectItem>
+                    <SelectItem value="3">3 Assessments</SelectItem>
+                    <SelectItem value="5">5 Assessments</SelectItem>
+                    <SelectItem value="10">10 Assessments</SelectItem>
+                    <SelectItem value="unlimited">Unlimited</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Priority Review Feature */}
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <Crown className="w-5 h-5 text-yellow-500" />
+                <div>
+                  <Label className="font-medium">Priority CV Review</Label>
+                  <p className="text-sm text-gray-500">Fast-track CV review process</p>
+                </div>
+              </div>
+              <Switch
+                checked={formData.features.priorityReview}
+                onCheckedChange={(checked) => handleFeatureChange('priorityReview', checked)}
+              />
+            </div>
+
+            {/* Feature Summary */}
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <Label className="text-sm font-medium text-gray-700">Feature Summary:</Label>
+              <p className="text-sm text-gray-600 mt-1">{getFeatureSummary()}</p>
             </div>
           </div>
 
@@ -203,6 +290,7 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
               type="submit"
               disabled={isSubmitting}
               className="flex-1"
+              onClick={handleSubmit}
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -221,7 +309,7 @@ const PlanFormModal: React.FC<PlanFormModalProps> = ({ isOpen, onClose, plan, on
               Cancel
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
