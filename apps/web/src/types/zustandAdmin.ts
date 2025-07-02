@@ -1,86 +1,77 @@
-import type { Subscription, SubscriptionStatus } from '@/types';
+// ==========================================
+// IMPORTS
+// ==========================================
+
+// --- Imports for Subscription Management (New) ---
+import type {
+  SubscriptionPlan,
+  Subscription,
+  SubscriptionListState,
+  SubscriptionPaymentState,
+  PlanManagementState,
+  PlanFormData,
+} from '@/types/subscription';
+
+// --- Imports for Assessment Management (Old) ---
 import type { 
   SkillCategory as PrismaSkillCategory, 
   SkillAssessment as PrismaSkillAssessment, 
   SkillAssessmentQuestion as PrismaSkillAssessmentQuestion 
 } from '@/types';
 
-type PrismaSubscriptionPlan = {
-  id: string;
-  name: string;
-  price: number;
-  duration: number;
-  description: string | null;
-  features: JSON; 
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-// --- Base States ---
-export interface PaginationState {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
 
 // ==========================================
-// Subscription Management Store Types
+// SUBSCRIPTION MANAGEMENT STORE TYPES 
 // ==========================================
 
-// --- Slices ---
-export interface SubscriptionListSlice {
-  subscriptions: Subscription[];
-  pagination: PaginationState;
-  filters: {
-    search?: string;
-    status?: SubscriptionStatus;
-    planId?: string;
-  };
-  isLoading: boolean;
+// --- Core Slice (Shared State) ---
+export interface SubscriptionCoreState {
+  loading: boolean;
   error: string | null;
-  fetchSubscriptions: (page?: number) => Promise<void>;
-  setSubscriptionFilters: (filters: Partial<SubscriptionListSlice['filters']>) => void;
-  clearSubscriptionError: () => void; 
 }
 
-export interface PaymentApprovalSlice {
-  pendingPayments: Subscription[];
-  selectedPayment: Subscription | null;
-  isPaymentsLoading: boolean;
-  isApproving: boolean;
-  isRejecting: boolean;
-  paymentsError: string | null;
+export interface SubscriptionCoreActions {
+  clearError: () => void;
+}
+
+// --- Feature Slices (Actions) ---
+export interface SubscriptionListSliceActions {
+  fetchSubscriptions: (page?: number, filters?: Record<string, string | undefined>) => Promise<void>;
+  setSubscriptionFilters: (filters: Record<string, string | undefined>) => void;
+}
+
+export interface SubscriptionPaymentSliceActions {
   fetchPendingPayments: () => Promise<void>;
   selectPayment: (payment: Subscription | null) => void;
   approvePayment: (subscriptionId: string) => Promise<boolean>;
   rejectPayment: (subscriptionId: string, reason?: string) => Promise<boolean>;
-  clearPaymentsError: () => void;
 }
 
-export interface PlanManagementSlice {
-  plans: PrismaSubscriptionPlan[];
-  selectedPlan: PrismaSubscriptionPlan | null;
-  isPlansLoading: boolean;
-  isCreatingPlan: boolean;
-  isUpdatingPlan: boolean;
-  isDeletingPlan: boolean;
-  plansError: string | null;
+export interface SubscriptionPlanSliceActions {
   fetchPlans: () => Promise<void>;
-  selectPlan: (plan: PrismaSubscriptionPlan | null) => void;
-  createPlan: (planData: Omit<PrismaSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt'>) => Promise<boolean>;
-  updatePlan: (planId: string, planData: Partial<Omit<PrismaSubscriptionPlan, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<boolean>;
+  selectPlan: (plan: SubscriptionPlan | null) => void;
+  createPlan: (planData: PlanFormData) => Promise<boolean>;
+  updatePlan: (planId: string, planData: Partial<PlanFormData>) => Promise<boolean>;
   deletePlan: (planId: string) => Promise<boolean>;
-  clearPlansError: () => void;
 }
 
-// --- Combined State ---
-export type SubscriptionMgtStoreState = SubscriptionListSlice & PaymentApprovalSlice & PlanManagementSlice;
+// --- Combined Subscription Store State ---
+export interface SubscriptionManagementState 
+  extends SubscriptionCoreState,
+          SubscriptionListState,      
+          SubscriptionPaymentState,   
+          PlanManagementState,        
+          SubscriptionCoreActions,
+          SubscriptionListSliceActions,
+          SubscriptionPaymentSliceActions,
+          SubscriptionPlanSliceActions {}
+
 
 // ==========================================
-// Assessment Management Store Types
+// ASSESSMENT MANAGEMENT STORE TYPES
 // ==========================================
 
+// --- Model Type Aliases ---
 export type SkillCategory = PrismaSkillCategory;
 export type SkillAssessmentQuestion = PrismaSkillAssessmentQuestion;
 
@@ -91,7 +82,7 @@ export interface SkillAssessment extends PrismaSkillAssessment {
   };
 }
 
-// --- Slices ---
+// --- Feature Slices ---
 export interface CategorySlice {
   categories: SkillCategory[];
   isCategoriesLoading: boolean;
@@ -125,5 +116,5 @@ export interface QuestionSlice {
   clearQuestions: () => void;
 }
 
-// --- Combined State ---
+// --- Combined Assessment Store State ---
 export type AssessmentMgtStoreState = CategorySlice & AssessmentSlice & QuestionSlice;

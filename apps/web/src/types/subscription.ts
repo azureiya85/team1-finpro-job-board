@@ -88,29 +88,19 @@ export type PaymentMethod =
 
 export type SubscriptionStatus = 'ACTIVE' | 'PENDING' | 'CANCELLED' | 'EXPIRED' | 'INACTIVE';
 
-// Store state types for Admin Management
 export interface SubscriptionListState {
   subscriptions: Subscription[];
-  loading: boolean;
-  error: string | null;
   pagination: {
     page: number;
     limit: number;
     total: number;
     totalPages: number;
   };
-  filters: {
-    search?: string;
-    status?: string;
-    userId?: string;
-    planId?: string;
-  };
+  filters: Record<string, string | undefined>; 
 }
 
 export interface SubscriptionPaymentState {
   pendingPayments: Subscription[];
-  loading: boolean;
-  error: string | null;
   selectedPayment: Subscription | null;
   approving: boolean;
   rejecting: boolean;
@@ -118,8 +108,6 @@ export interface SubscriptionPaymentState {
 
 export interface PlanManagementState {
   plans: SubscriptionPlan[];
-  loading: boolean;
-  error: string | null;
   selectedPlan: SubscriptionPlan | null;
   isCreating: boolean;
   isUpdating: boolean;

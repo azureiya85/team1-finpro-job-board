@@ -6,13 +6,12 @@ import {
   AssessmentStage,
 } from '@/types/assessments';
 
-// 1. Define State and Actions Interfaces
 interface AssessmentState {
   stage: AssessmentStage;
   assessmentData: AssessmentData | null;
   currentQuestionIndex: number;
   answers: AssessmentAnswer[];
-  selectedOption: string; // 'A', 'B', 'C', 'D' or ''
+  selectedOption: string; 
   timeLeft: number | null;
   submissionResult: SubmissionResult | null;
   error: string | null;
@@ -34,7 +33,6 @@ interface AssessmentActions {
   reset: () => void;
 }
 
-// 2. Define Initial State
 const initialState: AssessmentState = {
   stage: 'loading',
   assessmentData: null,
@@ -47,7 +45,6 @@ const initialState: AssessmentState = {
   showConfirmDialog: false,
 };
 
-// 3. Create the Zustand Store
 export const useAssessmentStore = create<AssessmentState & AssessmentActions>((set, get) => ({
   ...initialState,
 
