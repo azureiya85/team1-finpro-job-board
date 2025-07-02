@@ -11,7 +11,7 @@ import { RefreshCw } from 'lucide-react';
 import { formatEducationLevel } from '@/lib/utils';
 
 const DEBOUNCE_DELAY = 500;
-const educationLevels = ["HIGH_SCHOOL", "DIPLOMA", "BACHELOR", "MASTER", "DOCTORATE", "VOCATIONAL", "OTHER"];
+const educationLevels = ["HIGH_SCHOOL", "DIPLOMA", "BACHELOR", "MASTER", "DOCTORATE", "OTHER"];
 const ALL_ITEMS_VALUE = "__ALL__";
 
 interface ApplicationListFilterProps {

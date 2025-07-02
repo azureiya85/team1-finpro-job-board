@@ -6,10 +6,11 @@ import SalaryTrendsSection from '@/components/organisms/analytics/SalaryTrendsSe
 import DemographicsSection from '@/components/organisms/analytics/DemographicsSection';
 import ApplicantInterestsSection from '@/components/organisms/analytics/ApplicantInterestsSection';
 import LocationMapSection from '@/components/organisms/analytics/LocationMapSection';
+import { ApplicationPerJobSection } from '@/components/organisms/analytics/ApplicationPerJobSection';
 
 interface Props {
   title: string;
-  metricType: 'salary' | 'demographics' | 'interests' | 'location';
+  metricType: 'salary' | 'demographics' | 'interests' | 'location' | 'applications';
 }
 
 export default function AnalyticsTemplate({ title, metricType }: Props) {
@@ -29,6 +30,7 @@ export default function AnalyticsTemplate({ title, metricType }: Props) {
           {metricType === 'demographics' && <DemographicsSection />}
           {metricType === 'interests' && <ApplicantInterestsSection />}
           {metricType === 'location' && <LocationMapSection />}
+          {metricType === 'applications' && <ApplicationPerJobSection />}
         </div>
       </main>
     </AnalyticsFilterProvider>

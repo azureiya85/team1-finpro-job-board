@@ -73,7 +73,6 @@ export function NavbarDesktop() {
       {/* Desktop Navigation Links */}
       <div className="hidden md:flex items-center space-x-8">
         {navigationItems
-          .filter(item => !item.href.includes('analytics') || user?.role === 'Developer')
           .map((item) => (
             <motion.div key={item.href} whileHover={{ y: -2 }}>
               <Link

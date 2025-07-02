@@ -1,20 +1,42 @@
 'use client';
 
-import { useMemo } from 'react';
+import { Bar } from 'react-chartjs-2';
 import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
-import { getAgeChartData } from '@/lib/analytics/chartConfigs/ageDemographicChartConfig';
 import { AgeDemographicData } from '@/types/analyticsTypes';
 
-interface Props {
-  data?: AgeDemographicData[];
+interface AgeDemographicChartProps {
+  data: AgeDemographicData[]
 }
 
-export default function AgeDemographicChart({ data = [] }: Props) {
-  const chart = useMemo(() => getAgeChartData(data), [data]);
+export default function AgeDemographicChart({ data }: AgeDemographicChartProps) {
+  const labels = data.map((item) => item.ageRange);
+  const values = data.map((item) => item.count);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow p-4">
-      <ChartWrapper type="bar" data={chart.data} options={chart.options} height={300} />
-    </div>
+    <ChartWrapper >
+      <Bar
+        data={{
+          labels,
+          datasets: [
+            {
+              label: 'Applicants',
+              data: values,
+              backgroundColor: '#4CAF50',
+            },
+          ],
+        }}
+        options={{
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+              },
+            },
+          },
+        }}
+      />
+    </ChartWrapper>
   );
 }

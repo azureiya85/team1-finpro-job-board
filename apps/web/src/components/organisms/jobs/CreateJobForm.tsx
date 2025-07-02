@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { CreateJobFormSection } from '@/components/molecules/jobs/CreateJobFormSection';
 import { CreateJobFormBasicInput } from '@/components/molecules/jobs/CreateJobFormBasicInput';
 import { CreateJobFormDetailsInput } from '@/components/molecules/jobs/CreateJobFormDetailsInput';
 import { CreateJobFormBadgeInput } from '@/components/molecules/jobs/CreateJobFormBadgeInput';
-import { validateForm, preparePayload } from '@/components/molecules/jobs/CreateJobFormPayload';
 import type { CompanyData, CreateJobFormProps, FormData } from '@/types';
 import type { City, Province } from '@prisma/client';
 
@@ -142,7 +140,6 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
     if (!validateForm(formData)) {
       return;
     }
-
     setIsSubmitting(true);
 
     try {
@@ -153,7 +150,6 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
         : `/api/companies/${companyId}/jobs`;
 
       const method = isEditing ? 'PUT' : 'POST';
-
       const response = await fetch(url, {
         method,
         headers: {

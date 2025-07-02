@@ -1,11 +1,11 @@
 'use client';
 
 import { createContext, useState } from 'react';
-import { AnalyticsFilters } from '@/types/analyticsTypes';
+import { LocationFilter } from '@/types/analyticsTypes';
 
 interface AnalyticsFilterContextType {
-  filters: AnalyticsFilters;
-  setLocation: (loc: AnalyticsFilters['location']) => void;
+  filters: LocationFilter;
+  setLocation: (loc: LocationFilter['location']) => void;
   setDateRange: (start: Date, end: Date) => void;
   resetFilters: () => void;
 }
@@ -13,12 +13,11 @@ interface AnalyticsFilterContextType {
 export const AnalyticsFilterContext = createContext<AnalyticsFilterContextType | undefined>(undefined);
 
 export function AnalyticsFilterProvider({ children }: { children: React.ReactNode }) {
-  const [filters, setFilters] = useState<AnalyticsFilters>({
+  const [filters, setFilters] = useState<LocationFilter>({
     location: 'all',
-    dateRange: null,
   });
 
-  const setLocation = (loc: AnalyticsFilters['location']) =>
+  const setLocation = (loc: LocationFilter['location']) =>
     setFilters((prev) => ({ ...prev, location: loc }));
 
   const setDateRange = (start: Date, end: Date) =>
@@ -27,7 +26,6 @@ export function AnalyticsFilterProvider({ children }: { children: React.ReactNod
   const resetFilters = () =>
     setFilters({
       location: 'all',
-      dateRange: null,
     });
 
   return (

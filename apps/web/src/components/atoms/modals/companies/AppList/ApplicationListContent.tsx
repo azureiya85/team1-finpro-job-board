@@ -12,6 +12,7 @@ interface ApplicantListContentProps {
   applicants?: ApplicantWithPriority[];
   onStatusChange?: (applicationId: string, newStatus: ApplicationStatus) => void;
   onCvPreview?: (cvUrl: string) => void;
+  onCoverLetterPreview?: (coverLetter: string) => void;
   onScheduleInterview?: (
     applicationId: string,
     scheduleData: ApplicantWithPriority['latestInterview'],
@@ -24,6 +25,7 @@ export default function ApplicantListContent({
   applicants = [],
   onStatusChange = () => {},
   onCvPreview = () => {},
+  onCoverLetterPreview = () => {},
   onScheduleInterview = () => {},
 }: ApplicantListContentProps) {
 
@@ -48,6 +50,7 @@ export default function ApplicantListContent({
             <TableHead className="w-36 font-semibold">Salary Expectation</TableHead>
             <TableHead className="w-32 font-semibold">Applied Date</TableHead>
             <TableHead className="w-24 font-semibold text-center">CV</TableHead>
+            <TableHead className="w-24 font-semibold text-center">Cover Letter</TableHead>
             <TableHead className="w-24 font-semibold text-center">Test Score</TableHead>
             <TableHead className="w-32 font-semibold text-center">Interview</TableHead>
             <TableHead className="w-32 font-semibold">Status</TableHead>
@@ -61,6 +64,7 @@ export default function ApplicantListContent({
               applicant={app}
               onStatusChange={onStatusChange}
               onCvPreview={onCvPreview}
+              onCoverLetterPreview={onCoverLetterPreview}
               onScheduleInterview={onScheduleInterview}
             />
           ))}

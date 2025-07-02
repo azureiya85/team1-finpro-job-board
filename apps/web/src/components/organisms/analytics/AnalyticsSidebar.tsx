@@ -9,6 +9,7 @@ const items = [
   { label: 'Demographics', path: 'demographics' },
   { label: 'Interests', path: 'interests' },
   { label: 'Location', path: 'location' },
+  { label: 'Applications', path: 'applications' },
 ];
 
 export default function AnalyticsSidebar() {
