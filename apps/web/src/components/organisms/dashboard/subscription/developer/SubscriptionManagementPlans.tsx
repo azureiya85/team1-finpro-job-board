@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Plus, Edit2, Trash2, Package, Calendar } from 'lucide-react';
+import { Plus, Package } from 'lucide-react';
 import { useSubscriptionManagementStore } from '@/stores/subscriptionMgtStores';
-import type { SubscriptionPlan, PlanFeatures } from '@/types/subscription';
-import { format } from 'date-fns';
+import type { SubscriptionPlan } from '@/types/subscription';
 
 import PlanFormModal, { PlanFormData } from '@/components/molecules/dashboard/Subscription/PlanFormModal';
 import DeleteConfirmModal from '@/components/molecules/dashboard/Subscription/DeleteConfirmModal';
+import PlansTable from '@/components/molecules/dashboard/Subscription/Plans/PlanTable';
+import EmptyState from '@/components/molecules/dashboard/Subscription/Plans/PlanEmptyState';
+import LoadingState from '@/components/molecules/dashboard/Subscription/Plans/PlanLoadingState';
+import ErrorState from '@/components/molecules/dashboard/Subscription/Plans/PlanErrorState';
 
 const SubscriptionManagementPlans: React.FC = () => {
   const {
@@ -35,27 +36,6 @@ const SubscriptionManagementPlans: React.FC = () => {
   useEffect(() => {
     fetchPlans();
   }, [fetchPlans]);
-
-  // Helper function to handle both old and new feature formats
-  const getDisplayableFeatures = (features: unknown): string[] => {
-    // Case 1: It's the legacy string array. Just return it.
-    if (Array.isArray(features)) {
-      return features as string[];
-    }
-    // Case 2: It's the new structured object. Convert it to a string array.
-    if (typeof features === 'object' && features !== null) {
-      const f = features as PlanFeatures; // Cast to our new type
-      const list: string[] = [];
-      
-      if (f.cvGenerator) list.push('CV Generator');
-      if (f.skillAssessmentLimit === 'unlimited') list.push('Unlimited Assessments');
-      else if (f.skillAssessmentLimit > 0) list.push(`${f.skillAssessmentLimit} Assessments`);
-      if (f.priorityReview) list.push('Priority Review');
-      
-      return list;
-    }    
-    return [];
-  };
 
   const handleCreatePlan = async (data: PlanFormData) => {
     const success = await createPlan(data);
@@ -94,16 +74,16 @@ const SubscriptionManagementPlans: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
+  const handleRetry = () => {
+    fetchPlans();
+    clearError();
+  };
+
   if (error) {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-red-600">
-            <p>Error loading plans: {error}</p>
-            <Button onClick={() => { fetchPlans(); clearError(); }} variant="outline" className="mt-2">
-              Try Again
-            </Button>
-          </div>
+          <ErrorState error={error} onRetry={handleRetry} />
         </CardContent>
       </Card>
     );
@@ -128,109 +108,17 @@ const SubscriptionManagementPlans: React.FC = () => {
       </CardHeader>
       <CardContent>
         {loading && plans.length === 0 ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <span className="ml-2">Loading plans...</span>
-          </div>
+          <LoadingState />
         ) : (
           <>
             {plans.length === 0 && !loading ? (
-              <div className="text-center py-12">
-                <Package className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Plans Available</h3>
-                <p className="text-gray-500 mb-4">Create your first subscription plan to get started.</p>
-                <Button onClick={() => setCreateModalOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Plan
-                </Button>
-              </div>
+              <EmptyState onCreatePlan={() => setCreateModalOpen(true)} />
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Plan Name</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Features</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {plans.map((plan) => {
-                      const featuresList = getDisplayableFeatures(plan.features);
-
-                      return (
-                        <TableRow key={plan.id}>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-medium">{plan.name}</span>
-                              {plan.description && (
-                                <span className="text-sm text-gray-500 line-clamp-2" title={plan.description}>
-                                  {plan.description}
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-sm font-semibold">IDR</span>
-                              <span className="font-medium">{plan.price.toLocaleString('id-ID')}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              <span>{plan.duration} days</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {featuresList.slice(0, 2).map((feature, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {feature}
-                                </Badge>
-                              ))}
-                              {featuresList.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{featuresList.length - 2} more
-                                </Badge>
-                              )}
-                               {featuresList.length === 0 && (
-                                <span className="text-xs text-gray-500">No features</span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">
-                              {format(new Date(plan.createdAt), 'MMM dd, yyyy')}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditModal(plan)}
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => openDeleteModal(plan)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+              <PlansTable
+                plans={plans}
+                onEditPlan={openEditModal}
+                onDeletePlan={openDeleteModal}
+              />
             )}
           </>
         )}
