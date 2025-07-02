@@ -34,13 +34,17 @@ export function useApplicantList() {
   } = useCompanyProfileStore();
 
   const [showFullCvPreview, setShowFullCvPreview] = useState<string | null>(null);
+  const [showCoverLetterPreview, setShowCoverLetterPreview] = useState<string | null>(null);
   const [isRejectionDialogOpen, setIsRejectionDialogOpen] = useState(false);
   const [pendingRejection, setPendingRejection] = useState<{ applicationId: string; status: ApplicationStatus } | null>(null);
   const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
   const [selectedInterview, setSelectedInterview] = useState<{
     applicationId: string;
     candidateId: string;
-    interview?: { id: string; jobApplicationId: string; jobPostingId: string; candidateId: string; status: InterviewStatus; scheduledAt: Date; duration: number; interviewType: InterviewType; location: string | null; notes: string | null; createdAt: Date; updatedAt: Date; reminderSent: boolean; };
+    interview?: { id: string; jobApplicationId: string; jobPostingId: string; candidateId: string; status: InterviewStatus;
+      scheduledAt: Date; duration: number; interviewType: InterviewType; location: string | null; notes: string | null;
+      createdAt: Date; updatedAt: Date; reminderSent: boolean;
+    };
   } | null>(null);
 
   const companyId = selectedJobForApplicants?.companyId;
@@ -175,6 +179,7 @@ export function useApplicantList() {
     applicantFilters,
     applicantPagination,
     showFullCvPreview, setShowFullCvPreview,
+    showCoverLetterPreview, setShowCoverLetterPreview,
     isRejectionDialogOpen, setIsRejectionDialogOpen,
     setPendingRejection,
     isInterviewModalOpen, setIsInterviewModalOpen,
@@ -184,6 +189,7 @@ export function useApplicantList() {
     handlePageChange,
     handleStatusChange,
     handleCvPreview: setShowFullCvPreview,
+    handleCoverLetterPreview: setShowCoverLetterPreview,
     handleScheduleInterview,
     handleRejectionConfirm,
   };

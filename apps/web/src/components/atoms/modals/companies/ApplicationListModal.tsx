@@ -1,4 +1,3 @@
-// /components/your-path/ApplicationListModal.tsx
 'use client';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -9,6 +8,7 @@ import { useApplicantList } from '@/hooks/useApplicantList';
 import ApplicationListFilter from './AppList/ApplicationListFilter';
 import ApplicationListPagination from './AppList/ApplicationListPagination';
 import ApplicationListCVPreview from './AppList/ApplicationListCVPreview';
+import ApplicationListCoverLetterPreview from './AppList/ApplicationListCoverLetterPreview'
 import ApplicantListContent from './AppList/ApplicationListContent';
 import RejectionReasonDialog from './AppList/RejectionReasonDialog';
 import { InterviewScheduleModal } from '@/components/organisms/interview/InterviewScheduleModal';
@@ -26,6 +26,7 @@ export default function ApplicantListModal() {
     applicantFilters,
     applicantPagination,
     showFullCvPreview, setShowFullCvPreview,
+    showCoverLetterPreview, setShowCoverLetterPreview,
     isRejectionDialogOpen, setIsRejectionDialogOpen,
     setPendingRejection,
     isInterviewModalOpen, setIsInterviewModalOpen,
@@ -35,6 +36,7 @@ export default function ApplicantListModal() {
     handlePageChange,
     handleStatusChange,
     handleCvPreview,
+    handleCoverLetterPreview,
     handleScheduleInterview,
     handleRejectionConfirm,
   } = useApplicantList();
@@ -47,7 +49,10 @@ export default function ApplicantListModal() {
     <>
       <Dialog open={isApplicantModalOpen} onOpenChange={(open) => {
         setIsApplicantModalOpen(open);
-        if (!open) setShowFullCvPreview(null);
+        if (!open) {
+          setShowFullCvPreview(null);
+          setShowCoverLetterPreview(null);
+        }
       }}>
         <DialogContent className="!w-[88vw] !max-w-none h-[95vh] flex flex-col p-0">
           <DialogHeader className="p-6 border-b bg-gray-50/50">
@@ -80,30 +85,39 @@ export default function ApplicantListModal() {
                 </div>
               ) : (
                 <ApplicantListContent
-                    applicants={applicants as ApplicantWithPriority[]}
-                    onStatusChange={handleStatusChange}
-                    onCvPreview={handleCvPreview}
-                    onScheduleInterview={handleScheduleInterview}
-                    companyId={companyId}
+                  applicants={applicants as ApplicantWithPriority[]}
+                  onStatusChange={handleStatusChange}
+                  onCvPreview={handleCvPreview}
+                  onCoverLetterPreview={handleCoverLetterPreview}
+                  onScheduleInterview={handleScheduleInterview}
+                  companyId={companyId}
                 />
               )}
             </ScrollArea>
           </div>
 
           <ApplicationListPagination
-           pagination={applicantPagination}
-           currentItemsCount={applicants.length}
-           onPageChange={handlePageChange}
+            pagination={applicantPagination}
+            currentItemsCount={applicants.length}
+            onPageChange={handlePageChange}
           />
         </DialogContent>
       </Dialog>
 
       {showFullCvPreview && (
-         <ApplicationListCVPreview
-         cvUrl={showFullCvPreview}
-         isOpen={!!showFullCvPreview}
-         onClose={() => setShowFullCvPreview(null)}
-       />
+        <ApplicationListCVPreview
+          cvUrl={showFullCvPreview}
+          isOpen={!!showFullCvPreview}
+          onClose={() => setShowFullCvPreview(null)}
+        />
+      )}
+
+      {showCoverLetterPreview && (
+        <ApplicationListCoverLetterPreview
+          coverLetter={showCoverLetterPreview}
+          isOpen={!!showCoverLetterPreview}
+          onClose={() => setShowCoverLetterPreview(null)}
+        />
       )}
 
       <RejectionReasonDialog

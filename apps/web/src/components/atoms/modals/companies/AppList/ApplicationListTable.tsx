@@ -18,6 +18,7 @@ interface ApplicantTableRowProps {
   applicant: ApplicantWithPriority;
   onStatusChange: (applicationId: string, newStatus: ApplicationStatus) => void;
   onCvPreview: (cvUrl: string) => void;
+  onCoverLetterPreview: (coverLetter: string) => void;
   onScheduleInterview: (
     applicationId: string,
     scheduleData: ApplicantWithPriority['latestInterview'],
@@ -85,11 +86,12 @@ export default function ApplicantTableRow({
   applicant,
   onStatusChange,
   onCvPreview,
+  onCoverLetterPreview,
   onScheduleInterview,
 }: ApplicantTableRowProps) {
   const {
-    id, isPriority, applicant: user, expectedSalary, createdAt, cvUrl, status,
-    jobPosting, testResult, latestInterview,
+    id, isPriority, applicant: user, expectedSalary, createdAt, cvUrl, coverLetter, 
+    status, jobPosting, testResult, latestInterview,
   } = applicant;
   const statusInfo = statusConfig[status];
   const hasInterviewAction = ['INTERVIEW_SCHEDULED', 'TEST_COMPLETED', 'REVIEWED'].includes(status);
@@ -117,6 +119,22 @@ export default function ApplicantTableRow({
       <TableCell><span className="text-sm text-gray-600">{new Date(createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: '2-digit' })}</span></TableCell>
       <TableCell className="text-center">
         {cvUrl ? <Button variant="outline" size="sm" onClick={() => onCvPreview(cvUrl)} className="h-8 px-2 text-xs"><FileText className="w-3 h-3" /></Button> : <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">No CV</span>}
+      </TableCell>
+      <TableCell className="text-center">
+        {coverLetter ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => onCoverLetterPreview(coverLetter)} 
+            className="h-8 px-2 text-xs"
+          >
+            <FileText className="w-3 h-3" />
+          </Button>
+        ) : (
+          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">
+            No Cover Letter
+          </span>
+        )}
       </TableCell>
       <TableCell className="text-center">
         {testResult?.score !== undefined ? (
