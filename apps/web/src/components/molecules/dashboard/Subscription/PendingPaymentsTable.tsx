@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DialogTrigger } from '@/components/ui/dialog';
 import { Calendar, FileText, AlertCircle, Eye } from 'lucide-react';
-import { Subscription } from '@/stores/subscriptionMgtStores';
+import { Subscription } from '@/types/subscription';
 import { format } from 'date-fns';
 
 interface PendingPaymentsTableProps {

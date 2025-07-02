@@ -75,7 +75,7 @@ export default function AssessmentPageTemplate() {
           <h3 className="font-semibold">Error loading assessments</h3>
           <p>{error}</p>
           {error.includes("subscription") && (
-            <Link href="/dashboard/subscriptions">
+            <Link href="/dashboard/subscription">
                <Button variant="link" className="text-red-700 p-0 h-auto mt-1">Manage Subscription</Button>
             </Link>
           )}

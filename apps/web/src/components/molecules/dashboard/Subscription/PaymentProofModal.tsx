@@ -17,7 +17,7 @@ import {
   AlertCircle,
   CreditCard
 } from 'lucide-react';
-import { Subscription } from '@/stores/subscriptionMgtStores';
+import { Subscription, PlanFeatures } from '@/types/subscription';
 import { format } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -46,6 +46,33 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
     setRejectionReason('');
   }, [subscription]);
 
+  // Helper function to handle both old and new feature formats
+  const getDisplayableFeatures = (features: unknown): string[] => {
+    // Case 1: It's the legacy string array. Just return it.
+    if (Array.isArray(features)) {
+      return features as string[];
+    }
+
+    // Case 2: It's the new structured object. Convert it to a string array.
+    if (typeof features === 'object' && features !== null) {
+      const f = features as PlanFeatures; // Cast to our new type
+      const list: string[] = [];
+      
+      if (f.cvGenerator) list.push('AI CV Generator');
+      if (f.skillAssessmentLimit === 'unlimited') {
+        list.push('Unlimited Skill Assessments');
+      } else if (f.skillAssessmentLimit > 0) {
+        list.push(`${f.skillAssessmentLimit} Skill Assessment(s)`);
+      }
+      if (f.priorityReview) list.push('Priority CV Review');
+      
+      return list;
+    }
+    
+    // Fallback for any other unexpected type
+    return [];
+  };
+
   const handleReject = () => {
     onReject(rejectionReason.trim() === '' ? undefined : rejectionReason.trim());
   };
@@ -66,6 +93,8 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
       )}
     </div>
   );
+
+  const featuresList = getDisplayableFeatures(subscription.plan.features);
 
   return (
     <DialogContent className="max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -105,7 +134,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
 
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-gray-500" />
-                <span className="font-medium">${subscription.plan.price.toFixed(2)}</span>
+                <span className="font-medium">IDR {subscription.plan.price.toLocaleString()}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -118,11 +147,10 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
               <div>
                 <Label className="text-sm font-medium">Payment Method</Label>
                 <Badge variant="outline" className="ml-2">
-                  {subscription.paymentMethod.replace('_', ' ')}
+                  {subscription.paymentMethod.replace(/_/g, ' ')}
                 </Badge>
               </div>
 
-              {/* Payment Method Specific Information */}
               {subscription.paymentMethod === 'BANK_TRANSFER' ? (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-2">
@@ -165,8 +193,8 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                {subscription.plan.features.length > 0 ? (
-                  subscription.plan.features.map((feature, index) => (
+                {featuresList.length > 0 ? (
+                  featuresList.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-green-500" />
                       {feature}
@@ -187,9 +215,7 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
               <CardTitle className="text-lg">Payment Proof</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Conditional rendering based on payment method */}
               {subscription.paymentMethod === 'BANK_TRANSFER' ? (
-                // Bank Transfer - Show proof upload section
                 subscription.paymentProof ? (
                   <div className="space-y-4">
                     <div className="relative border rounded-lg h-80 sm:h-96">
@@ -241,7 +267,6 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
                       </AlertDescription>
                     </Alert>
                     
-                    {/* Still allow rejection even without proof for bank transfers */}
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         disabled
@@ -264,7 +289,6 @@ const PaymentProofModal: React.FC<PaymentProofModalProps> = ({
                   </div>
                 )
               ) : (
-                // Midtrans Payment - No proof required
                 <div className="space-y-4">
                   <div className="p-6 text-center border-2 border-dashed border-gray-300 rounded-lg">
                     <CreditCard className="w-12 h-12 mx-auto text-gray-400 mb-2" />

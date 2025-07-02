@@ -182,7 +182,7 @@ export default function AssessmentContent({ assessments, subscription }: Props) 
                           <Button asChild className={`w-full ${isQuotaExceeded || !subscription.isActive ? 'bg-accent hover:bg-accent/90' : ''}`}>
                             <Link href={
                               isQuotaExceeded || !subscription.isActive
-                                ? '/dashboard/subscriptions'
+                                ? '/dashboard/subscription'
                                 : `/dashboard/assessments/${assessment.id}`
                             }>
                               {!subscription.isActive
