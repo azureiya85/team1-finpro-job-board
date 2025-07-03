@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
@@ -13,7 +13,7 @@ import {
 
 // Get Single Question
 export async function GET(
-  request: Request,
+  request: NextRequest, 
   { params }: { params: { id: string; questionsId: string } }
 ) {
   const session = await auth() as AuthSession | null;
@@ -47,7 +47,7 @@ export async function GET(
 
 // Update Skill Assessment Question
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string; questionsId: string } }
 ) {
   const session = await auth() as AuthSession | null;
@@ -96,7 +96,7 @@ export async function PUT(
 
 // Delete Skill Assessment Question
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string; questionsId: string } }
 ) {
   const session = await auth() as AuthSession | null;

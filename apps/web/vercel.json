@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/subscription-expiry",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/interview-reminder",
+      "schedule": "0 8 * * *"
+    }
+  ]
+}
