@@ -10,7 +10,7 @@ interface TakeTestButtonProps {
   onTakeTest: () => void;
 }
 
-export function TakeTestButton({ applicationId, status, testCompleted, onTakeTest }: TakeTestButtonProps) {
+export function TakeTestButton({ status, testCompleted, onTakeTest }: TakeTestButtonProps) {
   if (status !== 'TEST_REQUIRED' || testCompleted) return null;
 
   return (

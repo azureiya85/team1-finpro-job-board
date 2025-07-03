@@ -1,7 +1,6 @@
 'use client';
 
 import { Pie } from 'react-chartjs-2';
-import ChartWrapper from '@/components/atoms/analytics/ChartWrapper';
 import { DemographicChartData } from '@/types/analyticsTypes';
 
 interface GenderDemographicChartProps {

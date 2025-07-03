@@ -1,7 +1,7 @@
 'use client';
 
 import { ApplicationStatus, JobApplication, JobPosting, Company, InterviewSchedule, InterviewStatus } from '@prisma/client';
-import { XCircle, AlertTriangle, FileText, Calendar } from 'lucide-react';
+import { XCircle, AlertTriangle, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

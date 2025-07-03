@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import { Question } from '@/types/testTypes';
 import { TestCreationForm } from '@/components/organisms/test/TestCreationForm';
 import { Card } from '@/components/ui/card';
 import { CreateTestData } from '@/types/testTypes';
@@ -30,14 +31,14 @@ export function CreateTestTemplate({ mode = 'create', initialData, testId }: Cre
           const data = await response.json();
           const formattedData = {
             ...data,
-            questions: data.questions.map((q: any) => ({
+            questions: data.questions.map((q: Question) => ({
               ...q,
               createdAt: new Date(q.createdAt),
               updatedAt: new Date(q.updatedAt)
             }))
           };
           setTest(formattedData);
-        } catch (error) {
+        } catch {
           toast.error('Failed to fetch test data');
           router.push(`/jobs/${jobId}/test`);
         } finally {
@@ -71,10 +72,7 @@ export function CreateTestTemplate({ mode = 'create', initialData, testId }: Cre
       }
 
       toast.success(`Test has been ${mode === 'edit' ? 'updated' : 'created'} successfully`);
-      
-      const result = await response.json();
-      const companyId = result.companyId;
-
+    
       router.push(`/jobs/${jobId}/test`);
       
     } catch (error) {

@@ -1,3 +1,5 @@
+import { DemographicItem } from '@/types/analyticsTypes';
+
 export async function getDemographics() {
   const query = new URLSearchParams();
 
@@ -10,7 +12,7 @@ export async function getDemographics() {
   const raw = await res.json();
 
   return {
-    labels: raw.map((item: any) => item.label),
-    values: raw.map((item: any) => item.count),
+    labels: raw.map((item: DemographicItem) => item.label),
+    values: raw.map((item: DemographicItem) => item.count),
   };
 }

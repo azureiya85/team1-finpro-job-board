@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const end = searchParams.get('end');
 
   try {
-    const where: any = {
+    const where: Record<string, unknown> = {
       role: UserRole.USER,
       jobApplications: { some: {} }
     };

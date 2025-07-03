@@ -61,7 +61,7 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
       description,
       timeLimit,
       passingScore,
-      questions: questions.map(({ isValid, createdAt, updatedAt, explanation, ...q }) => ({
+      questions: questions.map(({ explanation, ...q }) => ({
         ...q,
         explanation: explanation || ''
       }))
@@ -125,8 +125,8 @@ export function TestCreationForm({ onSubmit, initialData }: TestCreationFormProp
         {[
           { label: 'Test Title', value: title, set: setTitle, name: 'title' },
           { label: 'Description', value: description, set: setDescription, name: 'description', isTextArea: true },
-          { label: 'Time Limit (minutes)', value: timeLimit, set: (v: any) => setTimeLimit(Number(v)), name: 'timeLimit', type: 'number' },
-          { label: 'Passing Score', value: passingScore, set: (v: any) => setPassingScore(Number(v)), name: 'passingScore', type: 'number' },
+          { label: 'Time Limit (minutes)', value: timeLimit, set: (v: string) => setTimeLimit(Number(v)), name: 'timeLimit', type: 'number' },
+          { label: 'Passing Score', value: passingScore, set: (v: string) => setPassingScore(Number(v)), name: 'passingScore', type: 'number' },
         ].map(({ label, value, set, name, isTextArea, type }) => (
           <div key={name}>
             <label className="block text-sm font-medium mb-1">{label}</label>
