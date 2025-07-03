@@ -60,7 +60,7 @@ export function JobDetailsRelated({ currentJob }: Props) {
 
   useEffect(() => {
     if (currentJob.id) fetchJobs(1);
-  }, [currentJob.id]);
+  }, [currentJob.id, fetchJobs]); 
 
   const renderHeader = () => (
     <CardHeader>

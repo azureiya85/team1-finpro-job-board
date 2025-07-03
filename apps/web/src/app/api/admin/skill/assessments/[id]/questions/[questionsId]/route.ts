@@ -4,7 +4,6 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { SkillAssessmentQuestionUpdateSchema } from '@/lib/validations/zodAssessmentValidation';
 import {
-  QuestionRouteParams,
   SkillAssessmentQuestion,
   SkillAssessmentQuestionUpdateData,
   AuthSession,
@@ -12,8 +11,15 @@ import {
   isRecordNotFoundError
 } from '@/types/assessments';
 
+type RouteParams = {
+  params: {
+    id: string;        
+    questionsId: string;
+  };
+};
+
 // Get Single Question
-export async function GET(request: Request, { params }: QuestionRouteParams) {
+export async function GET(request: Request, { params }: RouteParams) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -21,7 +27,10 @@ export async function GET(request: Request, { params }: QuestionRouteParams) {
   
   try {
     const questionResult = await prisma.skillAssessmentQuestion.findUnique({
-      where: { id: params.questionId, assessmentId: params.assessmentId }
+      where: { 
+        id: params.questionsId,    
+        assessmentId: params.id   
+      }
     });
     
     if (!questionResult) {
@@ -46,7 +55,7 @@ export async function GET(request: Request, { params }: QuestionRouteParams) {
 }
 
 // Update Skill Assessment Question
-export async function PUT(request: Request, { params }: QuestionRouteParams) {
+export async function PUT(request: Request, { params }: RouteParams) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -65,7 +74,10 @@ export async function PUT(request: Request, { params }: QuestionRouteParams) {
     const updateData: SkillAssessmentQuestionUpdateData = validation.data;
     
     const updatedQuestionResult = await prisma.skillAssessmentQuestion.update({
-      where: { id: params.questionId, assessmentId: params.assessmentId },
+      where: { 
+        id: params.questionsId,    
+        assessmentId: params.id   
+      },
       data: updateData,
     });
     
@@ -89,7 +101,7 @@ export async function PUT(request: Request, { params }: QuestionRouteParams) {
 }
 
 // Delete Skill Assessment Question
-export async function DELETE(request: Request, { params }: QuestionRouteParams) {
+export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -97,7 +109,10 @@ export async function DELETE(request: Request, { params }: QuestionRouteParams) 
 
   try {
     await prisma.skillAssessmentQuestion.delete({
-      where: { id: params.questionId, assessmentId: params.assessmentId },
+      where: { 
+        id: params.questionsId,   
+        assessmentId: params.id    
+      },
     });
     
     return NextResponse.json({ message: 'Question deleted successfully' }, { status: 200 });
