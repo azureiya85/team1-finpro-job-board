@@ -22,10 +22,7 @@ import {
   resendVerificationEmail 
 } from './authVerification';
 
-/**
- * Main authentication helpers object
- * Maintains backwards compatibility with existing code
- */
+// Main authentication helpers object
 export const authHelpers = {
   // User management
   verifyCredentials,

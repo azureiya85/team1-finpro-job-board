@@ -6,9 +6,8 @@ import { UserRole } from '@prisma/client';
 import { RegisterResult } from '@/types/authTypes';
 import { generateSecureToken, createUserResponse, sendEmailSafely } from './authUtils';
 
-/**
- * Registers a regular user
- */
+
+// Registers a regular user
 export const register = async (data: RegisterFormData): Promise<RegisterResult> => {
   try {
     const { firstName, lastName, email, password } = data;
@@ -53,9 +52,8 @@ export const register = async (data: RegisterFormData): Promise<RegisterResult> 
   }
 };
 
-/**
- * Registers a company admin with associated company
- */
+
+// Registers a company admin with associated company
 export const registerCompanyAdmin = async (data: CompanyRegisterFormData): Promise<RegisterResult> => {
   try {
     const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
@@ -121,9 +119,8 @@ export const registerCompanyAdmin = async (data: CompanyRegisterFormData): Promi
   }
 };
 
-/**
- * Registers a developer (limited to one per system)
- */
+
+// Registers a developer (limited to one per system)
 export const registerDeveloper = async (data: DeveloperRegisterFormData): Promise<RegisterResult> => {
   try {
     const { email, password } = data;

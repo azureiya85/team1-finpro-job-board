@@ -3,16 +3,14 @@ import bcrypt from 'bcryptjs';
 import { universalCrypto } from '@/lib/crypto';
 import { AuthUser, DatabaseUser } from '@/types/authTypes';
 
-/**
- * Generates a secure token for email verification and password reset
- */
+
+// Generates a secure token for email verification and password reset
 export const generateSecureToken = (): string => {
   return universalCrypto.generateToken(32);
 };
 
-/**
- * Creates a standardized user response object from database user
- */
+
+// Creates a standardized user response object from database user
 export const createUserResponse = (user: DatabaseUser): AuthUser => ({
   id: user.id,
   email: user.email,
@@ -24,9 +22,8 @@ export const createUserResponse = (user: DatabaseUser): AuthUser => ({
   isVerified: user.isEmailVerified,
 });
 
-/**
- * Safely sends emails with error handling and logging
- */
+
+// Safely sends emails with error handling and logging
 export const sendEmailSafely = async (
   emailPromise: Promise<{ success: boolean; messageId: string; }>, 
   errorContext: string
@@ -39,9 +36,8 @@ export const sendEmailSafely = async (
   }
 };
 
-/**
- * Verifies user credentials for login
- */
+
+// Verifies user credentials for login
 export const verifyCredentials = async (email: string, password: string): Promise<AuthUser | null> => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -57,9 +53,8 @@ export const verifyCredentials = async (email: string, password: string): Promis
   }
 };
 
-/**
- * Gets user by ID
- */
+
+// Gets user by ID
 export const getUserById = async (id: string): Promise<AuthUser | null> => {
   try {
     const user = await prisma.user.findUnique({ where: { id } });
@@ -70,9 +65,8 @@ export const getUserById = async (id: string): Promise<AuthUser | null> => {
   }
 };
 
-/**
- * Updates user's last login timestamp
- */
+
+// Updates user's last login timestamp
 export const updateLastLogin = async (userId: string): Promise<void> => {
   try {
     const user = await prisma.user.findUnique({

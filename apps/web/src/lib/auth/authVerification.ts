@@ -4,9 +4,8 @@ import { emailService } from '@/services/email.service';
 import { ServiceResponse } from '@/types/authTypes';
 import { generateSecureToken, sendEmailSafely } from './authUtils';
 
-/**
- * Verifies email token and activates user account
- */
+
+// Verifies email token and activates user account
 export const verifyEmailToken = async (token: string): Promise<ServiceResponse> => {
   try {
     const user = await prisma.user.findFirst({
@@ -49,9 +48,8 @@ export const verifyEmailToken = async (token: string): Promise<ServiceResponse> 
   }
 };
 
-/**
- * Generates password reset token and sends reset email
- */
+
+// Generates password reset token and sends reset email
 export const generatePasswordResetToken = async (email: string): Promise<ServiceResponse> => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -85,9 +83,8 @@ export const generatePasswordResetToken = async (email: string): Promise<Service
   }
 };
 
-/**
- * Resets user password using reset token
- */
+
+// Resets user password using reset token
 export const resetPassword = async (token: string, newPassword: string): Promise<ServiceResponse> => {
   try {
     const user = await prisma.user.findFirst({
@@ -119,9 +116,8 @@ export const resetPassword = async (token: string, newPassword: string): Promise
   }
 };
 
-/**
- * Resends verification email to user
- */
+
+// Resends verification email to user
 export const resendVerificationEmail = async (email: string): Promise<ServiceResponse> => {
   try {
     const user = await prisma.user.findUnique({ where: { email } });
