@@ -2,12 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { Question, Test } from '@/types/testTypes';
-import { validateQuestion, prepareTestData } from '@/lib/actions/testActions';
+import { validateQuestion } from '@/lib/actions/testActions';
 import { PreSelectionTest, PreSelectionQuestion } from '@prisma/client';
-
-type TestWithQuestions = PreSelectionTest & {
-  questions: PreSelectionQuestion[]
-};
 
 type QuestionInput = {
   question: string;

@@ -20,7 +20,7 @@ export function TestManagementTemplate() {
       try {
         const data = await fetchTests(jobId);
         setTests(data);
-      } catch (error) {
+      } catch {
         setTests([]);
       }
     };

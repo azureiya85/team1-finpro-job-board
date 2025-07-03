@@ -15,6 +15,11 @@ export interface DemographicChartData {
     values: number[];
 }
 
+export interface DemographicItem {
+  label: string;
+  count: number;
+}
+
 export interface SalaryTrendChartData {
   labels: string[];
   values: number[];
@@ -22,6 +27,11 @@ export interface SalaryTrendChartData {
 
 export interface InterestChartData {
   label: string;
+  count: number;
+}
+
+export interface InterestItem {
+  category: string;
   count: number;
 }
 

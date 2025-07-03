@@ -53,7 +53,7 @@ export async function GET(
     }
 
     return NextResponse.json(test);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch test' },
       { status: 500 }

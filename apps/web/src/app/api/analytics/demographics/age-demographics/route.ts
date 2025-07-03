@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { differenceInYears } from 'date-fns';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const allUsers = await prisma.user.findMany({
       where: {

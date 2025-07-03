@@ -31,7 +31,7 @@ export async function GET(
     }
 
     return NextResponse.json(test);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch test' },
       { status: 500 }
@@ -57,7 +57,15 @@ export async function PUT(
         passingScore: data.passingScore,
         questions: {
           deleteMany: {},
-          create: data.questions.map((question: any) => ({
+          create: data.questions.map((question: {
+            question: string;
+            optionA: string;
+            optionB: string;
+            optionC: string;
+            optionD: string;
+            correctAnswer: string;
+            explanation: string;
+          }) => ({
             question: question.question,
             optionA: question.optionA,
             optionB: question.optionB,
@@ -86,7 +94,7 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedTest);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to update test' },
       { status: 500 }
@@ -114,8 +122,7 @@ export async function DELETE(
       if (!userWithCompany?.company) {
         return NextResponse.json({ error: 'Company not found' }, { status: 404 });
       }
-  
-      // Cek apakah test ada dan milik company yang benar
+
       const test = await prisma.preSelectionTest.findFirst({
         where: {
           id: params.testId,
@@ -130,13 +137,11 @@ export async function DELETE(
         return NextResponse.json({ error: 'Test not found' }, { status: 404 });
       }
   
-      // Verifikasi relasi dengan job
       const hasJobRelation = test.jobPostings.some(job => job.id === params.id);
       if (!hasJobRelation) {
         return NextResponse.json({ error: 'Test is not associated with this job' }, { status: 404 });
       }
   
-      // Hapus relasi dengan job terlebih dahulu
       await prisma.preSelectionTest.update({
         where: { id: params.testId },
         data: {
@@ -148,7 +153,6 @@ export async function DELETE(
         }
       });
   
-      // Hapus test
       await prisma.preSelectionTest.delete({
         where: {
           id: params.testId,
