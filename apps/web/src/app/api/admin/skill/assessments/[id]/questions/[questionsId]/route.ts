@@ -11,15 +11,11 @@ import {
   isRecordNotFoundError
 } from '@/types/assessments';
 
-type HandlerContext = {
-  params: {
-    id: string;
-    questionsId: string;
-  };
-};
-
 // Get Single Question
-export async function GET(request: Request, { params }: HandlerContext) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string; questionsId: string } }
+) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -37,11 +33,6 @@ export async function GET(request: Request, { params }: HandlerContext) {
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
     }
 
-    const validAnswers = ['A', 'B', 'C', 'D'];
-    if (!validAnswers.includes(questionResult.correctAnswer)) {
-      console.warn(`Invalid correctAnswer value: ${questionResult.correctAnswer}`);
-    }
-
     const question: SkillAssessmentQuestion = {
       ...questionResult,
       correctAnswer: questionResult.correctAnswer as "A" | "B" | "C" | "D"
@@ -55,7 +46,10 @@ export async function GET(request: Request, { params }: HandlerContext) {
 }
 
 // Update Skill Assessment Question
-export async function PUT(request: Request, { params }: HandlerContext) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string; questionsId: string } }
+) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -101,7 +95,10 @@ export async function PUT(request: Request, { params }: HandlerContext) {
 }
 
 // Delete Skill Assessment Question
-export async function DELETE(request: Request, { params }: HandlerContext) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string; questionsId: string } }
+) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
