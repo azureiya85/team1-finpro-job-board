@@ -1,6 +1,6 @@
 import prisma from '@/lib/prisma';
 import { JobPostingForRelatedSearch, JobPostingFeatured } from '@/types';
-import type { GetJobsParams, GetJobsResult } from '@/types/jobs';
+import type { GetJobsParams, GetJobsResult } from '@/types'; 
 import { buildWhereClause, calculateDistance } from './JobQueryHelpers';
 
 export async function getJobById(id: string): Promise<JobPostingForRelatedSearch | null> {
@@ -92,7 +92,7 @@ export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFea
 export async function getLatestFeaturedJobs(count: number = 5): Promise<JobPostingFeatured[]> {
   const result = await getJobs({
     take: count,
-    orderBy: [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+    orderBy: [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }], // Always pass as array
     includePagination: false,
   });
   return result as JobPostingFeatured[];
