@@ -1,14 +1,14 @@
 {
   "private": true,
-  "scripts": {
+ "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "serve": "turbo run serve",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "prepare": "is-ci || husky install",
-    "postprepare": "bash -c 'chmod ug+x .husky/*'"
+    "prepare": "node -e \"if (!process.env.CI) { try { require('husky').install() } catch (e) {} }\"",
+    "postprepare": "bash -c 'chmod ug+x .husky/* || true'"
   },
 "devDependencies": {
   "@commitlint/cli": "^18.4.2",
