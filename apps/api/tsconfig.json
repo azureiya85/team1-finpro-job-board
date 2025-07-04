@@ -1,21 +1,17 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    // ---- Overrides for a Node.js Express API ----
     "target": "ES2015",
     "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",    
-    "baseUrl": ".",         
+
+    // ---- Settings specific to this workspace ----
+    "outDir": "./dist",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]    
+      "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src/**/*.ts",         
-    "src/**/*.d.ts",
-    "src/**/*.json"
-, "index.ts"  ],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.json", "index.ts"],
+  "exclude": ["node_modules", "dist"]
 }
