@@ -78,6 +78,7 @@
     "axios": "^1.7.2",
     "chart.js": "^4.5.0",
     "cookie-parser": "^1.4.7",
+    "emoji-picker-react": "^4.12.3",
     "express-rate-limit": "^7.5.0",
     "is-ci": "^4.1.0",
     "leaflet": "^1.9.4",
