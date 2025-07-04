@@ -15,7 +15,7 @@ import {
 export async function GET(
   request: NextRequest, 
   { params }: { params: { id: string; questionsId: string } }
-) {
+): Promise<NextResponse> {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -49,7 +49,7 @@ export async function GET(
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string; questionsId: string } }
-) {
+): Promise<NextResponse> {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -97,7 +97,7 @@ export async function PUT(
 // Delete Skill Assessment Question
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; questionsId: string } }
+  { params }: { params: { id: string; questionId: string } }
 ) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
@@ -107,7 +107,7 @@ export async function DELETE(
   try {
     await prisma.skillAssessmentQuestion.delete({
       where: {
-        id: params.questionsId,
+        id: params.questionId,
         assessmentId: params.id
       },
     });
