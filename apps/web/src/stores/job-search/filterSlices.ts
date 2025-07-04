@@ -21,27 +21,12 @@ const initialFilterState = {
 export const createFilterSlice: StateCreator<JobSearchStoreState, [], [], JobFilterSlice> = (set, get) => ({
   ...initialFilterState,
 
+  // --- Single-value setters (Unchanged) ---
   setSearchTermInput: (term: string) => set({ searchTermInput: term }),
   setLocationSearchInput: (location: string) => set({ locationSearchInput: location }),
   setCompanySearchInput: (company: string) => set({ companySearchInput: company }),
   setCompanyLocationInput: (location: string) => {
     set({ companyLocationInput: location, currentPage: 1, skip: 0 });
-    get().fetchJobs();
-  },
-  setCategories: (categories: JobCategory[]) => {
-    set({ categories, currentPage: 1, skip: 0 });
-    get().fetchJobs();
-  },
-  setEmploymentTypes: (types: EmploymentType[]) => {
-    set({ employmentTypes: types, currentPage: 1, skip: 0 });
-    get().fetchJobs();
-  },
-  setExperienceLevels: (levels: ExperienceLevel[]) => {
-    set({ experienceLevels: levels, currentPage: 1, skip: 0 });
-    get().fetchJobs();
-  },
-  setCompanySizes: (sizes: CompanySize[]) => {
-    set({ companySizes: sizes, currentPage: 1, skip: 0 });
     get().fetchJobs();
   },
   setIsRemote: (isRemote?: boolean) => {
@@ -60,8 +45,51 @@ export const createFilterSlice: StateCreator<JobSearchStoreState, [], [], JobFil
     set({ startDate: start, endDate: end, datePosted: 'custom', currentPage: 1, skip: 0 });
     get().fetchJobs();
   },
+
+  // --- Robust array updaters (FIXED) ---
+  updateCategory: (category: JobCategory, isChecked: boolean) => {
+    const currentCategories = get().categories || [];
+    const newCategories = isChecked
+      ? [...currentCategories, category]
+      : currentCategories.filter((c) => c !== category);
+    
+    set({ categories: newCategories, currentPage: 1, skip: 0 });
+    get().fetchJobs();
+  },
+
+  updateEmploymentType: (type: EmploymentType, isChecked: boolean) => {
+    const currentTypes = get().employmentTypes || [];
+    const newTypes = isChecked
+      ? [...currentTypes, type]
+      : currentTypes.filter((t) => t !== type);
+    
+    set({ employmentTypes: newTypes, currentPage: 1, skip: 0 });
+    get().fetchJobs();
+  },
+
+  updateExperienceLevel: (level: ExperienceLevel, isChecked: boolean) => {
+    const currentLevels = get().experienceLevels || [];
+    const newLevels = isChecked
+      ? [...currentLevels, level]
+      : currentLevels.filter((l) => l !== level);
+    
+    set({ experienceLevels: newLevels, currentPage: 1, skip: 0 });
+    get().fetchJobs();
+  },
+  
+  updateCompanySize: (size: CompanySize, isChecked: boolean) => {
+    const currentSizes = get().companySizes || [];
+    const newSizes = isChecked
+      ? [...currentSizes, size]
+      : currentSizes.filter((s) => s !== size);
+      
+    set({ companySizes: newSizes, currentPage: 1, skip: 0 });
+    get().fetchJobs();
+  },
+  
+  // --- Reset function (Unchanged) ---
   resetFilters: () => {
-    set({ ...initialFilterState, jobs: [], error: null });
+    set({ ...initialFilterState, jobs: get().jobs, totalJobs: get().totalJobs, error: null });
     get().fetchJobs();
   },
 });

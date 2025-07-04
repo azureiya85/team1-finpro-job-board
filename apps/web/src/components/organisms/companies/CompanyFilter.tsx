@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MapPin, RotateCw } from 'lucide-react';
-import { useCompanySearchStore, SortByType } from '@/stores/companySearchStore';
+import { useCompanySearchStore } from '@/stores/companySearchStore';
+import type { CompanySortByType } from '@/types/zustandSearch';
 import { useDebouncedCompanySearch } from '@/hooks/useCompanySearch';
 import { useLocationData } from '@/hooks/useLocationData';
 
@@ -25,7 +26,7 @@ export function CompanyFilters() {
   const { provinces, cities, isLoadingProvinces } = useLocationData(selectedProvinceId);
 
   const handleSortChange = (value: string) => {
-    setSortBy(value as SortByType);
+    setSortBy(value as CompanySortByType);
   };
 
   const handleProvinceChange = (provinceId: string) => {

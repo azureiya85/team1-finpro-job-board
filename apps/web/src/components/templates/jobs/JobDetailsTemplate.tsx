@@ -3,27 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import axios from 'axios';
-import { JobPostingFeatured } from '@/types'; 
-import { JobDetailsHeader } from '@/components/organisms/jobs/JobDetailsHeader'; 
-import { JobDetailsContent } from '@/components/organisms/jobs/JobDetailsContent'; 
-import { JobDetailsRelated } from '@/components/organisms/jobs/JobDetailsRelated'; 
-import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal'; 
-
-const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
-
-const apiClient = axios.create({
-  baseURL: EXPRESS_API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-  withCredentials: true,
-});
+import { JobPostingFeatured } from '@/types';
+import { JobDetailsHeader } from '@/components/organisms/jobs/JobDetailsHeader';
+import { JobDetailsContent } from '@/components/organisms/jobs/JobDetailsContent';
+import { JobDetailsRelated } from '@/components/organisms/jobs/JobDetailsRelated';
+import CVSubmitModal from '@/components/atoms/modals/CVSubmitModal';
 
 export default function JobsDetailsTemplate() {
   const params = useParams();
-  const jobId = params.id as string;
+  const jobId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [job, setJob] = useState<JobPostingFeatured | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -31,59 +19,38 @@ export default function JobsDetailsTemplate() {
 
   useEffect(() => {
     if (!jobId) {
-      setError("Job ID is missing from URL.");
-      setLoading(false);
+      notFound();
       return;
     }
 
-    async function fetchJobFromExpress() {
+    const fetchJob = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await apiClient.get<JobPostingFeatured>(`/jobs/${jobId}`);
+        const response = await axios.get<JobPostingFeatured>(`/api/jobs/${jobId}`);
         setJob(response.data);
-        
       } catch (err) {
-        console.error(`Failed to fetch job ${jobId} from Express API:`, err);
+        console.error(`Failed to fetch job ${jobId} from Next.js API:`, err);
         
         if (axios.isAxiosError(err)) {
           if (err.response?.status === 404) {
             notFound();
             return;
           }
-          
-          let errorMessage: string;
-          
-          if (err.code === 'NETWORK_ERR' || err.message === 'Network Error') {
-            errorMessage = 'Network connection error. Please check your connection and try again.';
-          } else if (err.response) {
-            errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          `Server error: ${err.response.status}`;
-          } else if (err.request) {
-            errorMessage = 'No response from server. Please try again later.';
-          } else {
-            errorMessage = err.message;
-          }
-          
-          setError(errorMessage);
+          // Set a user-friendly error message
+          setError(err.response?.data?.error || 'Failed to load job details. Please try again.');
         } else {
-          const errorMessage = err instanceof Error 
-            ? err.message 
-            : typeof err === 'string'
-              ? err 
-              : "Failed to load job details from Express. Please try again later.";
-          setError(errorMessage);
+          setError('An unexpected error occurred.');
         }
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchJobFromExpress();
+    fetchJob();
   }, [jobId]);
 
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -99,6 +66,7 @@ export default function JobsDetailsTemplate() {
     );
   }
 
+  // Error state
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -106,8 +74,8 @@ export default function JobsDetailsTemplate() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <p className="text-red-500 mb-4">Error: {error}</p>
-              <button 
-                onClick={() => window.location.reload()} 
+              <button
+                onClick={() => window.location.reload()}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
               >
                 Try Again
@@ -120,10 +88,10 @@ export default function JobsDetailsTemplate() {
   }
 
   if (!job) {
-    notFound(); 
-    return null; 
+    return null; // notFound() was called in useEffect, so this prevents a flash of empty content
   }
 
+  // Success state
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-8 max-w-5xl">

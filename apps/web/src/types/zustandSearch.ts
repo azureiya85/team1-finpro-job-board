@@ -21,32 +21,37 @@ export interface ProvinceWithCities extends Province {
 // --- Job Search Slices ---
 
 export interface JobFilterSlice {
+  // --- State Properties ---
   searchTermInput: string;
   locationSearchInput: string;
-  categories?: JobCategory[];
-  employmentTypes?: EmploymentType[];
-  experienceLevels?: ExperienceLevel[];
-  companySizes?: CompanySize[];
-  isRemote?: boolean;
-   companySearchInput: string;     
+  companySearchInput: string;     
   companyLocationInput: string;  
+  categories: JobCategory[];
+  employmentTypes: EmploymentType[];
+  experienceLevels: ExperienceLevel[];
+  companySizes: CompanySize[];
+  isRemote?: boolean;
   sortBy: SortByType;
   datePosted: DatePostedType;
   startDate?: Date;
   endDate?: Date;
   
+  // --- State Setters / Actions ---
+
   setSearchTermInput: (term: string) => void;
   setLocationSearchInput: (location: string) => void;
-  setCategories: (categories: JobCategory[]) => void;
-  setEmploymentTypes: (types: EmploymentType[]) => void;
-  setExperienceLevels: (levels: ExperienceLevel[]) => void;
-  setCompanySizes: (sizes: CompanySize[]) => void;
-  setIsRemote: (isRemote?: boolean) => void;
-  setSortBy: (sortBy: SortByType) => void;
   setCompanySearchInput: (company: string) => void;
   setCompanyLocationInput: (location: string) => void; 
+  setIsRemote: (isRemote?: boolean) => void;
+  setSortBy: (sortBy: SortByType) => void;
   setDatePosted: (datePosted: DatePostedType) => void;
   setDateRange: (start?: Date, end?: Date) => void;
+
+  updateCategory: (category: JobCategory, isChecked: boolean) => void;
+  updateEmploymentType: (type: EmploymentType, isChecked: boolean) => void;
+  updateExperienceLevel: (level: ExperienceLevel, isChecked: boolean) => void;
+  updateCompanySize: (size: CompanySize, isChecked: boolean) => void;
+  
   resetFilters: () => void;
 }
 
@@ -76,7 +81,7 @@ export interface JobPaginationSlice {
 // Combined Job Search State
 export type JobSearchStoreState = JobFilterSlice & JobDataSlice & JobLocationSlice & JobPaginationSlice;
 
-// --- Company Search Store Types ---
+// --- Company Search Store Types (Unchanged) ---
 
 export type CompanyWithDetails = Pick<Company, 'id' | 'name' | 'description' | 'logo'> & {
   province: Pick<Province, 'id' | 'name'> | null;
@@ -96,7 +101,7 @@ export type PaginationState = {
 
 export type CompanySortByType = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 
-// --- Company Search Slices ---
+// --- Company Search Slices (Unchanged) ---
 
 export interface CompanyFilterSlice {
   searchInput: string;

@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import type { GetJobsParams } from '@/types/jobs';
+import type { GetJobsParams } from '@/types';
 
 // === Geospatial Helpers ===
 
@@ -36,19 +36,19 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     jobTitle, locationQuery, userLatitude, userLongitude, radiusKm = 25, 
     cityId, provinceId, categories, employmentTypes, experienceLevels, 
     companySizes, isRemote, companyId,
+    companyQuery,
+    companyLocationQuery 
   } = params;
 
-  const where: Prisma.JobPostingWhereInput = { isActive: true };
+  const where: Prisma.JobPostingWhereInput = { isActive: true, publishedAt: { not: null } };
   const andConditions: Prisma.JobPostingWhereInput[] = [];
 
-  // Location Logic
   if (userLatitude !== undefined && userLongitude !== undefined) {
     const { minLat, maxLat, minLon, maxLon } = getBoundingBox(userLatitude, userLongitude, radiusKm);
     andConditions.push({
       AND: [
         { latitude: { gte: minLat, lte: maxLat } },
         { longitude: { gte: minLon, lte: maxLon } },
-        { latitude: { not: null } }, { longitude: { not: null } }
       ]
     });
   } else if (cityId) {
@@ -64,7 +64,7 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     });
   }
   
-  // Search Logic
+  // --- Search Logic ---
   if (jobTitle) {
     andConditions.push({
       OR: [
@@ -75,13 +75,35 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     });
   }
 
-  // Filter Logic
+  // --- Direct Filter Logic ---
   if (categories?.length) andConditions.push({ category: { in: categories } });
   if (employmentTypes?.length) andConditions.push({ employmentType: { in: employmentTypes } });
   if (experienceLevels?.length) andConditions.push({ experienceLevel: { in: experienceLevels } });
   if (typeof isRemote === 'boolean') andConditions.push({ isRemote });
-  if (companySizes?.length) andConditions.push({ company: { is: { size: { in: companySizes } } } });
-  if (companyId) andConditions.push({ companyId });
+
+  const companyFilter: Prisma.CompanyWhereInput = {};
+
+  if (companyQuery) {
+    companyFilter.name = { contains: companyQuery, mode: 'insensitive' };
+  }
+  if (companySizes?.length) {
+    companyFilter.size = { in: companySizes };
+  }
+  if (companyLocationQuery) {
+    companyFilter.OR = [
+      { city: { is: { name: { contains: companyLocationQuery, mode: 'insensitive' } } } },
+      { province: { is: { name: { contains: companyLocationQuery, mode: 'insensitive' } } } },
+    ];
+  }
+  
+  if (Object.keys(companyFilter).length > 0) {
+    andConditions.push({ company: { is: companyFilter } });
+  }
+  
+  // Handle direct company ID filter separately
+  if (companyId) {
+    andConditions.push({ companyId });
+  }
 
   if (andConditions.length > 0) {
     where.AND = andConditions;

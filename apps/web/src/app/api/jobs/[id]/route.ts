@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { JobPostingFeatured } from '@/types'; 
+import { getJobById } from '@/lib/jobsUtils';
 import { auth } from '@/auth';
 import { createJobSchema } from '@/lib/validations/zodJobValidation';
 
-
 export async function GET(
-  request: Request, 
-  { params }: { params: Promise<{ id: string }> }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> } // Note: params is a Promise
 ) {
   const { id } = await params;
 
@@ -16,63 +15,19 @@ export async function GET(
   }
 
   try {
-    const job = await prisma.jobPosting.findUnique({
-      where: {
-        id: id,
-        isActive: true, // Only fetch active jobs
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        employmentType: true,
-        experienceLevel: true,
-        category: true,
-        isRemote: true,
-        createdAt: true,
-        publishedAt: true,
-        salaryMin: true,
-        salaryMax: true,
-        salaryCurrency: true,
-        isPriority: true,
-        tags: true,
-        requirements: true,
-        benefits: true,
-        applicationDeadline: true,
-        preSelectionTestId: true,
-        company: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-            size: true,
-            description: true,
-          },
-        },
-        city: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        province: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    const job = await getJobById(id);
 
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
     }
 
-    return NextResponse.json(job as unknown as JobPostingFeatured, { status: 200 });
-
+    return NextResponse.json(job);
   } catch (error) {
-    console.error('API: Failed to fetch job:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error(`[API_GET_JOB_BY_ID] Failed to fetch job ${id}:`, error);
+    return NextResponse.json(
+      { error: 'An internal error occurred while fetching the job.' },
+      { status: 500 }
+    );
   }
 }
 

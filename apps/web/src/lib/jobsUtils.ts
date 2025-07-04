@@ -1,7 +1,26 @@
 import prisma from '@/lib/prisma';
-import { JobPostingFeatured } from '@/types'; 
+import { JobPostingForRelatedSearch, JobPostingFeatured } from '@/types';
 import type { GetJobsParams, GetJobsResult } from '@/types/jobs';
 import { buildWhereClause, calculateDistance } from './JobQueryHelpers';
+
+export async function getJobById(id: string): Promise<JobPostingForRelatedSearch | null> {
+  if (!id) return null;
+
+  try {
+    const job = await prisma.jobPosting.findUnique({
+      where: { id: id },
+      include: { // Include is perfect here as it gets all fields
+        company: {
+          select: { id: true } 
+        },
+      },
+    });
+    return job as JobPostingForRelatedSearch | null;
+  } catch (error) {
+    console.error(`[UTIL_GET_JOB_BY_ID] Failed to fetch job ${id}:`, error);
+    return null; // Return null on error
+  }
+}
 
 // The main data fetching function
 export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFeatured[] | GetJobsResult> {
@@ -69,7 +88,7 @@ export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFea
   }
 }
 
-// Specific function for latest featured jobs 
+// Specific function for latest featured jobs
 export async function getLatestFeaturedJobs(count: number = 5): Promise<JobPostingFeatured[]> {
   const result = await getJobs({
     take: count,
@@ -79,9 +98,78 @@ export async function getLatestFeaturedJobs(count: number = 5): Promise<JobPosti
   return result as JobPostingFeatured[];
 }
 
+export async function getRelatedJobs(
+  currentJob: JobPostingForRelatedSearch,
+  count: number = 5
+): Promise<JobPostingFeatured[]> {
+  if (!currentJob) {
+    return [];
+  }
+
+  // Destructure properties from the full job object
+  const { id: excludeId, category, company, cityId, provinceId } = currentJob;
+
+  try {
+    const relatedJobs = await prisma.jobPosting.findMany({
+      where: {
+        id: { not: excludeId },
+        isActive: true,
+        publishedAt: { not: null },
+        OR: [
+          { category: { equals: category } },
+          { cityId: { equals: cityId, not: null } },
+          { provinceId: { equals: provinceId, not: null } },
+          { companyId: { equals: company?.id } }, 
+        ],
+      },
+      orderBy: [
+        { isPriority: 'desc' },
+        { publishedAt: 'desc' },
+      ],
+      take: count,
+      select: {
+        id: true,
+        title: true,
+        company: {
+          select: { id: true, name: true, logo: true, size: true },
+        },
+        city: {
+          select: { id: true, name: true },
+        },
+        province: {
+          select: { id: true, name: true },
+        },
+        description: true,
+        employmentType: true,
+        experienceLevel: true,
+        isRemote: true,
+        createdAt: true,
+        publishedAt: true,
+        salaryMin: true,
+        salaryMax: true,
+        salaryCurrency: true,
+        isPriority: true,
+        tags: true,
+        benefits: true,
+        requirements: true,
+        applicationDeadline: true,
+        requiresCoverLetter: true,
+        preSelectionTestId: true,
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    return relatedJobs as JobPostingFeatured[];
+  } catch (error) {
+    console.error(`[UTIL_GET_RELATED_JOBS] Failed to fetch related jobs for ${excludeId}:`, error);
+    return [];
+  }
+}
+
 // Utility function specifically for company job listings with pagination
 export async function getCompanyJobs(
-  companyId: string, 
+  companyId: string,
   params: Omit<GetJobsParams, 'companyId' | 'userLatitude' | 'userLongitude' | 'radiusKm' | 'locationQuery' | 'cityId' | 'provinceId'> = {}
 ): Promise<GetJobsResult> {
   const result = await getJobs({
