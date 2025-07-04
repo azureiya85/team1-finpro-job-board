@@ -11,10 +11,17 @@ import {
   isRecordNotFoundError
 } from '@/types/assessments';
 
+interface RouteParams {
+  params: {
+    id: string;
+    questionsId: string;
+  };
+}
+
 // Get Single Question
 export async function GET(
   request: NextRequest, 
-  { params }: { params: { id: string; questionsId: string } }
+  { params }: RouteParams
 ) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
@@ -48,7 +55,7 @@ export async function GET(
 // Update Skill Assessment Question
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; questionsId: string } }
+  { params }: RouteParams
 ) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {
@@ -97,7 +104,7 @@ export async function PUT(
 // Delete Skill Assessment Question
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; questionsId: string } }
+  { params }: RouteParams
 ) {
   const session = await auth() as AuthSession | null;
   if (!session?.user || session.user.role !== UserRole.Developer) {

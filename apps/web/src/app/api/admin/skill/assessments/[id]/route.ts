@@ -4,7 +4,6 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { SkillAssessmentUpdateSchema } from '@/lib/validations/zodAssessmentValidation';
 import {
-  AssessmentRouteParams,
   SkillAssessmentWithRelations,
   SkillAssessment,
   SkillAssessmentUpdateData,
@@ -12,6 +11,10 @@ import {
   isPrismaError,
   isRecordNotFoundError
 } from '@/types/assessments';
+
+interface AssessmentRouteParams {
+  params: { id: string };
+}
 
 // Get Single Skill Assessment include questions
 export async function GET(request: Request, { params }: AssessmentRouteParams) {
@@ -22,7 +25,7 @@ export async function GET(request: Request, { params }: AssessmentRouteParams) {
 
   try {
     const assessmentResult = await prisma.skillAssessment.findUnique({
-      where: { id: params.assessmentId },
+      where: { id: params.id }, // Changed from params.assessmentId to params.id
       include: {
         category: true,
         questions: { orderBy: { createdAt: 'asc' } }, // Developers see questions
@@ -78,7 +81,7 @@ export async function PUT(request: Request, { params }: AssessmentRouteParams) {
     }
 
     const updatedAssessmentResult = await prisma.skillAssessment.update({
-      where: { id: params.assessmentId },
+      where: { id: params.id }, // Changed from params.assessmentId to params.id
       data: updateData,
     });
     
@@ -106,7 +109,7 @@ export async function DELETE(request: Request, { params }: AssessmentRouteParams
   try {
     // Check if users have taken this assessment.
     const userAssessmentsCount = await prisma.userSkillAssessment.count({
-      where: { assessmentId: params.assessmentId }
+      where: { assessmentId: params.id } // Changed from params.assessmentId to params.id
     });
     
     if (userAssessmentsCount > 0) {
@@ -116,7 +119,7 @@ export async function DELETE(request: Request, { params }: AssessmentRouteParams
     }
 
     await prisma.skillAssessment.delete({
-      where: { id: params.assessmentId },
+      where: { id: params.id }, // Changed from params.assessmentId to params.id
     });
     
     return NextResponse.json({ message: 'Assessment deleted successfully' }, { status: 200 });

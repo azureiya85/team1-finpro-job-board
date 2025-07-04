@@ -5,7 +5,7 @@ import { UserRole } from '@prisma/client';
 import { SkillAssessmentQuestionCreateSchema } from '@/lib/validations/zodAssessmentValidation';
 
 interface Params {
-  params: { assessmentId: string };
+  params: { id: string }; 
 }
 const MAX_QUESTIONS = 25; 
 
@@ -18,7 +18,7 @@ export async function POST(request: Request, { params }: Params) {
 
   try {
     const assessment = await prisma.skillAssessment.findUnique({
-        where: { id: params.assessmentId },
+        where: { id: params.id }, 
         include: { _count: { select: { questions: true } } }
     });
     if (!assessment) {
@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: Params) {
     const newQuestion = await prisma.skillAssessmentQuestion.create({
       data: {
         ...validation.data,
-        assessmentId: params.assessmentId,
+        assessmentId: params.id, 
       },
     });
     return NextResponse.json(newQuestion, { status: 201 });
@@ -56,7 +56,7 @@ export async function GET(request: Request, { params }: Params) {
 
   try {
     const questions = await prisma.skillAssessmentQuestion.findMany({
-      where: { assessmentId: params.assessmentId },
+      where: { assessmentId: params.id }, // Changed from params.assessmentId to params.id
       orderBy: { createdAt: 'asc' },
     });
     return NextResponse.json(questions);
