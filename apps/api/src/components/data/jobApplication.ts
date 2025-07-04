@@ -44,13 +44,13 @@ const allJobPostingIds = jobPostings.map(jp => jp.id);
 
 // --- Applications for Seeker 1 (Anisa Rahayu - user_seeker_01) ---
 if (seeker1 && allJobPostingIds.length >= 4) {
-  const seeker1JobIds = [allJobPostingIds[0], allJobPostingIds[1], allJobPostingIds[2], allJobPostingIds[3]]; // job_01 to job_04
+  const seeker1JobIds = allJobPostingIds.slice(0, 4); // Get first 4 job IDs safely
 
   // App 1: PENDING
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker1.id,
-    jobPostingId: seeker1JobIds[0], // e.g., job_01
+    jobPostingId: seeker1JobIds[0]!, // Use non-null assertion since we've verified length
     cvUrl: `https://example.com/cv/${seeker1.firstName?.toLowerCase()}_${seeker1JobIds[0]}.pdf`,
     expectedSalary: 28000000,
     status: ApplicationStatus.PENDING,
@@ -62,7 +62,7 @@ if (seeker1 && allJobPostingIds.length >= 4) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker1.id,
-    jobPostingId: seeker1JobIds[1], // e.g., job_02
+    jobPostingId: seeker1JobIds[1]!,
     cvUrl: `https://example.com/cv/${seeker1.firstName?.toLowerCase()}_${seeker1JobIds[1]}.pdf`,
     expectedSalary: 18000000,
     status: ApplicationStatus.REVIEWED,
@@ -76,7 +76,7 @@ if (seeker1 && allJobPostingIds.length >= 4) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker1.id,
-    jobPostingId: seeker1JobIds[2], // e.g., job_03
+    jobPostingId: seeker1JobIds[2]!,
     cvUrl: `https://example.com/cv/${seeker1.firstName?.toLowerCase()}_${seeker1JobIds[2]}.pdf`,
     coverLetter: "Dear Hiring Manager, I am excited to apply for this position...",
     expectedSalary: 10000000,
@@ -91,7 +91,7 @@ if (seeker1 && allJobPostingIds.length >= 4) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker1.id,
-    jobPostingId: seeker1JobIds[3], // e.g., job_04
+    jobPostingId: seeker1JobIds[3]!,
     cvUrl: `https://example.com/cv/${seeker1.firstName?.toLowerCase()}_${seeker1JobIds[3]}.pdf`,
     expectedSalary: 30000000,
     status: ApplicationStatus.REJECTED,
@@ -108,13 +108,13 @@ if (seeker1 && allJobPostingIds.length >= 4) {
 
 // --- Applications for Seeker 2 (David Lee - user_seeker_02) ---
 if (seeker2 && allJobPostingIds.length >= 8) {
-  const seeker2JobIds = [allJobPostingIds[4], allJobPostingIds[5], allJobPostingIds[6], allJobPostingIds[7]]; // job_05 to job_08
+  const seeker2JobIds = allJobPostingIds.slice(4, 8); // Get next 4 job IDs safely
 
   // App 5: PENDING
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker2.id,
-    jobPostingId: seeker2JobIds[0], // e.g., job_05
+    jobPostingId: seeker2JobIds[0]!,
     cvUrl: `https://example.com/cv/${seeker2.firstName?.toLowerCase()}_${seeker2JobIds[0]}.pdf`,
     expectedSalary: 16000000,
     status: ApplicationStatus.PENDING,
@@ -126,7 +126,7 @@ if (seeker2 && allJobPostingIds.length >= 8) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker2.id,
-    jobPostingId: seeker2JobIds[1], // e.g., job_06
+    jobPostingId: seeker2JobIds[1]!,
     cvUrl: `https://example.com/cv/${seeker2.firstName?.toLowerCase()}_${seeker2JobIds[1]}.pdf`,
     coverLetter: "To Whom It May Concern, I am writing to express my interest...",
     expectedSalary: 20000000,
@@ -141,7 +141,7 @@ if (seeker2 && allJobPostingIds.length >= 8) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker2.id,
-    jobPostingId: seeker2JobIds[2], // e.g., job_07
+    jobPostingId: seeker2JobIds[2]!,
     cvUrl: `https://example.com/cv/${seeker2.firstName?.toLowerCase()}_${seeker2JobIds[2]}.pdf`,
     expectedSalary: 12000000,
     status: ApplicationStatus.INTERVIEW_SCHEDULED,
@@ -155,7 +155,7 @@ if (seeker2 && allJobPostingIds.length >= 8) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker2.id,
-    jobPostingId: seeker2JobIds[3], // e.g., job_08
+    jobPostingId: seeker2JobIds[3]!,
     cvUrl: `https://example.com/cv/${seeker2.firstName?.toLowerCase()}_${seeker2JobIds[3]}.pdf`,
     expectedSalary: 25000000,
     status: ApplicationStatus.REJECTED,
@@ -170,16 +170,15 @@ if (seeker2 && allJobPostingIds.length >= 8) {
   if (allJobPostingIds.length < 8) console.warn("Not enough job postings for Seeker 2's applications.");
 }
 
-
 // --- Applications for Seeker 3 (Siti Aminah - user_seeker_03) ---
 if (seeker3 && allJobPostingIds.length >= 12) {
-  const seeker3JobIds = [allJobPostingIds[8], allJobPostingIds[9], allJobPostingIds[10], allJobPostingIds[11]]; // job_09 to job_12
+  const seeker3JobIds = allJobPostingIds.slice(8, 12); // Get next 4 job IDs safely
 
   // App 9: PENDING
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker3.id,
-    jobPostingId: seeker3JobIds[0], // e.g., job_09
+    jobPostingId: seeker3JobIds[0]!,
     cvUrl: `https://example.com/cv/${seeker3.firstName?.toLowerCase()}_${seeker3JobIds[0]}.pdf`,
     expectedSalary: 8000000,
     status: ApplicationStatus.PENDING,
@@ -191,7 +190,7 @@ if (seeker3 && allJobPostingIds.length >= 12) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker3.id,
-    jobPostingId: seeker3JobIds[1], // e.g., job_10
+    jobPostingId: seeker3JobIds[1]!,
     cvUrl: `https://example.com/cv/${seeker3.firstName?.toLowerCase()}_${seeker3JobIds[1]}.pdf`,
     expectedSalary: 10000000,
     status: ApplicationStatus.REVIEWED,
@@ -205,7 +204,7 @@ if (seeker3 && allJobPostingIds.length >= 12) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker3.id,
-    jobPostingId: seeker3JobIds[2], // e.g., job_11
+    jobPostingId: seeker3JobIds[2]!,
     cvUrl: `https://example.com/cv/${seeker3.firstName?.toLowerCase()}_${seeker3JobIds[2]}.pdf`,
     coverLetter: "Dear Team, Please find my application for your consideration.",
     expectedSalary: 7500000,
@@ -220,7 +219,7 @@ if (seeker3 && allJobPostingIds.length >= 12) {
   jobApplications.push({
     id: generateApplicationId(appIndex++),
     userId: seeker3.id,
-    jobPostingId: seeker3JobIds[3], // e.g., job_12
+    jobPostingId: seeker3JobIds[3]!,
     cvUrl: `https://example.com/cv/${seeker3.firstName?.toLowerCase()}_${seeker3JobIds[3]}.pdf`,
     expectedSalary: 12000000,
     status: ApplicationStatus.REJECTED,

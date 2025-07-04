@@ -22,7 +22,10 @@
     "FACEBOOK_CLIENT_ID",
     "FACEBOOK_CLIENT_SECRET",
     "TWITTER_CLIENT_ID",
-    "TWITTER_CLIENT_SECRET"
+    "TWITTER_CLIENT_SECRET",
+    "PORT",
+    "NODE_ENV",
+    "FRONTEND_URL"
   ],
   "tasks": {
     "build": {
