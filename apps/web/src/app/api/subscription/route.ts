@@ -210,11 +210,12 @@ export async function POST(request: Request) {
           }
         });
       } catch (midtransError) {
-        await prisma.subscription.delete({ where: { id: newSubscription.id } });
-        return NextResponse.json({
-          error: 'Failed to create payment transaction',
-          details: midtransError instanceof Error ? midtransError.message : 'Unknown Midtrans error'
-        }, { status: 502 });
+      console.error('Failed to create Midtrans transaction. Full error object:', midtransError); // Log the whole object
+await prisma.subscription.delete({ where: { id: newSubscription.id } });
+return NextResponse.json({
+  error: 'Failed to create payment transaction',
+  details: midtransError instanceof Error ? midtransError.message : 'Unknown Midtrans error'
+}, { status: 502 });
       }
 
     } else if (paymentMethod === PaymentMethod.BANK_TRANSFER) {
