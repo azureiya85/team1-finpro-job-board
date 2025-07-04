@@ -1,5 +1,5 @@
 import 'server-only';
-import { Page, PDFOptions } from 'puppeteer';
+import { Page, PDFOptions } from 'puppeteer-core'; 
 import { 
   User, 
   WorkExperience, 

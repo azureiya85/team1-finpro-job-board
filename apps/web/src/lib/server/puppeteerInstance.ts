@@ -16,11 +16,54 @@ export async function getBrowserInstance(): Promise<Browser> {
 
   console.log('No existing browser instance. Launching a new one...');
 
-  const options = {
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
-    headless: true, 
-  };
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  let options;
+  
+  if (isDev) {
+    // Development configuration (local machine)
+    options = {
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ],
+    };
+  } else {
+    // Production configuration (Vercel)
+    try {
+      options = {
+        args: [
+          ...chromium.args,
+          '--hide-scrollbars',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+        ],
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      };
+    } catch (error) {
+      console.warn('Failed to use @sparticuz/chromium, falling back to local Chrome:', error);
+      // Fallback to local Chrome if chromium fails
+      options = {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu'
+        ],
+      };
+    }
+  }
 
   launchPromise = puppeteer.launch(options);
 
