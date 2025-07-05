@@ -1,11 +1,12 @@
 import 'server-only';
-import fs from 'fs'; 
+import fs from 'fs';
 import chromium from '@sparticuz/chromium';
 import puppeteer, { Browser, LaunchOptions } from 'puppeteer-core';
 
 let browserInstance: Browser | null = null;
 let launchPromise: Promise<Browser> | null = null;
 
+// This function is only for local development.
 function findLocalChrome(): string {
   const possiblePaths = [
     // Unix-like
@@ -20,11 +21,8 @@ function findLocalChrome(): string {
   ];
 
   for (const path of possiblePaths) {
-    try {
-      if (fs.existsSync(path)) {
-        return path;
-      }
-    } catch {
+    if (fs.existsSync(path)) {
+      return path;
     }
   }
   return '';
@@ -44,89 +42,50 @@ export async function getBrowserInstance(): Promise<Browser> {
   const isDev = process.env.NODE_ENV === 'development';
   let options: LaunchOptions;
 
-  const localChromeArgs = [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--no-first-run',
-    '--no-zygote',
-    '--disable-gpu',
-  ];
-
   if (isDev) {
-    // Development configuration: use a local Chrome installation
+    console.log('Running in development mode. Using local Chrome.');
     const executablePath = findLocalChrome();
-
     if (!executablePath) {
       throw new Error(
-        'Chrome executable not found. Please install Chrome or set CHROME_EXECUTABLE_PATH environment variable.',
+        'Chrome executable not found for development. Please install Chrome.',
       );
     }
-
     options = {
       executablePath,
-      headless: true,
-      args: localChromeArgs,
+      headless: true, 
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     };
   } else {
-    // Production configuration: use @sparticuz/chromium for serverless
-    try {
-      options = {
-        args: [
-          ...chromium.args,
-          '--hide-scrollbars',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-        ],
-        executablePath: await chromium.executablePath(),
-        headless: true, // Use headless mode (chromium.headless doesn't exist)
-      };
-    } catch (error) {
-      console.warn(
-        'Failed to use @sparticuz/chromium, falling back to local Chrome:',
-        error,
-      );
-      // Fallback for environments where @sparticuz/chromium fails
-      const executablePath = findLocalChrome();
-
-      if (!executablePath) {
-        throw new Error('Chrome executable not found in production fallback.');
-      }
-
-      options = {
-        executablePath,
-        headless: true,
-        args: localChromeArgs,
-      };
-    }
+    console.log('Running in production mode. Using @sparticuz/chromium.');
+    options = {
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true, 
+    };
   }
 
-  // Start the launch process and store the promise to prevent race conditions
   launchPromise = puppeteer.launch(options);
 
   try {
     const browser = await launchPromise;
     browserInstance = browser;
 
-    // Clean up when the browser disconnects
     browserInstance.on('disconnected', () => {
       console.log('Puppeteer browser instance has disconnected.');
       browserInstance = null;
-      launchPromise = null; // Allow a new instance to be launched
+      launchPromise = null;
     });
 
     console.log('New browser instance created successfully.');
     return browserInstance;
   } catch (error) {
     console.error('Failed to launch Puppeteer browser:', error);
-    // Clear the promise on failure to allow for future retries
-    launchPromise = null;
+    launchPromise = null; 
     throw error;
   }
 }
 
-// Graceful shutdown handler
+// Graceful shutdown handlers remain the same.
 async function closeBrowser() {
   if (browserInstance) {
     console.log('Closing browser instance...');
