@@ -46,6 +46,12 @@ const nextConfig: NextConfig = {
     // !! WARN !!
     ignoreBuildErrors: true,
   },
+
+  outputFileTracingIncludes: {
+    '/api/users/cv/generate': [
+      '../../node_modules/@sparticuz/chromium/bin/**',
+    ],
+  },
 };
 
 export default nextConfig;
