@@ -1,11 +1,24 @@
 import 'server-only';
-import puppeteer, { Browser, Page, PDFOptions } from 'puppeteer';
+import { Page, PDFOptions } from 'puppeteer-core';
+import { getBrowserInstance } from './puppeteerInstance';
 
 export interface CertificateTemplateProps {
   userName: string;
   assessmentTitle: string;
   issueDate: string;
   certificateCode: string;
+}
+
+// Simple HTML escape function for security 
+function escapeHtml(text: string): string {
+  const map: { [key: string]: string } = {
+    '&': '&',
+    '<': '<',
+    '>': '>',
+    '"': '"',
+    "'": ''
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // Generate HTML template 
@@ -162,89 +175,30 @@ function generateCertificateHTML({
 </html>`;
 }
 
-// Simple HTML escape function for security
-function escapeHtml(text: string): string {
-  const map: { [key: string]: string } = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
-}
-
 export async function generateCertificatePdf(props: CertificateTemplateProps): Promise<Buffer> {
-  let browser: Browser | null = null;
+  let page: Page | null = null;
   
   try {
-    // 1. Generate HTML content directly
     const htmlContent = generateCertificateHTML(props);
 
-    // 2. Launch Puppeteer
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-field-trial-config', 
-        '--disable-back-forward-cache',
-        '--disable-hang-monitor',
-        '--disable-ipc-flooding-protection',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-translate',
-        '--hide-scrollbars',
-        '--mute-audio',
-        '--no-default-browser-check',
-        '--no-pings',
-        '--password-store=basic',
-        '--use-mock-keychain',
-        '--disable-component-extensions-with-background-pages'
-      ],
-      // Remove timeout from launch options
-      timeout: 60000, // 60 seconds for launch
-    });
+    // 1. Get the shared browser instance, just like in cvGenerator.ts
+    const browser = await getBrowserInstance();
+    page = await browser.newPage();
 
-    const page: Page = await browser.newPage();
-
-    // 3. Set viewport for consistent rendering
+    // 2. Set viewport for consistent rendering
     await page.setViewport({ width: 1200, height: 800 });
 
-    // 4. Set the content and wait for it to be ready
+    // 3. Set the content and wait for it to be ready
     await page.setContent(htmlContent, { 
       waitUntil: 'domcontentloaded', 
-      timeout: 30000 // 30 second timeout
     });
 
-    // Wait a bit for fonts and rendering to settle
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 5. Generate the PDF with optimized settings
+    // 4. Generate the PDF with optimized settings
     const pdfOptions: PDFOptions = {
       format: 'A4',
       landscape: true,
       printBackground: true,
-      preferCSSPageSize: false,
-      margin: {
-        top: '0px',
-        right: '0px',
-        bottom: '0px',
-        left: '0px',
-      },
-      timeout: 30000, // 30 second timeout
+      margin: { top: '0px', right: '0px', bottom: '0px', left: '0px' },
     };
 
     const pdfBuffer = await page.pdf(pdfOptions);
@@ -253,16 +207,11 @@ export async function generateCertificatePdf(props: CertificateTemplateProps): P
     return Buffer.from(pdfBuffer);
 
   } catch (error) {
-    console.error('PDF generation error:', error);
+    console.error('Certificate PDF generation error:', error);
     throw new Error(`Failed to generate certificate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
-    // 6. Ensure browser is always closed
-    if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        console.error('Error closing browser:', closeError);
-      }
+    if (page) {
+      await page.close();
     }
   }
 }
