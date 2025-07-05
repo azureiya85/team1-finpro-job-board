@@ -26,6 +26,15 @@ export const updateCompanySchema = z.object({
 });
 export type UpdateCompanyFormData = z.infer<typeof updateCompanySchema>;
 
+// Define the allowed sort values for type safety and validation
+const SortByTypeSchema = z.enum([
+  'newest',
+  'oldest',
+  'company_asc',
+  'company_desc'
+]).default('newest');
+
+
 // Job Search Query Schema 
 export const jobSearchParamsSchema = z.object({
   take: z.coerce.number().int().positive().optional(),
@@ -38,20 +47,25 @@ export const jobSearchParamsSchema = z.object({
   userLongitude: z.coerce.number().optional(),
   radiusKm: z.coerce.number().min(1).max(500).optional().default(25),
 
+  sortBy: SortByTypeSchema.optional(),
+  startDate: z.string().datetime({ message: "Invalid start date format" }).optional(),
+  endDate: z.string().datetime({ message: "Invalid end date format" }).optional(),
+
+
   categories: z.preprocess(
-    (val) => (typeof val === 'string' ? val.split(',') : val),
+    (val) => (Array.isArray(val) ? val : typeof val === 'string' ? val.split(',') : []),
     z.array(z.nativeEnum(JobCategory)).optional()
   ),
   employmentTypes: z.preprocess(
-    (val) => (typeof val === 'string' ? val.split(',') : val),
+    (val) => (Array.isArray(val) ? val : typeof val === 'string' ? val.split(',') : []),
     z.array(z.nativeEnum(EmploymentType)).optional()
   ),
   experienceLevels: z.preprocess(
-    (val) => (typeof val === 'string' ? val.split(',') : val),
+    (val) => (Array.isArray(val) ? val : typeof val === 'string' ? val.split(',') : []),
     z.array(z.nativeEnum(ExperienceLevel)).optional()
   ),
   companySizes: z.preprocess(
-    (val) => (typeof val === 'string' ? val.split(',') : val),
+    (val) => (Array.isArray(val) ? val : typeof val === 'string' ? val.split(',') : []),
     z.array(z.nativeEnum(CompanySize)).optional()
   ),
   isRemote: z.preprocess(val => {
@@ -67,6 +81,15 @@ export const jobSearchParamsSchema = z.object({
   }, {
     message: "Both latitude and longitude must be provided together, or neither.",
     path: ["userLatitude", "userLongitude"], 
+})
+.refine(data => {
+    if (data.startDate && data.endDate) {
+      return new Date(data.startDate) <= new Date(data.endDate);
+    }
+    return true;
+}, {
+    message: "Start date cannot be after the end date.",
+    path: ["startDate"],
 });
 
 export type JobSearchParamsData = z.infer<typeof jobSearchParamsSchema>;

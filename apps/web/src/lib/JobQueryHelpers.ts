@@ -37,11 +37,26 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     cityId, provinceId, categories, employmentTypes, experienceLevels, 
     companySizes, isRemote, companyId,
     companyQuery,
-    companyLocationQuery 
+    companyLocationQuery,
+    startDate, 
+    endDate,   
   } = params;
 
   const where: Prisma.JobPostingWhereInput = { isActive: true, publishedAt: { not: null } };
   const andConditions: Prisma.JobPostingWhereInput[] = [];
+
+  if (startDate || endDate) {
+    const dateFilter: Prisma.DateTimeFilter = {};
+    if (startDate) {
+      dateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      dateFilter.lte = endOfDay;
+    }
+    andConditions.push({ publishedAt: dateFilter });
+  }
 
   if (userLatitude !== undefined && userLongitude !== undefined) {
     const { minLat, maxLat, minLon, maxLon } = getBoundingBox(userLatitude, userLongitude, radiusKm);

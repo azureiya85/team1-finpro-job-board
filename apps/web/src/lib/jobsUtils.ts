@@ -28,10 +28,10 @@ export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFea
     take = 10, skip = 0, orderBy, includePagination = false,
     userLatitude, userLongitude, radiusKm = 25,
   } = params;
-
-  const effectiveOrderBy = orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
+  
   const where = buildWhereClause(params);
-
+  const effectiveOrderBy = orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
+  
   const selectFields = {
     id: true, title: true, description: true, employmentType: true, experienceLevel: true, category: true, isRemote: true,
     latitude: true, longitude: true, createdAt: true, publishedAt: true, salaryMin: true, salaryMax: true, salaryCurrency: true,
