@@ -47,8 +47,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  outputFileTracingIncludes: {
+ outputFileTracingIncludes: {
     '/api/users/cv/generate': [
+      '../../node_modules/@sparticuz/chromium/bin/**',
+    ],
+    '/api/users/certificates/**': [
       '../../node_modules/@sparticuz/chromium/bin/**',
     ],
   },
