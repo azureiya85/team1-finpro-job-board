@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getJobs } from '@/lib/jobsUtils';
-import { GetJobsParams } from '@/types/jobs';
+import { GetJobsParams } from '@/types';
 import { jobSearchParamsSchema } from '@/lib/validations/zodCompanyValidation';
 import { Prisma } from '@prisma/client';
 
