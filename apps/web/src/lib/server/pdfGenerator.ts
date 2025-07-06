@@ -167,7 +167,7 @@ function generateCertificateHTML({
             </div>
             <div class="signature-block">
                 <div class="signature-line"></div>
-                <div class="signature-name">CEO, YourApp</div>
+                <div class="signature-name">CEO, Work Vault</div>
             </div>
         </footer>
     </div>
