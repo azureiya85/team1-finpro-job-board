@@ -163,7 +163,7 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
       }
 
       toast.success(isEditing ? 'Job updated successfully' : 'Job created successfully');
-      router.push('/company/profile');
+      router.push(`/companies/${companyId}`);
     } catch (error) {
       console.error('Error saving job posting:', error);
       toast.error('Failed to save job posting');
@@ -186,7 +186,7 @@ export function CreateJobForm({ jobId, isEditing, companyId }: CreateJobFormProp
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push('/company/profile')}
+          onClick={() => router.push(`/companies/${companyId}`)}
           disabled={isSubmitting}
         >
           Cancel
