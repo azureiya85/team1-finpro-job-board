@@ -2,20 +2,40 @@ import prisma from '@/lib/prisma';
 import { JobPostingForRelatedSearch, JobPostingFeatured } from '@/types';
 import type { GetJobsParams, GetJobsResult } from '@/types'; 
 import { buildWhereClause, calculateDistance } from './JobQueryHelpers';
+import { auth } from '@/auth';
 
 export async function getJobById(id: string): Promise<JobPostingForRelatedSearch | null> {
   if (!id) return null;
 
   try {
+    const session = await auth();
+    
     const job = await prisma.jobPosting.findUnique({
       where: { id: id },
-      include: { // Include is perfect here as it gets all fields
-        company: {
-          select: { id: true } 
-        },
+      include: {
+        company: true, 
+        province: true, 
+        city: true, 
+        ...(session && {
+          savedByUsers: {
+            where: {
+              userId: session.user.id
+            }
+          }
+        })
       },
     });
-    return job as JobPostingForRelatedSearch | null;
+
+    if (!job) {
+      return null;
+    }
+
+    const jobWithSavedStatus = {
+      ...job,
+      isSavedByCurrentUser: session ? job.savedByUsers.length > 0 : false
+    };
+
+    return jobWithSavedStatus as JobPostingForRelatedSearch | null;
   } catch (error) {
     console.error(`[UTIL_GET_JOB_BY_ID] Failed to fetch job ${id}:`, error);
     return null; // Return null on error
