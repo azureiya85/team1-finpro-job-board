@@ -21,40 +21,47 @@ const initialFilterState = {
 export const createFilterSlice: StateCreator<JobSearchStoreState, [], [], JobFilterSlice> = (set, get) => ({
   ...initialFilterState,
 
-  // --- Single-value setters (Unchanged) ---
+  // --- Input setters that do not trigger a fetch ---
   setSearchTermInput: (term: string) => set({ searchTermInput: term }),
   setLocationSearchInput: (location: string) => set({ locationSearchInput: location }),
   setCompanySearchInput: (company: string) => set({ companySearchInput: company }),
+
+  // --- Actions that do trigger a fetch by resetting to page 1 ---
   setCompanyLocationInput: (location: string) => {
-    set({ companyLocationInput: location, currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ companyLocationInput: location });
+    get().setCurrentPage(1); 
   },
   setIsRemote: (isRemote?: boolean) => {
-    set({ isRemote, currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ isRemote });
+    get().setCurrentPage(1); 
   },
   setSortBy: (sortBy: SortByType) => { 
-    set({ sortBy, currentPage: 1, skip: 0 });
-    get().fetchJobs();
-  },
-  setDatePosted: (datePosted: DatePostedType) => {
-    set({ datePosted, startDate: undefined, endDate: undefined, currentPage: 1, skip: 0 });
-    get().fetchJobs();
-  },
-  setDateRange: (start?: Date, end?: Date) => {
-    set({ startDate: start, endDate: end, datePosted: 'custom', currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ sortBy });
+    get().setCurrentPage(1); 
   },
 
-  // --- Robust array updaters (FIXED) ---
+    applyDebouncedSearch: () => {
+    get().setCurrentPage(1);
+  },
+  
+  setDatePosted: (datePosted: DatePostedType) => {
+    set({ datePosted, startDate: undefined, endDate: undefined });
+    get().setCurrentPage(1); 
+  },
+  setDateRange: (start?: Date, end?: Date) => {
+    set({ startDate: start, endDate: end, datePosted: 'custom' });
+    get().setCurrentPage(1); 
+  },
+
+  // --- Array updaters that do trigger a fetch by resetting to page 1 ---
   updateCategory: (category: JobCategory, isChecked: boolean) => {
     const currentCategories = get().categories || [];
     const newCategories = isChecked
       ? [...currentCategories, category]
       : currentCategories.filter((c) => c !== category);
     
-    set({ categories: newCategories, currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ categories: newCategories });
+    get().setCurrentPage(1); 
   },
 
   updateEmploymentType: (type: EmploymentType, isChecked: boolean) => {
@@ -63,8 +70,8 @@ export const createFilterSlice: StateCreator<JobSearchStoreState, [], [], JobFil
       ? [...currentTypes, type]
       : currentTypes.filter((t) => t !== type);
     
-    set({ employmentTypes: newTypes, currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ employmentTypes: newTypes });
+    get().setCurrentPage(1); 
   },
 
   updateExperienceLevel: (level: ExperienceLevel, isChecked: boolean) => {
@@ -73,8 +80,8 @@ export const createFilterSlice: StateCreator<JobSearchStoreState, [], [], JobFil
       ? [...currentLevels, level]
       : currentLevels.filter((l) => l !== level);
     
-    set({ experienceLevels: newLevels, currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ experienceLevels: newLevels });
+    get().setCurrentPage(1);
   },
   
   updateCompanySize: (size: CompanySize, isChecked: boolean) => {
@@ -83,13 +90,13 @@ export const createFilterSlice: StateCreator<JobSearchStoreState, [], [], JobFil
       ? [...currentSizes, size]
       : currentSizes.filter((s) => s !== size);
       
-    set({ companySizes: newSizes, currentPage: 1, skip: 0 });
-    get().fetchJobs();
+    set({ companySizes: newSizes });
+    get().setCurrentPage(1); 
   },
   
-  // --- Reset function (Unchanged) ---
+  // --- Reset function that triggers a fetch by resetting to page 1 ---
   resetFilters: () => {
-    set({ ...initialFilterState, jobs: get().jobs, totalJobs: get().totalJobs, error: null });
-    get().fetchJobs();
+    set({ ...initialFilterState });
+    get().setCurrentPage(1); 
   },
 });

@@ -1,78 +1,58 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useJobSearch } from '@/hooks/useJobSearch';
 import { useJobSearchStore } from '@/stores/jobSearchStore';
-import type { JobSearchStoreState } from '@/types/zustandSearch'; 
-import { useDebouncedJobSearchActions } from '@/hooks/useJobSearch';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Search, MapPin, Building2 } from 'lucide-react';
+import { useEffect } from 'react';
 
 const searchFormSchema = z.object({
-  jobTitle: z.string().optional(),
-  location: z.string().optional(),
-  company: z.string().optional(),
+  jobTitle: z.string(),
+  location: z.string(),
+  company: z.string(),
 });
 
 type SearchFormValues = z.infer<typeof searchFormSchema>;
 
 export function SearchJobSection() {
-const storeSearchTerm = useJobSearchStore((state) => state.searchTermInput);
-const storeLocationSearch = useJobSearchStore((state) => state.locationSearchInput);;
-  const storeCompanySearch = useJobSearchStore((state: JobSearchStoreState) => state.companySearchInput);
-
   const {
-    setSearchTermInput: debouncedSetSearchTerm,
-    setLocationSearchInput: debouncedSetLocationSearch,
-    setCompanySearchInput: debouncedSetCompanySearch,
-  } = useDebouncedJobSearchActions();
+    searchTermInput,
+    locationSearchInput,
+    companySearchInput,
+    setSearchTermInput,
+    setLocationSearchInput,
+    setCompanySearchInput,
+  } = useJobSearch();
+  
+  // Get the explicit search trigger for the "Search" button
+  const applyDebouncedSearch = useJobSearchStore((state) => state.applyDebouncedSearch);
 
-const fetchJobs = useJobSearchStore((state) => state.fetchJobs);
-
+  // Initialize react-hook-form, using the store's state as the default values.
   const form = useForm<SearchFormValues>({
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
-      jobTitle: storeSearchTerm || '',
-      location: storeLocationSearch || '',
-      company: storeCompanySearch || '',
+      jobTitle: searchTermInput,
+      location: locationSearchInput,
+      company: companySearchInput,
     },
   });
 
   useEffect(() => {
-    form.setValue('jobTitle', storeSearchTerm || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-  }, [storeSearchTerm, form]); 
-
-  useEffect(() => {
-    form.setValue('location', storeLocationSearch || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-  }, [storeLocationSearch, form]);
-
-  useEffect(() => {
-    form.setValue('company', storeCompanySearch || '', { shouldValidate: false, shouldDirty: false, shouldTouch: false });
-  }, [storeCompanySearch, form]);
-
-  const jobTitleValue = form.watch('jobTitle');
-  const locationValue = form.watch('location');
-  const companyValue = form.watch('company');
-
-  useEffect(() => {
-    debouncedSetSearchTerm(jobTitleValue === undefined ? '' : jobTitleValue);
-  }, [jobTitleValue, debouncedSetSearchTerm]);
-
-  useEffect(() => {
-    debouncedSetLocationSearch(locationValue === undefined ? '' : locationValue);
-  }, [locationValue, debouncedSetLocationSearch]);
-
-  useEffect(() => {
-    debouncedSetCompanySearch(companyValue === undefined ? '' : companyValue);
-  }, [companyValue, debouncedSetCompanySearch]);
-
-  const onSubmit = (values: SearchFormValues) => {
-    console.log("Form submitted, triggering explicit fetch with current store state:", values);
-    fetchJobs();
+    const subscription = form.watch((values) => {
+      setSearchTermInput(values.jobTitle || '');
+      setLocationSearchInput(values.location || '');
+      setCompanySearchInput(values.company || '');
+    });
+    return () => subscription.unsubscribe();
+  }, [form, setSearchTermInput, setLocationSearchInput, setCompanySearchInput]);
+  
+  const onSubmit = () => {
+    applyDebouncedSearch();
   };
 
   return (

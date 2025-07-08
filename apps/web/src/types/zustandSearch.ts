@@ -36,6 +36,7 @@ export interface JobFilterSlice {
   startDate?: Date;
   endDate?: Date;
   
+  
   // --- State Setters / Actions ---
 
   setSearchTermInput: (term: string) => void;
@@ -51,6 +52,7 @@ export interface JobFilterSlice {
   updateEmploymentType: (type: EmploymentType, isChecked: boolean) => void;
   updateExperienceLevel: (level: ExperienceLevel, isChecked: boolean) => void;
   updateCompanySize: (size: CompanySize, isChecked: boolean) => void;
+   applyDebouncedSearch: () => void;
   
   resetFilters: () => void;
 }
@@ -132,3 +134,15 @@ export interface CompanyPaginationSlice {
 
 // Combined Company Search State
 export type CompanySearchStoreState = CompanyFilterSlice & CompanyDataSlice & CompanyPaginationSlice;
+
+export interface JobPaginationSlice {
+  currentPage: number;
+  pageSize: number; 
+  skip?: number;
+  take?: number;
+  displayedJobsCount: number; 
+  isLoadingMore: boolean; 
+  loadMoreJobs: () => void; 
+  setCurrentPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+}

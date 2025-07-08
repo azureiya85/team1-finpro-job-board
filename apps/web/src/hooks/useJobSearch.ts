@@ -1,53 +1,42 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
-import {
-  useJobSearchStore,
-  JobSearchState,   
-  JobSearchActions 
-} from '@/stores/jobSearchStore';
+import { useJobSearchStore } from '@/stores/jobSearchStore';
+import type { JobSearchStoreState } from '@/types/zustandSearch';
 
-export function useDebouncedJobSearchActions(debounceMs: number = 500) {
-  // --- Select individual state slices and actions ---
-  const searchTermInput = useJobSearchStore((state: JobSearchState) => state.searchTermInput);
-  const locationSearchInput = useJobSearchStore((state: JobSearchState) => state.locationSearchInput);
-  const companySearchInput = useJobSearchStore((state: JobSearchState) => state.companySearchInput);
-  const categories = useJobSearchStore((state: JobSearchState) => state.categories);
-  const employmentTypes = useJobSearchStore((state: JobSearchState) => state.employmentTypes);
-  const experienceLevels = useJobSearchStore((state: JobSearchState) => state.experienceLevels);
-  const companySizes = useJobSearchStore((state: JobSearchState) => state.companySizes);
-  const isRemote = useJobSearchStore((state: JobSearchState) => state.isRemote);
-  const currentPage = useJobSearchStore((state: JobSearchState) => state.currentPage);
-  const pageSize = useJobSearchStore((state: JobSearchState) => state.pageSize);
+export function useJobSearch(debounceMs: number = 500) {
+  // --- Select state and actions from the store ---
+  const searchTermInput = useJobSearchStore((state: JobSearchStoreState) => state.searchTermInput);
+  const locationSearchInput = useJobSearchStore((state: JobSearchStoreState) => state.locationSearchInput);
+  const companySearchInput = useJobSearchStore((state: JobSearchStoreState) => state.companySearchInput);
 
-  const setSearchTermInput = useJobSearchStore((state: JobSearchActions) => state.setSearchTermInput);
-  const setLocationSearchInput = useJobSearchStore((state: JobSearchActions) => state.setLocationSearchInput);
-  const setCompanySearchInput = useJobSearchStore((state: JobSearchActions) => state.setCompanySearchInput);
-  const fetchJobs = useJobSearchStore((state: JobSearchActions) => state.fetchJobs);
+  const setSearchTermInput = useJobSearchStore((state: JobSearchStoreState) => state.setSearchTermInput);
+  const setLocationSearchInput = useJobSearchStore((state: JobSearchStoreState) => state.setLocationSearchInput);
+  const setCompanySearchInput = useJobSearchStore((state: JobSearchStoreState) => state.setCompanySearchInput);
+  const applyDebouncedSearch = useJobSearchStore((state: JobSearchStoreState) => state.applyDebouncedSearch);
 
-  // Debounce the UI input state values that are directly typed by the user
-  const [debouncedSearchTermInput] = useDebounce(searchTermInput, debounceMs);
-  const [debouncedLocationSearchInput] = useDebounce(locationSearchInput, debounceMs);
-  const [debouncedCompanySearchInput] = useDebounce(companySearchInput, debounceMs);
+  // Debounce the input values
+  const [debouncedSearchTerm] = useDebounce(searchTermInput, debounceMs);
+  const [debouncedLocation] = useDebounce(locationSearchInput, debounceMs);
+  const [debouncedCompany] = useDebounce(companySearchInput, debounceMs);
+
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
-    fetchJobs();
-  }, [
-    debouncedSearchTermInput,
-    debouncedLocationSearchInput,
-    debouncedCompanySearchInput,
-    categories,          
-    employmentTypes,     
-    experienceLevels,    
-    companySizes,       
-    isRemote,            
-    currentPage,         
-    pageSize,           
-    fetchJobs,           
-  ]);
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    // When a debounced value changes, call the action in the store.
+    applyDebouncedSearch();
+  }, [debouncedSearchTerm, debouncedLocation, debouncedCompany, applyDebouncedSearch]);
 
+  // Return everything needed to create controlled input components
   return {
+    searchTermInput,
+    locationSearchInput,
+    companySearchInput,
     setSearchTermInput,
     setLocationSearchInput,
     setCompanySearchInput,
