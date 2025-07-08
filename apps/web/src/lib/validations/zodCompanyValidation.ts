@@ -46,6 +46,7 @@ export const jobSearchParamsSchema = z.object({
   userLatitude: z.coerce.number().optional(),
   userLongitude: z.coerce.number().optional(),
   radiusKm: z.coerce.number().min(1).max(500).optional().default(25),
+  companyLocationQuery: z.string().optional(),
 
   sortBy: SortByTypeSchema.optional(),
   startDate: z.string().datetime({ message: "Invalid start date format" }).optional(),

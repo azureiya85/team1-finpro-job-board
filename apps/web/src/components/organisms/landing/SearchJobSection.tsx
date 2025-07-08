@@ -8,7 +8,7 @@ import { useJobSearchStore } from '@/stores/jobSearchStore';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Search, MapPin, Building2 } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import { useEffect } from 'react';
 
 const searchFormSchema = z.object({
@@ -60,7 +60,7 @@ export function SearchJobSection() {
       <h2 className="text-xl font-bold font-heading text-foreground mb-4">Search Jobs</h2>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
               name="jobTitle"
@@ -92,23 +92,7 @@ export function SearchJobSection() {
                   <FormMessage />
                 </FormItem>
               )}
-            />
-            <FormField
-              control={form.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-semibold">By Company</FormLabel>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="e.g., Google, Microsoft" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            />   
           </div>
           <div className="flex justify-end">
             <Button type="submit" className="bg-primary hover:bg-primary/90">

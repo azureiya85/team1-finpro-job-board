@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     sortBy, 
     startDate,
     endDate,
+    companyLocationQuery,
   } = validationResult.data;
 
   // Build the orderBy array based on the sortBy parameter
@@ -101,6 +102,7 @@ export async function GET(request: NextRequest) {
     orderBy, 
     startDate, 
     endDate, 
+     companyLocationQuery,
     includePagination: searchParams.has('includePagination') ? searchParams.get('includePagination') === 'true' : false,
   };
 

@@ -83,7 +83,7 @@ export interface JobPaginationSlice {
 // Combined Job Search State
 export type JobSearchStoreState = JobFilterSlice & JobDataSlice & JobLocationSlice & JobPaginationSlice;
 
-// --- Company Search Store Types (Unchanged) ---
+// --- Company Search Store Types ---
 
 export type CompanyWithDetails = Pick<Company, 'id' | 'name' | 'description' | 'logo'> & {
   province: Pick<Province, 'id' | 'name'> | null;
@@ -103,7 +103,7 @@ export type PaginationState = {
 
 export type CompanySortByType = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 
-// --- Company Search Slices (Unchanged) ---
+// --- Company Search Slices ---
 
 export interface CompanyFilterSlice {
   searchInput: string;

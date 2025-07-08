@@ -87,9 +87,11 @@ export function FilterAccordion() {
         </AccordionContent>
       </AccordionItem>
 
-     {/* Job Category Filter */}
+   {/* Job Category Filter */}
       <AccordionItem value="job-category">
-        <AccordionTrigger>Job Category</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Job Category
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Job Category"
@@ -102,7 +104,9 @@ export function FilterAccordion() {
       
       {/* Employment Type Filter */}
       <AccordionItem value="employment-type">
-        <AccordionTrigger>Employment Type</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Employment Type
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Employment Type"
@@ -115,7 +119,9 @@ export function FilterAccordion() {
 
       {/* Experience Level Filter */}
       <AccordionItem value="experience-level">
-        <AccordionTrigger>Experience Level</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Experience Level
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Experience Level"
@@ -154,9 +160,11 @@ export function FilterAccordion() {
         </AccordionContent>
       </AccordionItem>
 
-      {/* Company Size Filter */}
+       {/* Company Size Filter */}
       <AccordionItem value="company-size">
-        <AccordionTrigger>Company Size</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Company Size
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Company Size"

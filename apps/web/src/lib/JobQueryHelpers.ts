@@ -96,26 +96,33 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
   if (experienceLevels?.length) andConditions.push({ experienceLevel: { in: experienceLevels } });
   if (typeof isRemote === 'boolean') andConditions.push({ isRemote });
 
-  const companyFilter: Prisma.CompanyWhereInput = {};
+   const companyAndConditions: Prisma.CompanyWhereInput[] = [];
 
   if (companyQuery) {
-    companyFilter.name = { contains: companyQuery, mode: 'insensitive' };
+    companyAndConditions.push({ name: { contains: companyQuery, mode: 'insensitive' } });
   }
   if (companySizes?.length) {
-    companyFilter.size = { in: companySizes };
+    companyAndConditions.push({ size: { in: companySizes } });
   }
   if (companyLocationQuery) {
-    companyFilter.OR = [
-      { city: { is: { name: { contains: companyLocationQuery, mode: 'insensitive' } } } },
-      { province: { is: { name: { contains: companyLocationQuery, mode: 'insensitive' } } } },
-    ];
+    companyAndConditions.push({
+      OR: [
+        { city: { is: { name: { equals: companyLocationQuery, mode: 'insensitive' } } } },
+        { province: { is: { name: { equals: companyLocationQuery, mode: 'insensitive' } } } },
+      ],
+    });
+  }
+
+  if (companyAndConditions.length > 0) {
+    andConditions.push({
+      company: {
+        is: {
+          AND: companyAndConditions,
+        },
+      },
+    });
   }
   
-  if (Object.keys(companyFilter).length > 0) {
-    andConditions.push({ company: { is: companyFilter } });
-  }
-  
-  // Handle direct company ID filter separately
   if (companyId) {
     andConditions.push({ companyId });
   }
