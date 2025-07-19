@@ -105,6 +105,10 @@ export interface JobPostingInStore {
 // Alias for JobManagementStore compatibility
 export type JobPostingWithApplicantCount = JobPostingInStore;
 
+export type JobPostingForRelatedSearch = JobPosting & {
+  company: Pick<Company, 'id'> | null;
+};
+
 // ============================================================================
 // SEARCH AND FILTER TYPES
 // ============================================================================
@@ -142,11 +146,11 @@ export interface GetJobsParams {
   cityId?: string;        
   provinceId?: string;    
 
-  // Filter Parameters
-  categories?: string;
-  employmentTypes?: string;
-  experienceLevels?: string;
-  companySizes?: string;
+  categories?: JobCategory[];
+  employmentTypes?: EmploymentType[];
+  experienceLevels?: ExperienceLevel[];
+  companySizes?: CompanySize[];
+  
   isRemote?: boolean;  
   companyId?: string;
 
@@ -155,6 +159,8 @@ export interface GetJobsParams {
   sortBy?: SortByType;   
   startDate?: string;    
   endDate?: string;      
+
+  orderBy?: Prisma.JobPostingOrderByWithRelationInput[]; 
 
   // Response options
   includePagination?: boolean; 

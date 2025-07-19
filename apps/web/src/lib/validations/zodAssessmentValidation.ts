@@ -3,8 +3,9 @@ import { z } from 'zod';
 export const SkillCategoryCreateSchema = z.object({
   name: z.string().min(3, "Name must be at least 3 characters long"),
   description: z.string().optional(),
-  icon: z.string().url("Must be a valid URL").optional(),
+   icon: z.string().max(4, "Icon should be a single emoji").optional(), 
 });
+
 export type SkillCategoryCreateInput = z.infer<typeof SkillCategoryCreateSchema>;
 
 export const SkillCategoryUpdateSchema = SkillCategoryCreateSchema.partial();

@@ -8,7 +8,7 @@ import {
   Target,
   CreditCard,
   Activity,
-  Wallet
+  // Wallet
 } from "lucide-react";
 
 import { DashboardData, DashboardStats } from "@/types/devDashboard";
@@ -39,7 +39,7 @@ export default function DevDashboardOverviewHeader({ data, stats }: DevDashboard
       </div>
 
       {/* Key Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Subscriptions</CardTitle>
@@ -53,7 +53,8 @@ export default function DevDashboardOverviewHeader({ data, stats }: DevDashboard
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        {/* Total Revenue Card - Commented out for demo */}
+        {/* <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -64,7 +65,7 @@ export default function DevDashboardOverviewHeader({ data, stats }: DevDashboard
               From {data.subscriptions.data.filter((sub) => sub.paymentStatus === 'PAID').length} paid subscriptions
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

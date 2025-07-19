@@ -1,79 +1,106 @@
 import 'server-only';
-import puppeteer, { Browser } from 'puppeteer';
+import fs from 'fs';
+import chromium from '@sparticuz/chromium';
+import puppeteer, { Browser, LaunchOptions } from 'puppeteer-core';
 
 let browserInstance: Browser | null = null;
-// This promise will act as a lock to prevent race conditions during launch.
 let launchPromise: Promise<Browser> | null = null;
 
+// This function is only for local development.
+function findLocalChrome(): string {
+  const possiblePaths = [
+    // Unix-like
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    // macOS
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    // Windows
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  ];
+
+  for (const path of possiblePaths) {
+    if (fs.existsSync(path)) {
+      return path;
+    }
+  }
+  return '';
+}
+
 export async function getBrowserInstance(): Promise<Browser> {
-  // If we have a connected instance, reuse it immediately.
   if (browserInstance && browserInstance.isConnected()) {
     return browserInstance;
   }
 
-  // If a launch is already in progress, wait for it to complete and return the result.
   if (launchPromise) {
     return launchPromise;
   }
 
-  // If no instance exists and no launch is in progress, start a new one.
   console.log('No existing browser instance. Launching a new one...');
-  
-  const options = {
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      // '--single-process', // Avoid in production, but can help debug in constrained envs
-      '--disable-gpu',
-    ],
-  };
 
-  // Assign the launch promise to our "lock" variable.
+  const isDev = process.env.NODE_ENV === 'development';
+  let options: LaunchOptions;
+
+  if (isDev) {
+    console.log('Running in development mode. Using local Chrome.');
+    const executablePath = findLocalChrome();
+    if (!executablePath) {
+      throw new Error(
+        'Chrome executable not found for development. Please install Chrome.',
+      );
+    }
+    options = {
+      executablePath,
+      headless: true, 
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    };
+  } else {
+    console.log('Running in production mode. Using @sparticuz/chromium.');
+    options = {
+      args: chromium.args,
+      executablePath: await chromium.executablePath(),
+      headless: true, 
+    };
+  }
+
   launchPromise = puppeteer.launch(options);
 
   try {
-    // Wait for the launch to complete.
     const browser = await launchPromise;
     browserInstance = browser;
-    
-    // Set up a listener to clear the instance if it disconnects unexpectedly.
+
     browserInstance.on('disconnected', () => {
       console.log('Puppeteer browser instance has disconnected.');
       browserInstance = null;
+      launchPromise = null;
     });
 
+    console.log('New browser instance created successfully.');
     return browserInstance;
   } catch (error) {
-    // If launch fails, we must clear the promise to allow for a retry.
     console.error('Failed to launch Puppeteer browser:', error);
-    throw error; // Re-throw the error to the caller.
-  } finally {
-    // Once the launch is complete (success or fail), clear the promise lock.
-    // This allows the next call to initiate a new launch if the browser has been closed.
+    launchPromise = null; 
+    throw error;
+  }
+}
+
+// Graceful shutdown handlers remain the same.
+async function closeBrowser() {
+  if (browserInstance) {
+    console.log('Closing browser instance...');
+    await browserInstance.close();
+    browserInstance = null;
     launchPromise = null;
   }
 }
 
-// Your graceful shutdown handlers are still valuable for production.
 process.on('SIGINT', async () => {
-  if (browserInstance) {
-    console.log('Closing browser instance on SIGINT...');
-    await browserInstance.close();
-    browserInstance = null;
-  }
+  await closeBrowser();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  if (browserInstance) {
-    console.log('Closing browser instance on SIGTERM...');
-    await browserInstance.close();
-    browserInstance = null;
-  }
+  await closeBrowser();
   process.exit(0);
 });

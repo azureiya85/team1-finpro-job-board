@@ -1,22 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Briefcase, Loader2 } from 'lucide-react';
 import { JobPostingFeatured } from '@/types';
 import { RelatedJobCard } from '@/components/molecules/jobs/RelatedJobCard';
 import { AnimatePresence } from 'framer-motion';
-import { buildRelatedJobsQuery, filterRelatedJobs, parseJobsResponse } from '@/lib/attemptFilterHelper';
 import { useHorizontalScroll, createScrollIndicators } from '@/lib/scrollHelper';
-
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api',
-  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-  timeout: 10000,
-  withCredentials: true,
-});
 
 interface Props { currentJob: JobPostingFeatured }
 
@@ -27,40 +18,45 @@ export function JobDetailsRelated({ currentJob }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollState, scrollLeft, scrollRight } = useHorizontalScroll(scrollRef, relatedJobs.length);
 
-  const fetchJobs = useCallback(async (attempt = 1) => {
-    if (attempt === 1) {
-      setIsLoading(true);
-      setError(null);
-      setRelatedJobs([]);
-    }
+    const fetchRelatedJobs = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setRelatedJobs([]);
 
     try {
-      const query = buildRelatedJobsQuery(currentJob, attempt);
-      const res = await api.get(`/jobs?${query}`);
-      const parsed = parseJobsResponse(res.data);
-      const filtered = filterRelatedJobs(parsed, currentJob.id, 5);
+      const res = await fetch(`/api/jobs/related?jobId=${currentJob.id}`);
 
-      if (filtered.length >= 3 || attempt >= 4) {
-        setRelatedJobs(filtered);
-        setIsLoading(false);
-        if (!filtered.length) setError("Could not find suitably related jobs after several tries.");
-      } else fetchJobs(attempt + 1);
-    } catch (err) {
-      if (attempt < 4) return fetchJobs(attempt + 1);
-      let msg = 'Failed to load related jobs.';
-      if (axios.isAxiosError(err)) {
-        if (err.message === 'Network Error') msg = 'Network connection error.';
-        else if (err.response) msg = err.response.data?.error || err.response.statusText;
-        else if (err.request) msg = 'No response from server.';
-        else msg = err.message;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `Error: ${res.status}`);
       }
-      setError(msg); setRelatedJobs([]); setIsLoading(false);
+
+      const data: JobPostingFeatured[] = await res.json();
+      setRelatedJobs(data);
+      if (data.length === 0) {
+        console.log("No related jobs were found by the API.");
+      }
+
+    } catch (err: unknown) {
+      console.error("Failed to load related jobs:", err);
+      
+      let errorMessage = 'An unexpected error occurred.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      setRelatedJobs([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [currentJob]);
+  }, [currentJob.id]);
 
   useEffect(() => {
-    if (currentJob.id) fetchJobs(1);
-  }, [currentJob.id, fetchJobs]); 
+    if (currentJob.id) {
+      fetchRelatedJobs();
+    }
+  }, [currentJob.id, fetchRelatedJobs]); 
 
   const renderHeader = () => (
     <CardHeader>
@@ -100,7 +96,7 @@ export function JobDetailsRelated({ currentJob }: Props) {
       {renderHeader()}
       <CardContent className="text-center py-8">
         <p className="text-muted-foreground">{error}</p>
-        <Button onClick={() => fetchJobs(1)} className="mt-4">Try Again</Button>
+        <Button onClick={fetchRelatedJobs} className="mt-4">Try Again</Button>
       </CardContent>
     </Card>
   );

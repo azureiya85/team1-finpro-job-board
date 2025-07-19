@@ -25,10 +25,11 @@ export function FilterAccordion() {
   const allLocations = useJobSearchStore((state) => state.allLocations);
   const isLocationsLoading = useJobSearchStore((state) => state.isLocationsLoading);
 
-  const setCategories = useJobSearchStore((state) => state.setCategories);
-  const setEmploymentTypes = useJobSearchStore((state) => state.setEmploymentTypes);
-  const setExperienceLevels = useJobSearchStore((state) => state.setExperienceLevels);
-  const setCompanySizes = useJobSearchStore((state) => state.setCompanySizes);
+  const updateCategory = useJobSearchStore((state) => state.updateCategory);
+  const updateEmploymentType = useJobSearchStore((state) => state.updateEmploymentType);
+  const updateExperienceLevel = useJobSearchStore((state) => state.updateExperienceLevel);
+  const updateCompanySize = useJobSearchStore((state) => state.updateCompanySize);
+  
   const setIsRemote = useJobSearchStore((state) => state.setIsRemote);
   const setDatePosted = useJobSearchStore((state) => state.setDatePosted);
   const setDateRange = useJobSearchStore((state) => state.setDateRange);
@@ -86,44 +87,51 @@ export function FilterAccordion() {
         </AccordionContent>
       </AccordionItem>
 
-     {/* Job Category Filter */}
+   {/* Job Category Filter */}
       <AccordionItem value="job-category">
-        <AccordionTrigger>Job Category</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Job Category
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Job Category"
             items={JobCategory}
-            selectedItems={categories ?? []}
-            onChange={setCategories}
+            selectedItems={categories}
+            onItemToggle={updateCategory}
           />
         </AccordionContent>
       </AccordionItem>
       
       {/* Employment Type Filter */}
       <AccordionItem value="employment-type">
-        <AccordionTrigger>Employment Type</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Employment Type
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Employment Type"
             items={EmploymentType}
-            selectedItems={employmentTypes ?? []}
-            onChange={setEmploymentTypes}
+            selectedItems={employmentTypes}
+            onItemToggle={updateEmploymentType}
           />
         </AccordionContent>
       </AccordionItem>
 
       {/* Experience Level Filter */}
       <AccordionItem value="experience-level">
-        <AccordionTrigger>Experience Level</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Experience Level
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Experience Level"
             items={ExperienceLevel}
-            selectedItems={experienceLevels ?? []}
-            onChange={setExperienceLevels}
+            selectedItems={experienceLevels}
+            onItemToggle={updateExperienceLevel}
           />
         </AccordionContent>
       </AccordionItem>
+
       {/* Company Location Filter */}
        <AccordionItem value="company-location">
         <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
@@ -152,15 +160,17 @@ export function FilterAccordion() {
         </AccordionContent>
       </AccordionItem>
 
-      {/* Company Size Filter */}
+       {/* Company Size Filter */}
       <AccordionItem value="company-size">
-        <AccordionTrigger>Company Size</AccordionTrigger>
+        <AccordionTrigger className="cursor-pointer text-lg font-semibold font-heading text-primary hover:no-underline py-3">
+          Company Size
+        </AccordionTrigger>
         <AccordionContent>
           <FilterGroup
             title="Company Size"
             items={CompanySize}
-            selectedItems={companySizes ?? []}
-            onChange={setCompanySizes}
+            selectedItems={companySizes}
+            onItemToggle={updateCompanySize}
           />
         </AccordionContent>
       </AccordionItem>

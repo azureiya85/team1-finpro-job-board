@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   compiler: {
+    removeConsole: {
+      exclude: ['error'],
+    },
   },
   images: {
     remotePatterns: [
@@ -29,16 +32,28 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+       {
+        protocol: 'https',
+        hostname: 'twemoji.maxcdn.com',
+      },
     ],
   },
   
-  // Add this block to bypass TypeScript errors during the build
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
     // your project has type errors.
     // !! WARN !!
     ignoreBuildErrors: true,
+  },
+
+ outputFileTracingIncludes: {
+    '/api/users/cv/generate': [
+      '../../node_modules/@sparticuz/chromium/bin/**',
+    ],
+    '/api/users/certificates/**': [
+      '../../node_modules/@sparticuz/chromium/bin/**',
+    ],
   },
 };
 

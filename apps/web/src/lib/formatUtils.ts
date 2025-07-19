@@ -98,7 +98,7 @@ export const formatFeatures = (features: Plan['features']): string[] => {
     }
   }
   
-  if (features.priorityCvReview) {
+  if (features.priorityReview) {
     featureList.push("Priority CV Review");
   }
   

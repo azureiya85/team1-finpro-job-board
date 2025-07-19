@@ -133,20 +133,14 @@ export default function UserSidebar() {
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 px-3">
           My Badges
         </h2>
-        {badgesLoading ? (
-          <div className="flex justify-center items-center h-10">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : badgesError ? (
-          <p className="text-xs text-destructive px-3">Error loading badges.</p>
-        ) : badges && badges.length > 0 ? (
+      { !badgesLoading && !badgesError && badges && badges.length > 0 ? (
           <>
             <div className="flex flex-wrap gap-2 px-3">
               {badges.slice(0, 5).map(badge => (
                 <div key={badge.id} title={`${badge.assessmentTitle}\nEarned: ${new Date(badge.earnedAt).toLocaleDateString()}`} className="cursor-default">
-                  <Badge variant="outline" className="p-1.5 text-lg border-yellow-400 text-yellow-600 bg-yellow-50">
+                  <Badge variant="outline" className="p-1.5 h-auto w-auto aspect-square flex items-center justify-center">
                     {badge.assessmentIcon ? (
-                      <span>{badge.assessmentIcon}</span>
+                      <span className="text-base leading-none">{badge.assessmentIcon}</span>
                     ) : (
                       <Award className="w-4 h-4" />
                     )}

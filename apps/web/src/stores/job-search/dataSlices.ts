@@ -1,26 +1,59 @@
 import type { StateCreator } from 'zustand';
-import axios from 'axios';
 import { subDays, subMonths } from 'date-fns';
 import type { JobDataSlice, JobSearchStoreState } from '@/types/zustandSearch';
 import type { GetJobsParams, GetJobsResult, JobPostingFeatured } from '@/types';
 
-const EXPRESS_API_BASE_URL = process.env.NEXT_PUBLIC_EXPRESS_API_URL || 'http://localhost:3001/api';
+async function fetchJobsFromNextApi(params: GetJobsParams): Promise<{ jobs: JobPostingFeatured[], totalCount: number }> {
+  const searchParams = new URLSearchParams();
 
-async function fetchJobsFromApi(params: GetJobsParams): Promise<{ jobs: JobPostingFeatured[], totalCount: number }> {
+  const appendParam = (key: string, value: unknown) => {
+    if (value !== undefined && value !== null && value !== '') {
+      searchParams.append(key, String(value));
+    }
+  };
+
+  // Append simple key-value pairs
+  appendParam('jobTitle', params.jobTitle);
+  appendParam('locationQuery', params.locationQuery);
+  appendParam('companyQuery', params.companyQuery);
+  appendParam('companyLocationQuery', params.companyLocationQuery);
+  appendParam('isRemote', params.isRemote);
+  appendParam('take', params.take);
+  appendParam('skip', params.skip);
+  appendParam('sortBy', params.sortBy);
+  appendParam('startDate', params.startDate);
+  appendParam('endDate', params.endDate);
+  appendParam('includePagination', true); 
+
+  params.categories?.forEach(v => searchParams.append('categories', v));
+  params.employmentTypes?.forEach(v => searchParams.append('employmentTypes', v));
+  params.experienceLevels?.forEach(v => searchParams.append('experienceLevels', v));
+  params.companySizes?.forEach(v => searchParams.append('companySizes', v));
+
+  const url = `/api/jobs?${searchParams.toString()}`;
+
   try {
-    const response = await axios.get(`${EXPRESS_API_BASE_URL}/jobs`, { params });
-    const data: GetJobsResult = response.data;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+    }
+    
+    const data: GetJobsResult = await response.json();
     const jobs = data.jobs || [];
     const totalCount = data.pagination?.total || jobs.length;
+    
     return { jobs, totalCount };
+
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const errorMessage = error.response?.data?.error || `HTTP error! status: ${error.response?.status}`;
-      throw new Error(`Failed to fetch jobs: ${errorMessage}`);
+    if (error instanceof Error) {
+      throw new Error(`Failed to fetch jobs: ${error.message}`);
     }
     throw new Error("An unknown error occurred while fetching jobs.");
   }
 }
+
 
 export const createDataSlice: StateCreator<JobSearchStoreState, [], [], JobDataSlice> = (set, get) => ({
   jobs: [],
@@ -44,10 +77,10 @@ export const createDataSlice: StateCreator<JobSearchStoreState, [], [], JobDataS
         locationQuery: state.locationSearchInput || undefined,
         companyQuery: state.companySearchInput || undefined,
         companyLocationQuery: state.companyLocationInput || undefined,
-        categories: state.categories?.length ? state.categories.join(',') : undefined,
-        employmentTypes: state.employmentTypes?.length ? state.employmentTypes.join(',') : undefined,
-        experienceLevels: state.experienceLevels?.length ? state.experienceLevels.join(',') : undefined,
-        companySizes: state.companySizes?.length ? state.companySizes.join(',') : undefined,
+        categories: state.categories?.length ? state.categories : undefined,
+        employmentTypes: state.employmentTypes?.length ? state.employmentTypes : undefined,
+        experienceLevels: state.experienceLevels?.length ? state.experienceLevels : undefined,
+        companySizes: state.companySizes?.length ? state.companySizes : undefined,
         isRemote: state.isRemote,
         take: state.take,
         skip: state.skip,
@@ -55,9 +88,10 @@ export const createDataSlice: StateCreator<JobSearchStoreState, [], [], JobDataS
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
       };
-
-      const { jobs, totalCount } = await fetchJobsFromApi(apiParams);
+      
+      const { jobs, totalCount } = await fetchJobsFromNextApi(apiParams);
       set({ jobs, totalJobs: totalCount, isLoading: false });
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       set({ error: errorMessage, isLoading: false, jobs: [] });

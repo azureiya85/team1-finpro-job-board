@@ -21,32 +21,39 @@ export interface ProvinceWithCities extends Province {
 // --- Job Search Slices ---
 
 export interface JobFilterSlice {
+  // --- State Properties ---
   searchTermInput: string;
   locationSearchInput: string;
-  categories?: JobCategory[];
-  employmentTypes?: EmploymentType[];
-  experienceLevels?: ExperienceLevel[];
-  companySizes?: CompanySize[];
-  isRemote?: boolean;
-   companySearchInput: string;     
+  companySearchInput: string;     
   companyLocationInput: string;  
+  categories: JobCategory[];
+  employmentTypes: EmploymentType[];
+  experienceLevels: ExperienceLevel[];
+  companySizes: CompanySize[];
+  isRemote?: boolean;
   sortBy: SortByType;
   datePosted: DatePostedType;
   startDate?: Date;
   endDate?: Date;
   
+  
+  // --- State Setters / Actions ---
+
   setSearchTermInput: (term: string) => void;
   setLocationSearchInput: (location: string) => void;
-  setCategories: (categories: JobCategory[]) => void;
-  setEmploymentTypes: (types: EmploymentType[]) => void;
-  setExperienceLevels: (levels: ExperienceLevel[]) => void;
-  setCompanySizes: (sizes: CompanySize[]) => void;
-  setIsRemote: (isRemote?: boolean) => void;
-  setSortBy: (sortBy: SortByType) => void;
   setCompanySearchInput: (company: string) => void;
   setCompanyLocationInput: (location: string) => void; 
+  setIsRemote: (isRemote?: boolean) => void;
+  setSortBy: (sortBy: SortByType) => void;
   setDatePosted: (datePosted: DatePostedType) => void;
   setDateRange: (start?: Date, end?: Date) => void;
+
+  updateCategory: (category: JobCategory, isChecked: boolean) => void;
+  updateEmploymentType: (type: EmploymentType, isChecked: boolean) => void;
+  updateExperienceLevel: (level: ExperienceLevel, isChecked: boolean) => void;
+  updateCompanySize: (size: CompanySize, isChecked: boolean) => void;
+   applyDebouncedSearch: () => void;
+  
   resetFilters: () => void;
 }
 
@@ -127,3 +134,15 @@ export interface CompanyPaginationSlice {
 
 // Combined Company Search State
 export type CompanySearchStoreState = CompanyFilterSlice & CompanyDataSlice & CompanyPaginationSlice;
+
+export interface JobPaginationSlice {
+  currentPage: number;
+  pageSize: number; 
+  skip?: number;
+  take?: number;
+  displayedJobsCount: number; 
+  isLoadingMore: boolean; 
+  loadMoreJobs: () => void; 
+  setCurrentPage: (page: number) => void;
+  setPageSize: (size: number) => void;
+}

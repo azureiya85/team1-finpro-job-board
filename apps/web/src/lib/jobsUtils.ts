@@ -1,7 +1,46 @@
 import prisma from '@/lib/prisma';
-import { JobPostingFeatured } from '@/types'; 
-import type { GetJobsParams, GetJobsResult } from '@/types/jobs';
+import { JobPostingForRelatedSearch, JobPostingFeatured } from '@/types';
+import type { GetJobsParams, GetJobsResult } from '@/types'; 
 import { buildWhereClause, calculateDistance } from './JobQueryHelpers';
+import { auth } from '@/auth';
+
+export async function getJobById(id: string): Promise<JobPostingForRelatedSearch | null> {
+  if (!id) return null;
+
+  try {
+    const session = await auth();
+    
+    const job = await prisma.jobPosting.findUnique({
+      where: { id: id },
+      include: {
+        company: true, 
+        province: true, 
+        city: true, 
+        ...(session && {
+          savedByUsers: {
+            where: {
+              userId: session.user.id
+            }
+          }
+        })
+      },
+    });
+
+    if (!job) {
+      return null;
+    }
+
+    const jobWithSavedStatus = {
+      ...job,
+      isSavedByCurrentUser: session ? job.savedByUsers.length > 0 : false
+    };
+
+    return jobWithSavedStatus as JobPostingForRelatedSearch | null;
+  } catch (error) {
+    console.error(`[UTIL_GET_JOB_BY_ID] Failed to fetch job ${id}:`, error);
+    return null; // Return null on error
+  }
+}
 
 // The main data fetching function
 export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFeatured[] | GetJobsResult> {
@@ -9,10 +48,10 @@ export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFea
     take = 10, skip = 0, orderBy, includePagination = false,
     userLatitude, userLongitude, radiusKm = 25,
   } = params;
-
-  const effectiveOrderBy = orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
+  
   const where = buildWhereClause(params);
-
+  const effectiveOrderBy = orderBy || [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }];
+  
   const selectFields = {
     id: true, title: true, description: true, employmentType: true, experienceLevel: true, category: true, isRemote: true,
     latitude: true, longitude: true, createdAt: true, publishedAt: true, salaryMin: true, salaryMax: true, salaryCurrency: true,
@@ -69,19 +108,88 @@ export async function getJobs(params: GetJobsParams = {}): Promise<JobPostingFea
   }
 }
 
-// Specific function for latest featured jobs 
+// Specific function for latest featured jobs
 export async function getLatestFeaturedJobs(count: number = 5): Promise<JobPostingFeatured[]> {
   const result = await getJobs({
     take: count,
-    orderBy: [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+    orderBy: [{ isPriority: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }], // Always pass as array
     includePagination: false,
   });
   return result as JobPostingFeatured[];
 }
 
+export async function getRelatedJobs(
+  currentJob: JobPostingForRelatedSearch,
+  count: number = 5
+): Promise<JobPostingFeatured[]> {
+  if (!currentJob) {
+    return [];
+  }
+
+  // Destructure properties from the full job object
+  const { id: excludeId, category, company, cityId, provinceId } = currentJob;
+
+  try {
+    const relatedJobs = await prisma.jobPosting.findMany({
+      where: {
+        id: { not: excludeId },
+        isActive: true,
+        publishedAt: { not: null },
+        OR: [
+          { category: { equals: category } },
+          { cityId: { equals: cityId, not: null } },
+          { provinceId: { equals: provinceId, not: null } },
+          { companyId: { equals: company?.id } }, 
+        ],
+      },
+      orderBy: [
+        { isPriority: 'desc' },
+        { publishedAt: 'desc' },
+      ],
+      take: count,
+      select: {
+        id: true,
+        title: true,
+        company: {
+          select: { id: true, name: true, logo: true, size: true },
+        },
+        city: {
+          select: { id: true, name: true },
+        },
+        province: {
+          select: { id: true, name: true },
+        },
+        description: true,
+        employmentType: true,
+        experienceLevel: true,
+        isRemote: true,
+        createdAt: true,
+        publishedAt: true,
+        salaryMin: true,
+        salaryMax: true,
+        salaryCurrency: true,
+        isPriority: true,
+        tags: true,
+        benefits: true,
+        requirements: true,
+        applicationDeadline: true,
+        requiresCoverLetter: true,
+        preSelectionTestId: true,
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    return relatedJobs as JobPostingFeatured[];
+  } catch (error) {
+    console.error(`[UTIL_GET_RELATED_JOBS] Failed to fetch related jobs for ${excludeId}:`, error);
+    return [];
+  }
+}
+
 // Utility function specifically for company job listings with pagination
 export async function getCompanyJobs(
-  companyId: string, 
+  companyId: string,
   params: Omit<GetJobsParams, 'companyId' | 'userLatitude' | 'userLongitude' | 'radiusKm' | 'locationQuery' | 'cityId' | 'provinceId'> = {}
 ): Promise<GetJobsResult> {
   const result = await getJobs({

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getJobs } from '@/lib/jobsUtils';
-import { GetJobsParams } from '@/types/jobs';
+import { GetJobsParams } from '@/types';
 import { jobSearchParamsSchema } from '@/lib/validations/zodCompanyValidation';
 import { Prisma } from '@prisma/client';
 
@@ -20,10 +20,16 @@ export async function GET(request: NextRequest) {
           paramsForZod[key] = [existingValue as string, value];
         }
       } else {
-        paramsForZod[key] = value;
+        paramsForZod[key] = [value];
       }
     } else {
       paramsForZod[key] = value;
+    }
+  }
+
+  for (const key in paramsForZod) {
+    if (Array.isArray(paramsForZod[key]) && !arrayKeys.includes(key)) {
+      paramsForZod[key] = paramsForZod[key][0];
     }
   }
 
@@ -46,19 +52,37 @@ export async function GET(request: NextRequest) {
     userLatitude,
     userLongitude,
     radiusKm,
+    sortBy, 
+    startDate,
+    endDate,
+    companyLocationQuery,
   } = validationResult.data;
 
-  let orderBy: Prisma.JobPostingOrderByWithRelationInput[] = [
-    { publishedAt: 'desc' },
-    { createdAt: 'desc' }
-  ];
+  // Build the orderBy array based on the sortBy parameter
+  const orderBy: Prisma.JobPostingOrderByWithRelationInput[] = [];
 
+  switch (sortBy) {
+    case 'oldest':
+      orderBy.push({ publishedAt: 'asc' });
+      break;
+    case 'company_asc':
+      orderBy.push({ company: { name: 'asc' } });
+      break;
+    case 'company_desc':
+      orderBy.push({ company: { name: 'desc' } });
+      break;
+    case 'newest':
+    default:
+      orderBy.push({ publishedAt: 'desc' });
+      break;
+  }
+  
+  // Add secondary sort criteria for consistency
+  orderBy.push({ createdAt: 'desc' });
+
+  // If location is provided, prioritize featured and then apply the selected sort
   if (userLatitude !== undefined && userLongitude !== undefined) {
-    orderBy = [
-      { isPriority: 'desc' },
-      { publishedAt: 'desc' },
-      { createdAt: 'desc' }
-    ];
+    orderBy.unshift({ isPriority: 'desc' });
   }
 
   const paramsForDb: GetJobsParams = {
@@ -76,6 +100,9 @@ export async function GET(request: NextRequest) {
     userLongitude,
     radiusKm,
     orderBy, 
+    startDate, 
+    endDate, 
+     companyLocationQuery,
     includePagination: searchParams.has('includePagination') ? searchParams.get('includePagination') === 'true' : false,
   };
 

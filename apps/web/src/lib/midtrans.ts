@@ -10,14 +10,16 @@ if (!process.env.NEXT_PUBLIC_APP_URL) {
     throw new Error('NEXT_PUBLIC_APP_URL is not defined for Midtrans callbacks');
 }
 
+const isMidtransProduction = process.env.MIDTRANS_IS_PRODUCTION === 'true';
+
 export const snap = new midtransClient.Snap({
-  isProduction: process.env.NODE_ENV === 'production',
+   isProduction: isMidtransProduction,
   serverKey: process.env.MIDTRANS_SERVER_KEY!,
   clientKey: process.env.MIDTRANS_CLIENT_KEY!,
 });
 
 export const coreApi = new midtransClient.CoreApi({
-    isProduction: process.env.NODE_ENV === 'production',
+    isProduction: isMidtransProduction,
     serverKey: process.env.MIDTRANS_SERVER_KEY!,
     clientKey: process.env.MIDTRANS_CLIENT_KEY!,
 });

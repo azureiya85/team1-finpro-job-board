@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import type { GetJobsParams } from '@/types/jobs';
+import type { GetJobsParams } from '@/types';
 
 // === Geospatial Helpers ===
 
@@ -36,19 +36,34 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     jobTitle, locationQuery, userLatitude, userLongitude, radiusKm = 25, 
     cityId, provinceId, categories, employmentTypes, experienceLevels, 
     companySizes, isRemote, companyId,
+    companyQuery,
+    companyLocationQuery,
+    startDate, 
+    endDate,   
   } = params;
 
-  const where: Prisma.JobPostingWhereInput = { isActive: true };
+  const where: Prisma.JobPostingWhereInput = { isActive: true, publishedAt: { not: null } };
   const andConditions: Prisma.JobPostingWhereInput[] = [];
 
-  // Location Logic
+  if (startDate || endDate) {
+    const dateFilter: Prisma.DateTimeFilter = {};
+    if (startDate) {
+      dateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      dateFilter.lte = endOfDay;
+    }
+    andConditions.push({ publishedAt: dateFilter });
+  }
+
   if (userLatitude !== undefined && userLongitude !== undefined) {
     const { minLat, maxLat, minLon, maxLon } = getBoundingBox(userLatitude, userLongitude, radiusKm);
     andConditions.push({
       AND: [
         { latitude: { gte: minLat, lte: maxLat } },
         { longitude: { gte: minLon, lte: maxLon } },
-        { latitude: { not: null } }, { longitude: { not: null } }
       ]
     });
   } else if (cityId) {
@@ -64,7 +79,7 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     });
   }
   
-  // Search Logic
+  // --- Search Logic ---
   if (jobTitle) {
     andConditions.push({
       OR: [
@@ -75,13 +90,42 @@ export const buildWhereClause = (params: GetJobsParams): Prisma.JobPostingWhereI
     });
   }
 
-  // Filter Logic
+  // --- Direct Filter Logic ---
   if (categories?.length) andConditions.push({ category: { in: categories } });
   if (employmentTypes?.length) andConditions.push({ employmentType: { in: employmentTypes } });
   if (experienceLevels?.length) andConditions.push({ experienceLevel: { in: experienceLevels } });
   if (typeof isRemote === 'boolean') andConditions.push({ isRemote });
-  if (companySizes?.length) andConditions.push({ company: { is: { size: { in: companySizes } } } });
-  if (companyId) andConditions.push({ companyId });
+
+   const companyAndConditions: Prisma.CompanyWhereInput[] = [];
+
+  if (companyQuery) {
+    companyAndConditions.push({ name: { contains: companyQuery, mode: 'insensitive' } });
+  }
+  if (companySizes?.length) {
+    companyAndConditions.push({ size: { in: companySizes } });
+  }
+  if (companyLocationQuery) {
+    companyAndConditions.push({
+      OR: [
+        { city: { is: { name: { equals: companyLocationQuery, mode: 'insensitive' } } } },
+        { province: { is: { name: { equals: companyLocationQuery, mode: 'insensitive' } } } },
+      ],
+    });
+  }
+
+  if (companyAndConditions.length > 0) {
+    andConditions.push({
+      company: {
+        is: {
+          AND: companyAndConditions,
+        },
+      },
+    });
+  }
+  
+  if (companyId) {
+    andConditions.push({ companyId });
+  }
 
   if (andConditions.length > 0) {
     where.AND = andConditions;

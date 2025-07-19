@@ -4,7 +4,6 @@ import prisma from '@/lib/prisma';
 import { UserRole } from '@prisma/client';
 import { SkillAssessmentUpdateSchema } from '@/lib/validations/zodAssessmentValidation';
 import {
-  AssessmentRouteParams,
   SkillAssessmentWithRelations,
   SkillAssessment,
   SkillAssessmentUpdateData,
@@ -12,6 +11,10 @@ import {
   isPrismaError,
   isRecordNotFoundError
 } from '@/types/assessments';
+
+interface AssessmentRouteParams {
+  params: Promise<{ id: string }>;
+}
 
 // Get Single Skill Assessment include questions
 export async function GET(request: Request, { params }: AssessmentRouteParams) {
@@ -21,8 +24,9 @@ export async function GET(request: Request, { params }: AssessmentRouteParams) {
   }
 
   try {
+    const { id } = await params;
     const assessmentResult = await prisma.skillAssessment.findUnique({
-      where: { id: params.assessmentId },
+      where: { id },
       include: {
         category: true,
         questions: { orderBy: { createdAt: 'asc' } }, // Developers see questions
@@ -57,6 +61,7 @@ export async function PUT(request: Request, { params }: AssessmentRouteParams) {
   }
 
   try {
+    const { id } = await params;
     const body = await request.json();
     const validation = SkillAssessmentUpdateSchema.safeParse(body);
     if (!validation.success) {
@@ -78,7 +83,7 @@ export async function PUT(request: Request, { params }: AssessmentRouteParams) {
     }
 
     const updatedAssessmentResult = await prisma.skillAssessment.update({
-      where: { id: params.assessmentId },
+      where: { id },
       data: updateData,
     });
     
@@ -104,9 +109,10 @@ export async function DELETE(request: Request, { params }: AssessmentRouteParams
   }
 
   try {
+    const { id } = await params;
     // Check if users have taken this assessment.
     const userAssessmentsCount = await prisma.userSkillAssessment.count({
-      where: { assessmentId: params.assessmentId }
+      where: { assessmentId: id }
     });
     
     if (userAssessmentsCount > 0) {
@@ -116,7 +122,7 @@ export async function DELETE(request: Request, { params }: AssessmentRouteParams
     }
 
     await prisma.skillAssessment.delete({
-      where: { id: params.assessmentId },
+      where: { id },
     });
     
     return NextResponse.json({ message: 'Assessment deleted successfully' }, { status: 200 });

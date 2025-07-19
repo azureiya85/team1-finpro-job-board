@@ -1,24 +1,26 @@
-import { useCallback } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FilterGroupProps, formatEnumKey } from '@/lib/utils';
+import { formatEnumKey } from '@/lib/utils'; 
+
+export interface FilterGroupProps<T extends string> {
+  items: Record<string, T>;
+  selectedItems: T[];
+  title: string;
+  // This is the new prop. It's much simpler.
+  onItemToggle: (itemValue: T, isChecked: boolean) => void;
+}
 
 export function FilterGroup<T extends string>({ 
   items, 
   selectedItems, 
-  onChange, 
+  onItemToggle, 
   title 
 }: FilterGroupProps<T>) {
-  const handleCheckboxChange = useCallback((itemValue: T, checked: boolean | 'indeterminate') => {
-    if (checked === true) {
-      if (!selectedItems.includes(itemValue)) {
-        onChange([...selectedItems, itemValue]);
-      }
-    } else {
-      onChange(selectedItems.filter(val => val !== itemValue));
-    }
-  }, [selectedItems, onChange]);
+  
+  const handleCheckboxChange = (itemValue: T, checked: boolean | 'indeterminate') => {
+    onItemToggle(itemValue, !!checked);
+  };
 
   return (
     <ScrollArea className="h-auto max-h-60 pr-3"> 
